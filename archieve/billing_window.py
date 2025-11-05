@@ -1,197 +1,205 @@
-
+# from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton
 # import sqlite3
-# from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QLineEdit, QMessageBox
-# from PyQt6.QtGui import QFont
+# from pathlib import Path
+
+# DB_PATH = Path(__file__).resolve().parent / "database" / "travel_billing.db"
+
+# class BillingWindow(QWidget):
+#     def __init__(self):
+#         super().__init__()
+#         self.setWindowTitle("Billing Form")
+#         self.resize(400, 300)
+
+#         layout = QVBoxLayout()
+
+#         self.customer = QLineEdit()
+#         self.customer.setPlaceholderText("Customer Name")
+#         layout.addWidget(self.customer)
+
+#         self.item = QLineEdit()
+#         self.item.setPlaceholderText("Item Name")
+#         layout.addWidget(self.item)
+
+#         self.quantity = QLineEdit()
+#         self.quantity.setPlaceholderText("Quantity")
+#         layout.addWidget(self.quantity)
+
+#         self.price = QLineEdit()
+#         self.price.setPlaceholderText("Price")
+#         layout.addWidget(self.price)
+
+#         save_btn = QPushButton("Save Bill")
+#         save_btn.clicked.connect(self.save_bill)
+#         layout.addWidget(save_btn)
+
+#         self.msg = QLabel("")
+#         layout.addWidget(self.msg)
+
+#         self.setLayout(layout)
+
+#     def save_bill(self):
+#         conn = sqlite3.connect(DB_PATH)
+#         cur = conn.cursor()
+#         cur.execute("INSERT INTO bills (customer_name, item_name, quantity, price, total) VALUES (?, ?, ?, ?, ?)",
+#                     (self.customer.text(), self.item.text(), int(self.quantity.text()), float(self.price.text()),
+#                      int(self.quantity.text()) * float(self.price.text())))
+#         conn.commit()
+#         conn.close()
+#         self.msg.setText("✅ Bill Saved Successfully!")
+# import sqlite3
+# from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem, QMessageBox
 # from PyQt6.QtCore import Qt
 
 # class BillingWindow(QWidget):
 #     def __init__(self):
 #         super().__init__()
-#         self.setWindowTitle("Travel Agency Billing")
-#         self.resize(500, 400)
-#         self.setStyleSheet("background-color: #f9f9f9; color: #333;")
+#         self.setWindowTitle("Travel Billing System")
+#         self.resize(700, 400)
 
 #         layout = QVBoxLayout()
 
-#         title = QLabel("🧾 Create New Bill")
-#         title.setFont(QFont("Arial", 18, QFont.Weight.Bold))
+#         # Title
+#         title = QLabel("🧾 Billed Item/s List")
 #         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
 #         layout.addWidget(title)
 
-#         # Input fields
-#         self.customer_name = QLineEdit()
-#         self.customer_name.setPlaceholderText("Customer Name")
-#         layout.addWidget(self.customer_name)
+#         # Table for items
+#         self.table = QTableWidget(3, 5)  # 3 rows, 5 columns
+#         self.table.setHorizontalHeaderLabels(["Item Name", "Quantity", "Price/Unit (₹)", "Tax (%)", "Amount (₹)"])
+#         layout.addWidget(self.table)
 
-#         self.destination = QLineEdit()
-#         self.destination.setPlaceholderText("Destination")
-#         layout.addWidget(self.destination)
+#         # Save Button
+#         save_btn = QPushButton("💾 Save")
+#         save_btn.clicked.connect(self.save_data)
+#         layout.addWidget(save_btn)
 
-#         self.travel_date = QLineEdit()
-#         self.travel_date.setPlaceholderText("Travel Date (YYYY-MM-DD)")
-#         layout.addWidget(self.travel_date)
+#         self.setLayout(layout)
 
-#         self.amount = QLineEdit()
-#         self.amount.setPlaceholderText("Amount (₹)")
-#         layout.addWidget(self.amount)
+#     def save_data(self):
+#         conn = sqlite3.connect("travel_agency.db")
+#         cur = conn.cursor()
+#         cur.execute("""
+#             CREATE TABLE IF NOT EXISTS bills (
+#                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+#                 item_name TEXT,
+#                 quantity INTEGER,
+#                 price REAL,
+#                 tax REAL,
+#                 amount REAL
+#             )
+#         """)
+
+#         for row in range(self.table.rowCount()):
+#             item_name = self.table.item(row, 0)
+#             qty = self.table.item(row, 1)
+#             price = self.table.item(row, 2)
+#             tax = self.table.item(row, 3)
+#             amount = self.table.item(row, 4)
+
+#             if item_name and qty and price and amount:
+#                 cur.execute("INSERT INTO bills (item_name, quantity, price, tax, amount) VALUES (?, ?, ?, ?, ?)",
+#                             (item_name.text(), qty.text(), price.text(), tax.text() if tax else 0, amount.text()))
+
+#         conn.commit()
+#         conn.close()
+#         QMessageBox.information(self, "Success", "Bill Saved Successfully!")
+#     # billing_window.py
+# import sqlite3
+# from pathlib import Path
+# from PyQt6.QtWidgets import (
+#     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
+#     QTableWidget, QTableWidgetItem, QPushButton,
+#     QMessageBox
+# )
+# from database.db import DB_PATH  # reuse same path
+
+# class BillingWindow(QWidget):
+#     def __init__(self):
+#         super().__init__()
+#         self.setWindowTitle("Travel Billing System")
+#         self.resize(600, 400)
+
+#         layout = QVBoxLayout()
+#         layout.addWidget(QLabel("🧾 Billed Item's List"))
+
+#         # create table
+#         self.table = QTableWidget(3, 5)
+#         self.table.setHorizontalHeaderLabels(["Item Name", "Quantity", "Price/Unit (₹)", "Tax (%)", "Amount (₹)"])
+#         layout.addWidget(self.table)
 
 #         # Save button
-#         save_button = QPushButton("Save Bill")
-#         save_button.clicked.connect(self.save_bill)
-#         layout.addWidget(save_button)
+#         save_btn = QPushButton("💾 Save")
+#         save_btn.clicked.connect(self.save_bill)
+#         layout.addWidget(save_btn)
 
 #         self.setLayout(layout)
 
 #     def save_bill(self):
-#         name = self.customer_name.text()
-#         destination = self.destination.text()
-#         date = self.travel_date.text()
-#         amount = self.amount.text()
-
-#         if not (name and destination and date and amount):
-#             QMessageBox.warning(self, "Error", "Please fill all fields!")
-#             return
-
-#         conn = sqlite3.connect("travel_agency.db")
+#         """Save all rows to database"""
+#         conn = sqlite3.connect(DB_PATH)
 #         cur = conn.cursor()
-#         cur.execute("INSERT INTO bills (customer_name, destination, travel_date, amount) VALUES (?, ?, ?, ?)",
-#                     (name, destination, date, amount))
+
+#         for row in range(self.table.rowCount()):
+#             item = self.table.item(row, 0)
+#             qty = self.table.item(row, 1)
+#             price = self.table.item(row, 2)
+#             tax = self.table.item(row, 3)
+#             amt = self.table.item(row, 4)
+
+#             if item and qty and price:  # skip empty rows
+#                 cur.execute("""
+#                     INSERT INTO bills (customer_name, item_name, quantity, price, tax, date)
+#                     VALUES (?, ?, ?, ?, ?, DATE('now'))
+#                 """, (
+#                     "Walk-in Customer",  # later you can add a textbox for name
+#                     item.text(),
+#                     int(qty.text()),
+#                     float(price.text()),
+#                     float(tax.text()) if tax else 0
+#                 ))
+
 #         conn.commit()
 #         conn.close()
-
-#         QMessageBox.information(self, "Success", "✅ Bill saved successfully!")
-#         self.customer_name.clear()
-#         self.destination.clear()
-#         self.travel_date.clear()
-#         self.amount.clear()
-import sqlite3
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QMessageBox
+#         QMessageBox.information(self, "Saved", "✅ Bill saved successfully!")
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QTableWidget, QTableWidgetItem, QMessageBox
+from database.ui.models.controllers.billing_controller import BillingController
+from database.ui.models.transaction import Transaction
 
 class BillingWindow(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Travel Agency Billing")
-        self.resize(400, 300)
+        self.setWindowTitle("Travel Billing System")
+        self.resize(600, 400)
+        self.controller = BillingController()
 
         layout = QVBoxLayout()
 
-        # Input fields
-        self.customer_name = QLineEdit()
-        self.customer_name.setPlaceholderText("Customer Name")
-        layout.addWidget(self.customer_name)
-
-        self.destination = QLineEdit()
-        self.destination.setPlaceholderText("Destination")
-        layout.addWidget(self.destination)
-
-        self.travel_date = QLineEdit()
-        self.travel_date.setPlaceholderText("Travel Date (YYYY-MM-DD)")
-        layout.addWidget(self.travel_date)
-
-        self.amount = QLineEdit()
-        self.amount.setPlaceholderText("Amount")
-        layout.addWidget(self.amount)
+        # Table
+        self.table = QTableWidget(3, 5)
+        self.table.setHorizontalHeaderLabels(["Item Name", "Quantity", "Price/Unit (₹)", "Tax (%)", "Amount (₹)"])
+        layout.addWidget(self.table)
 
         # Save button
-        save_button = QPushButton("Save Bill")
-        save_button.clicked.connect(self.save_bill)
-        layout.addWidget(save_button)
+        self.save_btn = QPushButton("💾 Save")
+        self.save_btn.clicked.connect(self.save_billing)
+        layout.addWidget(self.save_btn)
 
         self.setLayout(layout)
 
-    def save_bill(self):
-        name = self.customer_name.text()
-        destination = self.destination.text()
-        date = self.travel_date.text()
-        amount = self.amount.text()
-
-        # Save to SQLite database
-        conn = sqlite3.connect("travel_agency.db")
-        cur = conn.cursor()
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS bills (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                customer_name TEXT,
-                destination TEXT,
-                travel_date TEXT,
-                amount REAL
-            )
-        """)
-        cur.execute("INSERT INTO bills (customer_name, destination, travel_date, amount) VALUES (?, ?, ?, ?)",
-                    (name, destination, date, amount))
-        conn.commit()
-        conn.close()
-
-        # Success message
-        QMessageBox.information(self, "Success", "✅ Bill saved successfully!")
-
-        # Clear inputs
-        self.customer_name.clear()
-        self.destination.clear()
-        self.travel_date.clear()
-        self.amount.clear()
-
-import sqlite3
-from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QLineEdit, QPushButton, QMessageBox
-
-DB_NAME = "travel_agency.db"
-
-class BillingWindow(QWidget):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Billing Window")
-        self.setGeometry(300, 200, 400, 250)
-
-        layout = QVBoxLayout()
-
-        self.name_input = QLineEdit()
-        self.name_input.setPlaceholderText("Customer Name")
-        layout.addWidget(self.name_input)
-
-        self.destination_input = QLineEdit()
-        self.destination_input.setPlaceholderText("Destination")
-        layout.addWidget(self.destination_input)
-
-        self.date_input = QLineEdit()
-        self.date_input.setPlaceholderText("Travel Date (YYYY-MM-DD)")
-        layout.addWidget(self.date_input)
-
-        self.amount_input = QLineEdit()
-        self.amount_input.setPlaceholderText("Amount")
-        layout.addWidget(self.amount_input)
-
-        save_button = QPushButton("Save Bill")
-        save_button.clicked.connect(self.save_bill)
-        layout.addWidget(save_button)
-
-        self.setLayout(layout)
-
-    def save_bill(self):
-        name = self.name_input.text()
-        destination = self.destination_input.text()
-        date = self.date_input.text()
-        amount = self.amount_input.text()
-
-        if not name or not destination or not date or not amount:
-            QMessageBox.warning(self, "Error", "All fields are required!")
-            return
-
-        conn = sqlite3.connect(DB_NAME)
-        cur = conn.cursor()
-        cur.execute("INSERT INTO bills (customer_name, destination, travel_date, amount) VALUES (?, ?, ?, ?)",
-                    (name, destination, date, amount))
-        conn.commit()
-        conn.close()
-
-        QMessageBox.information(self, "Success", "Bill saved successfully!")
-        self.name_input.clear()
-        self.destination_input.clear()
-        self.date_input.clear()
-        self.amount_input.clear()
-def open_billing(self):
-    self.billing = BillingWindow()
-    self.billing.show()
-    self.close()
-
-
-        
+    def save_billing(self):
+        """Collect data from table and save into DB"""
+        try:
+            for row in range(self.table.rowCount()):
+                item = self.table.item(row, 0)
+                if item and item.text().strip():
+                    tx = Transaction(
+                        customer_name="Walk-in",
+                        item_name=item.text(),
+                        quantity=int(self.table.item(row, 1).text()),
+                        price=float(self.table.item(row, 2).text()),
+                        tax=float(self.table.item(row, 3).text())
+                    )
+                    self.controller.add_transaction(tx)
+            QMessageBox.information(self, "Success", "Bills saved successfully!")
+        except Exception as e:
+            QMessageBox.warning(self, "Error", str(e))
