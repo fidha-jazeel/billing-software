@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                              QPushButton, QLineEdit, QTableWidget, QTableWidgetItem,
                              QDateEdit, QFrame, QGridLayout, QHeaderView, QComboBox,
-                             QMessageBox, QDoubleSpinBox, QCompleter, QFileDialog)
+                             QMessageBox, QDoubleSpinBox, QCompleter, QFileDialog, QScrollArea)
 from PyQt6.QtCore import Qt, QDate, QStringListModel
 from PyQt6.QtGui import QFont
 from database.db_manager import DatabaseManager
@@ -23,7 +23,7 @@ class HomePage(QWidget):
         layout.setContentsMargins(20, 20, 20, 20)
         layout.setSpacing(15)
         
-        # Header
+        # Header (Fixed at top - not scrollable)
         header_layout = QHBoxLayout()
         title = QLabel("Welcome to Travel Agency Billing")
         title.setObjectName("titleLabel")
@@ -43,10 +43,18 @@ class HomePage(QWidget):
         subtitle.setStyleSheet("font-size: 11pt; color: #a0a0a0;")
         layout.addWidget(subtitle)
         
-        # Main form area
-        form_scroll = QWidget()
-        form_layout = QVBoxLayout(form_scroll)
+        # Create scroll area for the main form
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setFrameShape(QFrame.Shape.NoFrame)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        
+        # Main form content widget
+        form_widget = QWidget()
+        form_layout = QVBoxLayout(form_widget)
         form_layout.setSpacing(20)
+        form_layout.setContentsMargins(0, 0, 10, 0)  # Right margin for scrollbar
         
         # Invoice and Customer Details Section
         details_layout = QHBoxLayout()
@@ -88,7 +96,11 @@ class HomePage(QWidget):
         
         form_layout.addLayout(button_layout)
         
-        layout.addWidget(form_scroll)
+        # Set the form widget to scroll area
+        scroll_area.setWidget(form_widget)
+        
+        # Add scroll area to main layout
+        layout.addWidget(scroll_area)
     
     def create_invoice_details_card(self):
         """Create invoice details card"""
@@ -223,8 +235,12 @@ class HomePage(QWidget):
         # Set alternating row colors
         self.items_table.setAlternatingRowColors(True)
         
-        # Set minimum height
-        self.items_table.setMinimumHeight(250)
+        # Remove scrollbars from table - let it grow naturally
+        self.items_table.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.items_table.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        
+        # Make table resize to fit all rows
+        self.items_table.verticalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Fixed)
         
         layout.addWidget(self.items_table)
         
@@ -244,10 +260,18 @@ class HomePage(QWidget):
         # Create grid for calculations
         calc_layout = QVBoxLayout()
         calc_layout.setSpacing(4)
-        # calc_layout.set
-        
+        # Ensure there is spacing between rows in the calculation layout
+        calc_layout.setSpacing(12)
+        calc_layout.setContentsMargins(6, 6, 6, 6)
+
+        # helper to create rows with consistent spacing
+        def _row():
+            r = QHBoxLayout()
+            r.setSpacing(12)
+            return r
+
         # Subtotal row
-        subtotal_row = QHBoxLayout()
+        subtotal_row = _row()
         subtotal_label = QLabel("Subtotal :")
         subtotal_label.setStyleSheet("font-size: 11pt;")
         self.subtotal_value = QLabel("₹ 0.00")
@@ -300,9 +324,10 @@ class HomePage(QWidget):
         # Balance (in colored box)
         balance_frame = QFrame()
         balance_frame.setStyleSheet("""
-            background-color: #e8f5e9;
+            # background-color: rgba(0, 122, 204, 0.5);
+            border: 1px solid rgba(0, 0, 0, 0.08);
             border-radius: 5px;
-            padding: 15px;
+            padding: 1px;
             margin-top: 10px;
         """)
         balance_layout = QHBoxLayout(balance_frame)
@@ -389,10 +414,28 @@ class HomePage(QWidget):
         delete_btn.setMaximumWidth(60)
         delete_btn.clicked.connect(lambda: self.delete_item_row(row_position))
         self.items_table.setCellWidget(row_position, 9, delete_btn)
+        
+        # Update table height to fit all rows
+        self.update_table_height()
+    
+    def update_table_height(self):
+        """Update table height to show all rows without scrolling"""
+        # Calculate height needed for all rows
+        row_count = self.items_table.rowCount()
+        if row_count == 0:
+            row_count = 1  # Minimum height for empty table
+        
+        header_height = self.items_table.horizontalHeader().height()
+        row_height = self.items_table.verticalHeader().defaultSectionSize()
+        total_height = header_height + (row_height * row_count) + 2  # +2 for borders
+        
+        self.items_table.setMinimumHeight(total_height)
+        self.items_table.setMaximumHeight(total_height)
     
     def delete_item_row(self, row):
         """Delete a row from items table"""
         self.items_table.removeRow(row)
+        self.update_table_height()  # Update height after deleting
         self.calculate_totals()
     
     def calculate_row_total(self, row):

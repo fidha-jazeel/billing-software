@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
-                             QFrame, QPushButton)
+                             QFrame, QPushButton, QScrollArea)
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 
@@ -10,7 +10,21 @@ class AboutPage(QWidget):
     
     def init_ui(self):
         """Initialize the UI"""
-        layout = QVBoxLayout(self)
+        # Main layout
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+        
+        # Create scroll area
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setFrameShape(QFrame.Shape.NoFrame)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        
+        # Content widget
+        content_widget = QWidget()
+        layout = QVBoxLayout(content_widget)
         layout.setContentsMargins(20, 20, 20, 20)
         layout.setSpacing(20)
         
@@ -40,9 +54,9 @@ class AboutPage(QWidget):
         # Description card
         desc_card = QFrame()
         desc_card.setObjectName("card")
-        desc_card.setMaximumWidth(600)
         
         desc_layout = QVBoxLayout(desc_card)
+        desc_layout.setContentsMargins(50, 50, 50, 50)
         
         description = QLabel(
             "A comprehensive billing and invoicing solution designed specifically "
@@ -51,28 +65,28 @@ class AboutPage(QWidget):
         )
         description.setWordWrap(True)
         description.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        description.setStyleSheet("font-size: 11pt; line-height: 1.6; padding: 20px;")
+        description.setStyleSheet("font-size: 11pt; line-height: 1.6;")
         desc_layout.addWidget(description)
         
-        # Center the card
+        # Add card with margins (responsive)
         card_container = QHBoxLayout()
-        card_container.addStretch()
+        card_container.setContentsMargins(100, 0, 100, 0)  # Side margins for large screens
         card_container.addWidget(desc_card)
-        card_container.addStretch()
         layout.addLayout(card_container)
         
         # Features
         features_label = QLabel("✨ Key Features")
-        features_label.setStyleSheet("font-size: 14pt; font-weight: bold; color: #0d7377; margin-top: 20px;")
+        features_label.setStyleSheet("font-size: 14pt; font-weight: bold; color: #0d7377; margin-top: 30px; margin-bottom: 15px;")
         features_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         features_label.setWordWrap(True)
         layout.addWidget(features_label)
         
         features_card = QFrame()
         features_card.setObjectName("card")
-        features_card.setMaximumWidth(600)
         
         features_layout = QVBoxLayout(features_card)
+        features_layout.setContentsMargins(40, 30, 40, 30)
+        features_layout.setSpacing(15)
         
         features = [
             "📄 Dynamic invoice creation with multiple items",
@@ -86,15 +100,14 @@ class AboutPage(QWidget):
         
         for feature in features:
             feature_label = QLabel(feature)
-            feature_label.setStyleSheet("font-size: 10pt; padding: 5px; margin-left: 20px;")
+            feature_label.setStyleSheet("font-size: 11pt; padding: 8px;")
             feature_label.setWordWrap(True)
             features_layout.addWidget(feature_label)
         
-        # Center the features card
+        # Add features card with margins (responsive)
         features_container = QHBoxLayout()
-        features_container.addStretch()
+        features_container.setContentsMargins(100, 0, 100, 0)  # Side margins for large screens
         features_container.addWidget(features_card)
-        features_container.addStretch()
         layout.addLayout(features_container)
         
         layout.addSpacing(20)
@@ -112,3 +125,9 @@ class AboutPage(QWidget):
         layout.addWidget(copyright_label)
         
         layout.addStretch()
+        
+        # Set content to scroll area
+        scroll_area.setWidget(content_widget)
+        
+        # Add scroll area to main layout
+        main_layout.addWidget(scroll_area)
