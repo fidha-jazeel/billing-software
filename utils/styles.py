@@ -116,6 +116,7 @@ QSpinBox, QDoubleSpinBox {
     border: 1px solid #3a3a3a;
     border-radius: 4px;
     padding: 6px;
+    padding-right: 10px;  /* Space for up/down buttons */
     selection-background-color: #0d7377;
 }
 
@@ -123,14 +124,58 @@ QSpinBox:focus, QDoubleSpinBox:focus {
     border: 1px solid #0d7377;
 }
 
+/* Up button */
 QSpinBox::up-button, QDoubleSpinBox::up-button {
+    subcontrol-origin: border;
+    subcontrol-position: right top;
+    width: 18px;
     background-color: #3a3a3a;
     border-left: 1px solid #3a3a3a;
+    border-top-right-radius: 4px;
 }
 
+QSpinBox::up-button:hover, QDoubleSpinBox::up-button:hover {
+    background-color: #4a4a4a;
+}
+
+QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {
+    image: none;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-bottom: 5px solid #e0e0e0;
+    width: 0px;
+    height: 0px;
+}
+
+QSpinBox::up-arrow:hover, QDoubleSpinBox::up-arrow:hover {
+    border-bottom: 5px solid #0d7377;
+}
+
+/* Down button */
 QSpinBox::down-button, QDoubleSpinBox::down-button {
+    subcontrol-origin: border;
+    subcontrol-position: right bottom;
+    width: 18px;
     background-color: #3a3a3a;
     border-left: 1px solid #3a3a3a;
+    border-bottom-right-radius: 4px;
+}
+
+QSpinBox::down-button:hover, QDoubleSpinBox::down-button:hover {
+    background-color: #4a4a4a;
+}
+
+QSpinBox::down-arrow, QDoubleSpinBox::down-arrow {
+    image: none;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid #e0e0e0;
+    width: 0px;
+    height: 0px;
+}
+
+QSpinBox::down-arrow:hover, QDoubleSpinBox::down-arrow:hover {
+    border-top: 5px solid #0d7377;
 }
 
 /* Combo box */
@@ -140,6 +185,7 @@ QComboBox {
     border: 1px solid #3a3a3a;
     border-radius: 4px;
     padding: 6px 10px;
+    padding-right: 30px;  /* Space for dropdown button */
     selection-background-color: #0d7377;
 }
 
@@ -148,16 +194,30 @@ QComboBox:focus {
 }
 
 QComboBox::drop-down {
-    border: none;
-    width: 20px;
+    subcontrol-origin: padding;
+    subcontrol-position: right center;
+    width: 25px;
+    border-left: 1px solid #3a3a3a;
+    background-color: #3a3a3a;
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+}
+
+QComboBox::drop-down:hover {
+    background-color: #4a4a4a;
 }
 
 QComboBox::down-arrow {
-    image: url(none);
+    image: none;
     border-left: 5px solid transparent;
     border-right: 5px solid transparent;
-    border-top: 5px solid #e0e0e0;
-    margin-right: 5px;
+    border-top: 6px solid #e0e0e0;
+    width: 0px;
+    height: 0px;
+}
+
+QComboBox::down-arrow:hover {
+    border-top: 6px solid #0d7377;
 }
 
 QComboBox QAbstractItemView {
@@ -175,6 +235,7 @@ QDateEdit {
     border: 1px solid #3a3a3a;
     border-radius: 4px;
     padding: 6px 10px;
+    # padding-right: 10px;  /* Space for calendar button */
 }
 
 QDateEdit:focus {
@@ -182,13 +243,40 @@ QDateEdit:focus {
 }
 
 QDateEdit::drop-down {
-    border: none;
-    width: 20px;
+    subcontrol-origin: padding;
+    subcontrol-position: right center;
+    width: 25px;
+    border-left: 1px solid #3a3a3a;
+    background-color: #3a3a3a;
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
 }
 
+QDateEdit::drop-down:hover {
+    background-color: #4a4a4a;
+}
+
+QDateEdit::down-arrow {
+    image: none;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid #e0e0e0;
+    width: 0px;
+    height: 0px;
+}
+
+QDateEdit::down-arrow:hover {
+    border-top: 6px solid #0d7377;
+}
+
+/* Calendar Widget */
 QCalendarWidget {
     background-color: #2d2d2d;
     color: #e0e0e0;
+}
+
+QCalendarWidget QWidget#qt_calendar_navigationbar {
+    background-color: #3a3a3a;
 }
 
 QCalendarWidget QToolButton {
@@ -197,16 +285,37 @@ QCalendarWidget QToolButton {
     border: none;
     border-radius: 3px;
     padding: 5px;
+    margin: 2px;
 }
 
 QCalendarWidget QToolButton:hover {
     background-color: #0d7377;
 }
 
+QCalendarWidget QMenu {
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+}
+
+QCalendarWidget QSpinBox {
+    background-color: #3a3a3a;
+    color: #e0e0e0;
+    selection-background-color: #0d7377;
+}
+
 QCalendarWidget QAbstractItemView {
     background-color: #2d2d2d;
     selection-background-color: #0d7377;
     selection-color: white;
+    border: none;
+}
+
+QCalendarWidget QAbstractItemView:enabled {
+    color: #e0e0e0;
+}
+
+QCalendarWidget QAbstractItemView:disabled {
+    color: #6a6a6a;
 }
 
 /* Tables */

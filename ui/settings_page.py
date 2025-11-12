@@ -38,15 +38,15 @@ class SettingsPage(QWidget):
         button_layout.addStretch()
         
         save_btn = QPushButton("💾 Save Settings")
-        save_btn.setFixedHeight(40)
-        save_btn.setFixedWidth(150)
+        save_btn.setMinimumHeight(40)
+        save_btn.setMinimumWidth(150)
         save_btn.clicked.connect(self.save_settings)
         button_layout.addWidget(save_btn)
         
         reset_btn = QPushButton("🔄 Reset")
         reset_btn.setObjectName("secondaryBtn")
-        reset_btn.setFixedHeight(40)
-        reset_btn.setFixedWidth(120)
+        reset_btn.setMinimumHeight(40)
+        reset_btn.setMinimumWidth(120)
         reset_btn.clicked.connect(self.load_settings)
         button_layout.addWidget(reset_btn)
         
@@ -79,7 +79,7 @@ class SettingsPage(QWidget):
         form_layout.addWidget(QLabel("Address:"), 1, 0, Qt.AlignmentFlag.AlignTop)
         self.company_address = QTextEdit()
         self.company_address.setPlaceholderText("Enter company address")
-        self.company_address.setMaximumHeight(80)
+        self.company_address.setMinimumHeight(60)
         form_layout.addWidget(self.company_address, 1, 1)
         
         # Contact Number
@@ -121,22 +121,26 @@ class SettingsPage(QWidget):
         form_layout.setSpacing(15)
         
         # Invoice Prefix
+        prefix_container = QHBoxLayout()
         form_layout.addWidget(QLabel("Invoice Prefix:"), 0, 0)
         self.invoice_prefix = QLineEdit()
         self.invoice_prefix.setPlaceholderText("e.g., INV, BILL")
-        self.invoice_prefix.setMaximumWidth(200)
-        form_layout.addWidget(self.invoice_prefix, 0, 1, Qt.AlignmentFlag.AlignLeft)
+        prefix_container.addWidget(self.invoice_prefix, 1)
+        prefix_container.addStretch(2)
+        form_layout.addLayout(prefix_container, 0, 1)
         
         help_label = QLabel("Format: PREFIX-0001, PREFIX-0002, etc.")
         help_label.setStyleSheet("color: #6a6a6a; font-size: 9pt;")
         form_layout.addWidget(help_label, 1, 1)
         
         # Currency Symbol
+        currency_container = QHBoxLayout()
         form_layout.addWidget(QLabel("Currency Symbol:"), 2, 0)
         self.currency_symbol = QLineEdit()
         self.currency_symbol.setPlaceholderText("₹")
-        self.currency_symbol.setMaximumWidth(100)
-        form_layout.addWidget(self.currency_symbol, 2, 1, Qt.AlignmentFlag.AlignLeft)
+        currency_container.addWidget(self.currency_symbol, 1)
+        currency_container.addStretch(4)
+        form_layout.addLayout(currency_container, 2, 1)
         
         layout.addLayout(form_layout)
         

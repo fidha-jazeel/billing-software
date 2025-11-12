@@ -32,7 +32,7 @@ class HomePage(QWidget):
         
         # New Invoice button
         new_invoice_btn = QPushButton("📄 New Invoice")
-        new_invoice_btn.setFixedHeight(35)
+        new_invoice_btn.setMinimumHeight(35)
         new_invoice_btn.clicked.connect(self.reset_form)
         header_layout.addWidget(new_invoice_btn)
         
@@ -82,15 +82,15 @@ class HomePage(QWidget):
         button_layout.addStretch()
         
         save_btn = QPushButton("💾 Save Invoice")
-        save_btn.setFixedHeight(40)
-        save_btn.setFixedWidth(150)
+        save_btn.setMinimumHeight(40)
+        save_btn.setMinimumWidth(150)
         save_btn.clicked.connect(self.save_invoice)
         button_layout.addWidget(save_btn)
         
         pdf_btn = QPushButton("📄 Save as PDF")
         pdf_btn.setObjectName("secondaryBtn")
-        pdf_btn.setFixedHeight(40)
-        pdf_btn.setFixedWidth(150)
+        pdf_btn.setMinimumHeight(40)
+        pdf_btn.setMinimumWidth(150)
         pdf_btn.clicked.connect(self.save_as_pdf)
         button_layout.addWidget(pdf_btn)
         
@@ -313,7 +313,6 @@ class HomePage(QWidget):
         self.received_input = QDoubleSpinBox()
         self.received_input.setMaximum(999999.99)
         self.received_input.setPrefix("₹ ")
-        self.received_input.setMinimumWidth(200)
         self.received_input.setMinimumHeight(35)
         self.received_input.valueChanged.connect(self.calculate_balance)
         received_row.addWidget(received_label)
@@ -334,11 +333,9 @@ class HomePage(QWidget):
         balance_layout.setContentsMargins(15, 15, 15, 15)
         balance_label = QLabel("Balance :")
         balance_label.setStyleSheet("font-size: 14pt; font-weight: bold; color: #1b5e20;")
-        balance_label.setMinimumWidth(180)
         self.balance_value = QLabel("₹ 0.00")
         self.balance_value.setStyleSheet("font-size: 16pt; font-weight: bold; color: #2e7d32;")
         self.balance_value.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-        self.balance_value.setMinimumWidth(150)
         balance_layout.addWidget(balance_label)
         balance_layout.addStretch()
         balance_layout.addWidget(self.balance_value)
