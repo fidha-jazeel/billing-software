@@ -1,7 +1,41 @@
-from PyQt5 import QtWidgets, QtCore, QtGui
+# from PyQt5 import QtWidgets, QtCore, QtGui
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QPushButton, QTableWidget
 import sys
 
-class DashboardApp(QtWidgets.QMainWindow):
+class ManualBillingDashboard(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Travel Billing System (Manual UI)")
+        self.resize(900, 600)
+
+        # Layout
+        layout = QVBoxLayout()
+
+        # Table
+        self.table = QTableWidget()
+        self.table.setColumnCount(6)
+        self.table.setHorizontalHeaderLabels(["Item Name", "Ticket #", "Sector", "Supplier", "Price", "Qty"])
+        layout.addWidget(self.table)
+
+        # Add Item Button
+        self.add_button = QPushButton("+ Add Item")
+        self.add_button.clicked.connect(self.add_item)
+        layout.addWidget(self.add_button)
+
+        # Main container
+        # container = QWidget()
+        # container.setLayout(layout)
+        # self.setCentralWidget(container)
+
+    def add_item(self):
+        """Add a new blank row to the table"""
+        row_position = self.table.rowCount()
+        self.table.insertRow(row_position)
+        # container = QWidget()
+        # container.setLayout(layout)
+        # self.setCentralWidget(container)
+
+class DashboardApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Travel Agency - Billing Software")
