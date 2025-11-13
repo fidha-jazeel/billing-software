@@ -121,9 +121,7 @@ class DashboardFull(QMainWindow):
         content_layout.addLayout(form_layout)
 
         # --- Table for Billed Items ---
-        table_label = QLabel("<b>Billed Items:</b>")
-        content_layout.addWidget(table_label)
-
+    
         self.table = QTableWidget(3, 6)
         self.table.verticalHeader().setVisible(False)
     #     self.table.setStyleSheet("""
@@ -150,10 +148,22 @@ class DashboardFull(QMainWindow):
             font-weight: bold;
           } 
      """)     
-
+        
         self.table.setHorizontalHeaderLabels([
             "Item Name", "Ticket #", "Sector", "Supplier", "Price", "Qty"
         ])
+            # Add a final row for totals inside the table
+        self.table.insertRow(self.table.rowCount())  # create a new empty row at bottom
+        row = self.table.rowCount() - 1
+
+    # Fill that row with total labels
+        self.table.setItem(row, 0, QTableWidgetItem("Subtotal / Total"))
+        self.table.setItem(row, 1, QTableWidgetItem(""))
+        self.table.setItem(row, 2, QTableWidgetItem(""))
+        self.table.setItem(row, 3, QTableWidgetItem(""))
+        self.table.setItem(row, 4, QTableWidgetItem("₹0.00"))  # total amount
+        self.table.setItem(row, 5, QTableWidgetItem(""))
+
         # Wrap the table inside a card-style frame
         self.frame = QFrame()
         self.frame.setStyleSheet("""
@@ -170,8 +180,19 @@ class DashboardFull(QMainWindow):
         self.frame_layout.addWidget(self.table)
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         # content_layout.addWidget(self.table)
-        content_layout.addWidget(self.frame)
+        # content_layout.addWidget(self.frame)
+        content_layout.addWidget(self.table, alignment=Qt.AlignCenter)
+        # btn_layout = QHBoxLayout()
+        # save_btn = QPushButton("Save Invoice")
+        # pdf_btn = QPushButton("Save as PDF")
 
+        # btn_layout.addStretch()
+        # btn_layout.addWidget(save_btn)
+        # btn_layout.addWidget(pdf_btn)
+
+        # content_layout.addLayout(btn_layout)
+        
+        # Save_btn.clicked.connect(self.save_invoice)
         # --- Total Calculation ---
         total_layout = QHBoxLayout()
         self.subtotal_label = QLabel("Subtotal: ₹0.00")
@@ -181,6 +202,7 @@ class DashboardFull(QMainWindow):
         total_layout.addWidget(self.tax_label)
         total_layout.addWidget(self.total_label)
         content_layout.addLayout(total_layout)
+        # Save_btn.clicked.connect(self.save_invoice)
         # --- Dark theme for table ---
         # self.table.setStyleSheet("""
     #      QTableWidget {
@@ -234,26 +256,26 @@ class DashboardFull(QMainWindow):
         table_layout.addWidget(self.table)
 
 # Blue "+ Add Item" button on right side
-        self.btn_add_item = QPushButton("+")
-        self.btn_add_item.setFixedSize(40, 30)  # small size
-        self.btn_add_item.setStyleSheet("""
-            QPushButton {
-                background-color: #3B82F6;  /* grey */
-                color: white;
-                border: none;
-                border-radius: 6px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #2563EB;  /* darker grey on hover */
-            }
-        """)
+        # self.btn_add_item = QPushButton("+")
+        # self.btn_add_item.setFixedSize(40, 30)  # small size
+        # self.btn_add_item.setStyleSheet("""
+        #     QPushButton {
+        #         background-color: #3B82F6;  /* grey */
+        #         color: white;
+        #         border: none;
+        #         border-radius: 6px;
+        #         font-weight: bold;
+        #     }
+        #     QPushButton:hover {
+        #         background-color: #2563EB;  /* darker grey on hover */
+        #     }
+        # """)
 
-        table_layout.addWidget(self.btn_add_item)
-        content_layout.addLayout(table_layout)
+        # table_layout.addWidget(self.btn_add_item)
+        # content_layout.addLayout(table_layout)
 
-        # Connection
-        self.btn_add_item.clicked.connect(self.add_item_row)
+        # # Connection
+        # self.btn_add_item.clicked.connect(self.add_item_row)
         self.btn_add_item = QPushButton("+ Add Item")
         self.btn_add_item.setStyleSheet("""
         #     QPushButton {
@@ -268,22 +290,109 @@ class DashboardFull(QMainWindow):
             }
         """)
 
-#         # --- Buttons ---
-        btn_layout = QHBoxLayout()
-        save_btn = QPushButton("💾 Save Invoice")
-        pdf_btn = QPushButton("🧾 Save as PDF")
-        btn_layout.addStretch()
-        btn_layout.addWidget(save_btn)
-        btn_layout.addWidget(pdf_btn)
-        content_layout.addLayout(btn_layout)
-
-        main_layout.addWidget(content)
+        # --- Buttons ---
+        # main_layout.addWidget(content)
         content_layout.addWidget(self.table)
-        self.btn_add_item = QPushButton("+ Add Item")
-        content_layout.addWidget(self.btn_add_item)
+        # --- Invoice Calculation Section ---
+        calc_layout = QVBoxLayout()
+
+        # Subtotal, Tax, Total Labels
+        self.lbl_subtotal = QLabel("Subtotal: ₹0.00")
+        self.lbl_tax = QLabel("Tax: ₹0.00")
+        self.lbl_total = QLabel("Total: ₹0.00")
+
+        # Style for labels
+        self.lbl_subtotal.setStyleSheet("font-weight: bold; color: white;")
+        self.lbl_tax.setStyleSheet("font-weight: bold; color: white;")
+        self.lbl_total.setStyleSheet("font-weight: bold; color: #00FF00; font-size: 14px;")
+
+        # Add them to layout
+        calc_layout.addWidget(self.lbl_subtotal)
+        calc_layout.addWidget(self.lbl_tax)
+        calc_layout.addWidget(self.lbl_total)
+
+        # Add to main content layout
+        content_layout.addLayout(calc_layout)
+
+        # btn_layout = QHBoxLayout()
+        # save_btn = QPushButton("💾 Save Invoice")
+        # pdf_btn = QPushButton("🧾 Save as PDF")
+        # # excel_btn = QPushButton("📊 Export Excel")
+
+        # btn_layout.addStretch()
+        # btn_layout.addWidget(save_btn)
+        # btn_layout.addWidget(pdf_btn)
+        # # btn_layout.addWidget(excel_btn)
+        # content_layout.addLayout(btn_layout)
+        # save_btn.clicked.connect(self.save_invoice)
+        # pdf_btn.clicked.connect(self.save_pdf)        # create this method later
+        # # excel_btn.clicked.connect(self.export_excel) 
+        # self.btn_add_item.clicked.connect(self.add_item_row)
+
+        # main_layout.addWidget(content)
+        # content_layout.addWidget(self.table)
+        # content_layout.addWidget(self.table)
+        # self.btn_add_item = QPushButton("+ Add Item")
+        # content_layout.addWidget(self.btn_add_item)
         # ---------- Connections ----------
-        save_btn.clicked.connect(self.save_invoice)
+        # save_btn.clicked.connect(self.save_invoice)
+        # self.btn_add_item.clicked.connect(self.add_item_row)
+       # ---------- Buttons ----------
+        top_buttons = QHBoxLayout()
+        top_buttons.addStretch()
+
+        self.btn_add_item = QPushButton("+ Add Item")
+        self.btn_add_item.setStyleSheet("""
+            QPushButton {
+                background-color: #1E90FF;
+                color: white;
+                font-weight: bold;
+                border-radius: 5px;
+                padding: 5px 10px;
+            }
+            QPushButton:hover {
+                background-color: #63B3FF;
+            }
+        """)
+
+        top_buttons.addWidget(self.btn_add_item)
+        content_layout.addLayout(top_buttons)
+
+        # ---------- Table ----------
+        content_layout.addWidget(self.table)
+
+        # ---------- Bottom Buttons (Save & PDF) ----------
+        bottom_buttons = QHBoxLayout()
+        bottom_buttons.addStretch()
+
+        self.save_btn = QPushButton("💾 Save Invoice")
+        self.pdf_btn = QPushButton("🧾 Save as PDF")
+
+        for btn in [self.save_btn, self.pdf_btn]:
+            btn.setStyleSheet("""
+                QPushButton {
+                    background-color: #5C5CFF;
+                    color: white;
+                    font-weight: bold;
+                    border-radius: 5px;
+                    padding: 6px 12px;
+                }
+                QPushButton:hover {
+                    background-color: #7A7AFF;
+                }
+            """)
+
+        bottom_buttons.addWidget(self.save_btn)
+        bottom_buttons.addWidget(self.pdf_btn)
+        content_layout.addLayout(bottom_buttons)
+
+        # ---------- Connect signals ----------
         self.btn_add_item.clicked.connect(self.add_item_row)
+        self.save_btn.clicked.connect(self.save_invoice)
+        self.pdf_btn.clicked.connect(self.save_pdf)
+
+        # Add this before adding content to main layout
+        main_layout.addWidget(content)
 
         def add_item_row(self):
             row_position = self.table.rowCount()
@@ -336,6 +445,7 @@ class DashboardFull(QMainWindow):
     # # --- Add everything to content layout ---
     #     content_layout.addLayout(table_section)
     #     self.load_invoice_page()
+        self.table.itemChanged.connect(self.update_invoice_totals)
 
     def load_invoice_page(self):
             from travel_billing.main_manual import InvoicePage
@@ -351,8 +461,36 @@ class DashboardFull(QMainWindow):
                 print("Please enter customer name")
     def add_item_row(self):
                 row_position = self.table.rowCount()
-                self.table.insertRow(row_position)
+                self.table.insertRow(row_position)  
+                
+    def save_pdf(self):
+        from PyQt5.QtWidgets import QMessageBox
+        QMessageBox.information(self, "Save as PDF", "PDF export feature coming soon!")
+
+    def export_excel(self):
+        from PyQt5.QtWidgets import QMessageBox
+        QMessageBox.information(self, "Export Excel", "Excel export feature coming soon!")
+
     # def load_invoice_page(self):
+    def update_invoice_totals(self):
+        subtotal = 0.0
+        for row in range(self.table.rowCount()):
+            try:
+                price_item = self.table.item(row, 4)  # price column
+                qty_item = self.table.item(row, 5)    # qty column
+                if price_item and qty_item:
+                    price = float(price_item.text() or 0)
+                    qty = float(qty_item.text() or 0)
+                    subtotal += price * qty
+            except:
+                pass
+
+            tax = subtotal * 0.05  # 5% tax
+            total = subtotal + tax
+
+            self.lbl_subtotal.setText(f"Subtotal: ₹{subtotal:.2f}")
+            self.lbl_tax.setText(f"Tax: ₹{tax:.2f}")
+            self.lbl_total.setText(f"Total: ₹{total:.2f}")
 
 
 if __name__ == "__main__":
@@ -599,15 +737,7 @@ if __name__ == "__main__":
         # self.table.cellChanged.connect(self.calculate_totals)
 
         # # --- Total Calculation ---
-        # total_layout = QHBoxLayout()
-        # self.subtotal_label = QLabel("Subtotal: ₹0.00")
-        # self.tax_label = QLabel("Tax (5%): ₹0.00")
-        # self.total_label = QLabel("<b>Total: ₹0.00</b>")
-        # total_layout.addWidget(self.subtotal_label)
-        # total_layout.addWidget(self.tax_label)
-        # total_layout.addWidget(self.total_label)
-        # content_layout.addLayout(total_layout)
-
+        
         # # --- Buttons ---
         # btn_layout = QHBoxLayout()
         # save_btn = QPushButton("💾 Save Invoice")
