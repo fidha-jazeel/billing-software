@@ -1,7 +1,9 @@
 
+from PyQt5.QtWidgets import QDateEdit
+from PyQt5.QtCore import QDate
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-    QPushButton, QLineEdit, QFrame, QTableWidget, QTableWidgetItem, QHeaderView
+    QPushButton, QLineEdit, QFrame, QTableWidget, QTableWidgetItem, QHeaderView, QGridLayout
 )
 from PyQt5.QtCore import Qt
 import sys
@@ -108,16 +110,34 @@ class DashboardFull(QMainWindow):
 
         invoice_number_label = QLabel("Invoice Number:")
         self.invoice_number = QLineEdit()
-        self.invoice_number.setPlaceholderText("Auto-generated")
+        self.invoice_number.setPlaceholderText("Auto-generated")# Invoice Date
+        lbl_invoice_date = QLabel("Invoice Date:")
+        self.txt_invoice_date = QDateEdit()
+        self.txt_invoice_date.setDate(QDate.currentDate())
+        self.txt_invoice_date.setCalendarPopup(True)
+        self.txt_invoice_date.setDisplayFormat("dd-MM-yyyy")
+
+        form_layout.addWidget(invoice_number_label)
+        form_layout.addWidget(self.invoice_number)
+        form_layout.addWidget(lbl_invoice_date)
+        form_layout.addWidget(self.txt_invoice_date)
+
 
         customer_name_label = QLabel("Customer Name:")
         self.customer_name = QLineEdit()
         self.customer_name.setPlaceholderText("Enter customer name")
+        contact_number_label = QLabel("Contact Number:")
+        self.contact_number = QLineEdit()
+        self.contact_number.setPlaceholderText("Enter contact number")
 
+# self.contact_number = QLineEdit()
+# self.contac
         form_layout.addWidget(invoice_number_label)
         form_layout.addWidget(self.invoice_number)
         form_layout.addWidget(customer_name_label)
         form_layout.addWidget(self.customer_name)
+        form_layout.addWidget(contact_number_label)
+        form_layout.addWidget(self.contact_number)
         content_layout.addLayout(form_layout)
 
         # --- Table for Billed Items ---
@@ -130,25 +150,44 @@ class DashboardFull(QMainWindow):
     #     border: none;
     # """)
 
+    #     self.table.setStyleSheet("""
+    #       QTableWidget {
+    #         background-color: #f0f0f0;
+    #         alternate-background-color: #d9d9d9;
+    #         color: white;
+    #         gridline-color: #bfbfbf;
+    #         selection-background-color: #4b4bff;
+    #         selection-color: white;
+    #         border: 1px solid #bfbfbf;
+    #       }
+    #       QHeaderView::section {
+    #         background-color: #c0c0c0;
+    #         color: white;
+    #         padding: 6px;
+    #         border: 1px solid #bfbfbf; 
+    #         font-weight: bold;
+    #       } 
+    #  """)     
         self.table.setStyleSheet("""
-          QTableWidget {
-            background-color: #f0f0f0;
-            alternate-background-color: #d9d9d9;
-            color: white;
-            gridline-color: #bfbfbf;
-            selection-background-color: #4b4bff;
-            selection-color: white;
-            border: 1px solid #bfbfbf;
-          }
-          QHeaderView::section {
-            background-color: #c0c0c0;
-            color: white;
-            padding: 6px;
-            border: 1px solid #bfbfbf; 
-            font-weight: bold;
-          } 
-     """)     
-        
+            QTableWidget {
+                background-color: #2e2e2e;              /* Dark grey rows */
+                alternate-background-color: #3a3a3a;    /* Slightly lighter for alternating rows */
+                color: white;                           /* Text color */
+                gridline-color: #444;                   /* Grid lines */
+                selection-background-color: #555;       /* Highlight when selected */
+                selection-color: #fff;                  /* Text color when selected */
+                border: 1px solid #444;                 /* Border color */
+            }
+            QHeaderView::section {
+                background-color: #1f1f1f;              /* Header background */
+                color: white;                           /* Header text */
+                font-weight: bold;                      /* Bold headers */
+                border: 1px solid #444;                 /* Header border */
+                padding: 4px;
+            }
+        """)
+        self.table.setAlternatingRowColors(True)
+
         self.table.setHorizontalHeaderLabels([
             "Item Name", "Ticket #", "Sector", "Supplier", "Price", "Qty"
         ])
@@ -292,27 +331,27 @@ class DashboardFull(QMainWindow):
 
         # --- Buttons ---
         # main_layout.addWidget(content)
-        content_layout.addWidget(self.table)
-        # --- Invoice Calculation Section ---
-        calc_layout = QVBoxLayout()
+        # content_layout.addWidget(self.table)
+        # # --- Invoice Calculation Section ---
+        # calc_layout = QVBoxLayout()
 
-        # Subtotal, Tax, Total Labels
-        self.lbl_subtotal = QLabel("Subtotal: ₹0.00")
-        self.lbl_tax = QLabel("Tax: ₹0.00")
-        self.lbl_total = QLabel("Total: ₹0.00")
+        # # Subtotal, Tax, Total Labels
+        # self.lbl_subtotal = QLabel("Subtotal: ₹0.00")
+        # self.lbl_tax = QLabel("Tax: ₹0.00")
+        # self.lbl_total = QLabel("Total: ₹0.00")
 
-        # Style for labels
-        self.lbl_subtotal.setStyleSheet("font-weight: bold; color: white;")
-        self.lbl_tax.setStyleSheet("font-weight: bold; color: white;")
-        self.lbl_total.setStyleSheet("font-weight: bold; color: #00FF00; font-size: 14px;")
+        # # Style for labels
+        # self.lbl_subtotal.setStyleSheet("font-weight: bold; color: white;")
+        # self.lbl_tax.setStyleSheet("font-weight: bold; color: white;")
+        # self.lbl_total.setStyleSheet("font-weight: bold; color: #00FF00; font-size: 14px;")
 
         # Add them to layout
-        calc_layout.addWidget(self.lbl_subtotal)
-        calc_layout.addWidget(self.lbl_tax)
-        calc_layout.addWidget(self.lbl_total)
+        # calc_layout.addWidget(self.lbl_subtotal)
+        # calc_layout.addWidget(self.lbl_tax)
+        # calc_layout.addWidget(self.lbl_total)
 
-        # Add to main content layout
-        content_layout.addLayout(calc_layout)
+        # # Add to main content layout
+        # content_layout.addLayout(calc_layout)
 
         # btn_layout = QHBoxLayout()
         # save_btn = QPushButton("💾 Save Invoice")
@@ -360,6 +399,39 @@ class DashboardFull(QMainWindow):
 
         # ---------- Table ----------
         content_layout.addWidget(self.table)
+        # ---------------- Invoice Calculation Section ----------------
+        calc_layout = QGridLayout()
+
+        lbl_subtotal = QLabel("Subtotal:")
+        lbl_tax = QLabel("Tax Amount:")
+        lbl_total = QLabel("Invoice Amount ₹:")
+        lbl_received = QLabel("Received:")
+        lbl_balance = QLabel("Balance:")
+
+        self.txt_subtotal = QLabel("₹ 0.00")
+        self.txt_tax = QLabel("₹ 0.00")
+        self.txt_total = QLabel("₹ 0.00")
+        self.txt_received = QLineEdit()
+        self.txt_balance = QLabel("₹ 0.00")
+
+        # Styling
+        for label in [lbl_subtotal, lbl_tax, lbl_total, lbl_received, lbl_balance]:
+            label.setStyleSheet("font-weight: 600; color: white;")
+        self.txt_total.setStyleSheet("color: #00FF00; font-weight: bold;")
+
+        calc_layout.addWidget(lbl_subtotal, 0, 0)
+        calc_layout.addWidget(self.txt_subtotal, 0, 1)
+        calc_layout.addWidget(lbl_tax, 1, 0)
+        calc_layout.addWidget(self.txt_tax, 1, 1)
+        calc_layout.addWidget(lbl_total, 2, 0)
+        calc_layout.addWidget(self.txt_total, 2, 1)
+        calc_layout.addWidget(lbl_received, 3, 0)
+        calc_layout.addWidget(self.txt_received, 3, 1)
+        calc_layout.addWidget(lbl_balance, 4, 0)
+        calc_layout.addWidget(self.txt_balance, 4, 1)
+
+        content_layout.addLayout(calc_layout)
+
 
         # ---------- Bottom Buttons (Save & PDF) ----------
         bottom_buttons = QHBoxLayout()
@@ -397,6 +469,10 @@ class DashboardFull(QMainWindow):
         def add_item_row(self):
             row_position = self.table.rowCount()
             self.table.insertRow(row_position)
+            # row = self.table.rowCount()
+            # self.table.insertRow(row)
+            # self.table.setItem(row, 0, QTableWidgetItem(str(row + 1)))
+
 
 #    --- Billed Items Label ---
     #     table_label = QLabel("<b>Billed Items:</b>")
@@ -460,8 +536,15 @@ class DashboardFull(QMainWindow):
             else:
                 print("Please enter customer name")
     def add_item_row(self):
-                row_position = self.table.rowCount()
-                self.table.insertRow(row_position)  
+                # row_position = self.table.rowCount()
+                # self.table.insertRow(row_position)
+                row_count = self.table.rowCount()
+                self.table.insertRow(row_count)
+
+                # Add row number automatically
+                number_item = QTableWidgetItem(str(row_count + 1))
+                self.table.setItem(row_count, 0, number_item)  # assuming first column is for serial no.
+  
                 
     def save_pdf(self):
         from PyQt5.QtWidgets import QMessageBox
@@ -730,11 +813,52 @@ if __name__ == "__main__":
         # self.table.setHorizontalHeaderLabels([
         #     "Item Name", "Ticket #", "Sector", "Supplier", "Price", "Qty"
         # ])
-        # self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        # # self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         # content_layout.addWidget(self.table)
+        # # --- Invoice Calculation Section ---
+        # calc_layout = QGridLayout()
 
-        # # Connect cell changes to calculation
-        # self.table.cellChanged.connect(self.calculate_totals)
+        # # Labels
+        # lbl_subtotal = QLabel("Subtotal:")
+        # lbl_tax = QLabel("Tax Amount:")
+        # lbl_total = QLabel("Invoice Amount ₹:")
+        # lbl_received = QLabel("Received:")
+        # lbl_balance = QLabel("Balance:")
+
+        # # Value fields
+        # self.txt_subtotal = QLabel("₹ 0.00")
+        # self.txt_tax = QLabel("₹ 0.00")
+        # self.txt_total = QLabel("₹ 0.00")
+        # self.txt_received = QLineEdit()
+        # self.txt_balance = QLabel("₹ 0.00")
+
+        # # Styling (optional)
+        # for label in [lbl_subtotal, lbl_tax, lbl_total, lbl_received, lbl_balance]:
+        #     label.setStyleSheet("font-weight: bold; color: white;")
+
+        # self.txt_total.setStyleSheet("color: #00FF00; font-weight: bold;")
+
+        # # Add to layout
+        # calc_layout.addWidget(lbl_subtotal, 0, 0)
+        # calc_layout.addWidget(self.txt_subtotal, 0, 1)
+
+        # calc_layout.addWidget(lbl_tax, 1, 0)
+        # calc_layout.addWidget(self.txt_tax, 1, 1)
+
+        # calc_layout.addWidget(lbl_total, 2, 0)
+        # calc_layout.addWidget(self.txt_total, 2, 1)
+
+        # calc_layout.addWidget(lbl_received, 3, 0)
+        # calc_layout.addWidget(self.txt_received, 3, 1)
+
+        # calc_layout.addWidget(lbl_balance, 4, 0)
+        # calc_layout.addWidget(self.txt_balance, 4, 1)
+
+        # content_layout.addLayout(calc_layout)
+
+
+        # # # Connect cell changes to calculation
+        # # self.table.cellChanged.connect(self.calculate_totals)
 
         # # --- Total Calculation ---
         
