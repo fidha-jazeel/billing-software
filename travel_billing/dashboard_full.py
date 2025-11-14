@@ -107,6 +107,10 @@ class DashboardFull(QMainWindow):
 
 #         # --- Invoice Info Section ---
         form_layout = QHBoxLayout()
+        title = QLabel("📝 Invoice Details :")
+        title.setObjectName("sectionLabel")
+        content_layout.addWidget(title)
+        
 
         invoice_number_label = QLabel("Invoice Number:")
         self.invoice_number = QLineEdit()
@@ -187,28 +191,38 @@ class DashboardFull(QMainWindow):
             }
         """)
         self.table.setAlternatingRowColors(True)
-
+        self.table.setColumnCount(8)
         self.table.setHorizontalHeaderLabels([
-            "Item Name", "Ticket #", "Sector", "Supplier", "Price", "Qty"
+            "Item Name", "Ticket #", "Sector", "Supplier", "Price", "Qty", "Tax (%)","Amount (₹)"
+        
         ])
             # Add a final row for totals inside the table
         self.table.insertRow(self.table.rowCount())  # create a new empty row at bottom
         row = self.table.rowCount() - 1
 
     # Fill that row with total labels
-        self.table.setItem(row, 0, QTableWidgetItem("Subtotal / Total"))
+        header = self.table.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        self.table.setItem(row, 0, QTableWidgetItem(""))
         self.table.setItem(row, 1, QTableWidgetItem(""))
         self.table.setItem(row, 2, QTableWidgetItem(""))
         self.table.setItem(row, 3, QTableWidgetItem(""))
-        self.table.setItem(row, 4, QTableWidgetItem("₹0.00"))  # total amount
+        self.table.setItem(row, 4, QTableWidgetItem(""))  # total amount
         self.table.setItem(row, 5, QTableWidgetItem(""))
-
+        self.table.setItem(row, 6, QTableWidgetItem(""))
+        self.table.setItem(row, 7, QTableWidgetItem(""))
+        
         # Wrap the table inside a card-style frame
+        header.setStretchLastSection(False)
+        self.table.verticalHeader() # Row height
+        
+        # Set alternating row colors
+        self.table.setAlternatingRowColors(True)
         self.frame = QFrame()
         self.frame.setStyleSheet("""
                 QFrame {
                     background-color: #e6e6e6;
-                    border-radius: 10px;
+                    border-radius: 5px;
                     border: 1px solid #bfbfbf;
                     padding: 8px;
                 }
@@ -233,14 +247,14 @@ class DashboardFull(QMainWindow):
         
         # Save_btn.clicked.connect(self.save_invoice)
         # --- Total Calculation ---
-        total_layout = QHBoxLayout()
-        self.subtotal_label = QLabel("Subtotal: ₹0.00")
-        self.tax_label = QLabel("Tax: ₹0.00")
-        self.total_label = QLabel("<b>Total: ₹0.00</b>")
-        total_layout.addWidget(self.subtotal_label)
-        total_layout.addWidget(self.tax_label)
-        total_layout.addWidget(self.total_label)
-        content_layout.addLayout(total_layout)
+        # total_layout = QHBoxLayout()
+        # self.subtotal_label = QLabel("Subtotal: ₹0.00")
+        # self.tax_label = QLabel("Tax: ₹0.00")
+        # self.total_label = QLabel("<b>Total: ₹0.00</b>")
+        # total_layout.addWidget(self.subtotal_label)
+        # total_layout.addWidget(self.tax_label)
+        # total_layout.addWidget(self.total_label)
+        # content_layout.addLayout(total_layout)
         # Save_btn.clicked.connect(self.save_invoice)
         # --- Dark theme for table ---
         # self.table.setStyleSheet("""
@@ -528,7 +542,38 @@ class DashboardFull(QMainWindow):
             self.invoice_page = InvoicePage()
             self.invoice_page.show()
             self.load_invoice_page()
-
+    def create_sidebar_button(self, text, page_id):
+            """Create a styled sidebar button"""
+            btn = QPushButton(text)
+            btn.setObjectName("sidebarBtn")
+            btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            btn.setProperty("active", "false")
+            btn.setMinimumHeight(45)
+            
+            # Set font
+            font = btn.font()
+            font.setPointSize(11)
+            btn.setFont(font)
+            
+            return btn
+    def add_page(self, page_id, page_widget):
+        """Add a page to the stack"""
+        self.pages[page_id] = page_widget
+        self.content_stack.addWidget(page_widget)
+    def switch_page(self, page_id):
+        """Switch to a different page"""
+        if page_id in self.pages:
+            # Update active button styling
+            for btn_id, btn in self.sidebar_buttons.items():
+                if btn_id == page_id:
+                    btn.setProperty("active", "true")
+                else:
+                    btn.setProperty("active", "false")
+                btn.style().unpolish(btn)
+                btn.style().polish(btn)
+            
+            # Switch to the page
+            self.content_stack.setCurrentWidget(self.pages[page_id])
     def save_invoice(self):
             customer = self.customer_name.text().strip()
             if customer:
@@ -544,8 +589,161 @@ class DashboardFull(QMainWindow):
                 # Add row number automatically
                 number_item = QTableWidgetItem(str(row_count + 1))
                 self.table.setItem(row_count, 0, number_item)  # assuming first column is for serial no.
-  
+    # def add_item_row(self):
+    #     """Add a new row to items table"""
+    #     row_position = self.items_table.rowCount()
+    #     self.items_table.insertRow(row_position)
                 
+    #     # Item Name
+    #     item_name = QLineEdit()
+    #     item_name.setPlaceholderText("Enter item/visa type")
+    #     self.items_table.setCellWidget(row_position, 0, item_name)
+        
+    #     # Ticket Number
+    #     ticket_num = QLineEdit()         
+    #         # Sector
+    #     sector = QLineEdit()
+    #     sector.setPlaceholderText("Sector")
+    #     self.items_table.setCellWidget(row_position, 2, sector)
+                
+    #         # Supplier
+    #     supplier = QLineEdit()
+    #     supplier.setPlaceholderText("Supplier name")
+    #     self.items_table.setCellWidget(row_position, 3, supplier)
+                
+    #             # Quantity
+    #     quantity = QDoubleSpinBox()
+    #     quantity.setMinimum(1)
+    #     quantity.setMaximum(999)
+    #     quantity.setValue(1)
+    #     quantity.valueChanged.connect(lambda: self.calculate_row_total(row_position))
+    #     self.items_table.setCellWidget(row_position, 4, quantity)
+            
+    #         # Price per unit
+    #     price = QDoubleSpinBox()
+    #     price.setMaximum(999999.99)
+    #     price.setPrefix("₹ ")
+    #     price.valueChanged.connect(lambda: self.calculate_row_total(row_position))
+    #     self.items_table.setCellWidget(row_position, 5, price)
+            
+    #         # Tax percentage
+    #     tax_pct = QDoubleSpinBox()
+    #     tax_pct.setMaximum(100)
+    #     tax_pct.setSuffix("%")
+    #             tax_pct.valueChanged.connect(lambda: self.calculate_row_total(row_position))
+    #             self.items_table.setCellWidget(row_position, 6, tax_pct)
+            
+    #         # Tax amount (read-only)
+    #             tax_amt = QLineEdit("₹ 0.00")
+    #             tax_amt.setReadOnly(True)
+    #             tax_amt.setAlignment(Qt.AlignmentFlag.AlignRight)
+    #             self.items_table.setCellWidget(row_position, 7, tax_amt)
+            
+    #         # Total amount (read-only)
+    #     total_amt = QLineEdit("₹ 0.00")
+    #     total_amt.setReadOnly(True)
+    #     total_amt.setAlignment(Qt.AlignmentFlag.AlignRight)
+    #     total_amt.setStyleSheet("font-weight: bold;")
+    #     self.items_table.setCellWidget(row_position, 8, total_amt)
+            
+    #         # Delete button
+    #     delete_btn = QPushButton("🗑️")
+    #     delete_btn.setObjectName("dangerBtn")
+    #     delete_btn.setMaximumWidth(60)
+    #     delete_btn.clicked.connect(lambda: self.delete_item_row(row_position))
+    #     self.items_table.setCellWidget(row_position, 9, delete_btn)
+            
+    #         # Update table height to fit all rows
+    #     self.update_table_height()
+    
+    # def update_table_height(self):
+    #     """Update table height to show all rows without scrolling"""
+    #     # Calculate height needed for all rows
+    #     row_count = self.items_table.rowCount()
+    #     if row_count == 0:
+    #         row_count = 1  # Minimum height for empty table
+        
+    #     header_height = self.items_table.horizontalHeader().height()
+    #     row_height = self.items_table.verticalHeader().defaultSectionSize()
+    #     total_height = header_height + (row_height * row_count) + 2  # +2 for borders
+        
+    #     self.items_table.setMinimumHeight(total_height)
+    #     self.items_table.setMaximumHeight(total_height)
+    
+    # def delete_item_row(self, row):
+    #     """Delete a row from items table"""
+    #     self.items_table.removeRow(row)
+    #     self.update_table_height()  # Update height after deleting
+    #     self.calculate_totals()
+    
+    # def calculate_row_total(self, row):
+    #     """Calculate total for a specific row"""
+    #     try:
+    #         quantity_widget = self.items_table.cellWidget(row, 4)
+    #         price_widget = self.items_table.cellWidget(row, 5)
+    #         tax_pct_widget = self.items_table.cellWidget(row, 6)
+    #         tax_amt_widget = self.items_table.cellWidget(row, 7)
+    #         total_widget = self.items_table.cellWidget(row, 8)
+            
+    #         if all([quantity_widget, price_widget, tax_pct_widget, tax_amt_widget, total_widget]):
+    #             quantity = quantity_widget.value()
+    #             price = price_widget.value()
+    #             tax_pct = tax_pct_widget.value()
+                
+    #             subtotal = quantity * price
+    #             tax_amt = subtotal * (tax_pct / 100)
+    #             total = subtotal + tax_amt
+                
+    #             tax_amt_widget.setText(f"₹ {tax_amt:.2f}")
+    #             total_widget.setText(f"₹ {total:.2f}")
+                
+    #             self.calculate_totals()
+    #     except Exception as e:
+    #         print(f"Error calculating row total: {e}")
+    # def get_current_page(self):
+    #     """Get the current page widget"""
+    #     return self.content_stack.currentWidget()
+
+    # def create_invoice_details_card(self):
+    #     """Create invoice details card"""
+    #     card = QFrame()
+    #     card.setObjectName("card")
+        
+    #     layout = QVBoxLayout(card)
+        
+    #     # Title
+    #     title = QLabel("📝 Invoice Details :")
+    #     title.setObjectName("sectionLabel")
+    #     layout.addWidget(title)
+        
+    #     # Invoice Number
+    #     inv_layout = QHBoxLayout()
+    #     inv_label = QLabel("Invoice Number :")
+    #     inv_label.setMinimumWidth(120)
+    #     self.invoice_number = QLineEdit()
+    #     self.invoice_number.setReadOnly(True)
+    #     self.invoice_number.setPlaceholderText("Auto-generated")
+    #     self.invoice_number.setMinimumHeight(30)
+    #     inv_layout.addWidget(inv_label)
+    #     inv_layout.addWidget(self.invoice_number)
+    #     layout.addLayout(inv_layout)
+        
+    #     # Invoice Date
+    #     date_layout = QHBoxLayout()
+    #     date_label = QLabel("Invoice Date :")
+    #     date_label.setMinimumWidth(120)
+    #     self.invoice_date = QDateEdit()
+    #     self.invoice_date.setCalendarPopup(True)
+    #     self.invoice_date.setDate(QDate.currentDate())
+    #     self.invoice_date.setDisplayFormat("dd-MM-yyyy")
+    #     self.invoice_date.setMinimumHeight(30)
+    #     date_layout.addWidget(date_label)
+    #     date_layout.addWidget(self.invoice_date)
+    #     layout.addLayout(date_layout)
+        
+    #     layout.addStretch()
+        
+    #     return card            
     def save_pdf(self):
         from PyQt5.QtWidgets import QMessageBox
         QMessageBox.information(self, "Save as PDF", "PDF export feature coming soon!")
