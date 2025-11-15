@@ -1,5 +1,6 @@
 # from PyQt5 import QtWidgets, QtCore, QtGui
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QPushButton, QTableWidget
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QPushButton, QTableWidget, QTableWidgetItem
+from PyQt5 import QtWidgets
 import sys
 
 class ManualBillingDashboard(QMainWindow):
@@ -11,10 +12,12 @@ class ManualBillingDashboard(QMainWindow):
         # Layout
         layout = QVBoxLayout()
 
-        # Table
+        # Table (add a serial number column as the first column)
+
         self.table = QTableWidget()
-        self.table.setColumnCount(6)
-        self.table.setHorizontalHeaderLabels(["Item Name", "Ticket #", "Sector", "Supplier", "Price", "Qty"])
+        # Add one extra column at the front for serial number
+        self.table.setColumnCount(7)
+        self.table.setHorizontalHeaderLabels(["S/No", "Item Name", "Ticket #", "Sector", "Supplier", "Price", "Qty"])
         layout.addWidget(self.table)
 
         # Add Item Button
@@ -31,6 +34,32 @@ class ManualBillingDashboard(QMainWindow):
         """Add a new blank row to the table"""
         row_position = self.table.rowCount()
         self.table.insertRow(row_position)
+        # set serial number in first column (non-editable)
+        try:
+            number_item = QTableWidgetItem(str(row_position + 1))
+            number_item.setFlags(number_item.flags() & ~0x2)  # make it not editable (Qt.ItemIsEditable flag)
+            self.table.setItem(row_position, 0, number_item)
+        except Exception:
+            # fallback: ignore if QTableWidgetItem not available
+            pass
+
+        # ensure subsequent rows (if any) have correct serials
+        self.refresh_serials()
+
+    def refresh_serials(self):
+        """Re-number the S/No column from 1..n. Call after insert/delete operations."""
+        try:
+            for r in range(self.table.rowCount()):
+                item = self.table.item(r, 0)
+                if item is None:
+                    item = QTableWidgetItem(str(r + 1))
+                    item.setFlags(item.flags() & ~0x2)
+                    self.table.setItem(r, 0, item)
+                else:
+                    item.setText(str(r + 1))
+                    item.setFlags(item.flags() & ~0x2)
+        except Exception:
+            pass
         # container = QWidget()
         # container.setLayout(layout)
         # self.setCentralWidget(container)

@@ -254,7 +254,7 @@
 #     window.show()
 #     sys.exit(app.exec_())
 from PyQt5.QtWidgets import QApplication
-from travel_billing.dashboard_full import DashboardFull
+from travel_billing.dashboard_full_dark import DashboardFull
 import sys
 
 app = QApplication(sys.argv)
