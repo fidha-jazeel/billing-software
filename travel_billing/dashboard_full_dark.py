@@ -17,6 +17,7 @@ from PyQt5.QtCore import QSize
 class DashboardFull(QMainWindow):
     """Minimal, stable DashboardFull implementation used by main.py.
 
+    
     Provides a table with Add Item, per-row amount calculation, and totals.
     Multi-page navigation with sidebar buttons (Home, About, Settings, Reports).
     Dark theme applied globally.
