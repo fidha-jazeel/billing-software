@@ -254,10 +254,12 @@
 #     window.show()
 #     sys.exit(app.exec_())
 from PyQt5.QtWidgets import QApplication
-from travel_billing.dashboard_full_dark import DashboardFull
 import sys
 
+# Import the new improved dashboard
+from travel_billing.dashboard_improved import DashboardImproved
+
 app = QApplication(sys.argv)
-window = DashboardFull()
+window = DashboardImproved()
 window.show()
 sys.exit(app.exec_())
