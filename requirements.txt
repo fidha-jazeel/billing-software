@@ -1,4 +1,2 @@
-pyqt6
-pyqt6-qt6
-pyqt6-sip
-pyqt5
+PyQt5==5.15.9
+reportlab==4.0.7

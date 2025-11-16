@@ -254,12 +254,33 @@
 #     window.show()
 #     sys.exit(app.exec_())
 from PyQt5.QtWidgets import QApplication
+from PyQt5.QtGui import QIcon
 import sys
+import os
 
-# Import the new improved dashboard
+# Import the new improved dashboard and login page
 from travel_billing.dashboard_improved import DashboardImproved
+from ui.login_page import LoginPage
 
 app = QApplication(sys.argv)
-window = DashboardImproved()
-window.show()
+
+# Set application icon
+icon_path = os.path.join(os.path.dirname(__file__), 'travel_billing.ico')
+if os.path.exists(icon_path):
+    app.setWindowIcon(QIcon(icon_path))
+
+# Create dashboard instance (hidden initially)
+dashboard = DashboardImproved()
+
+# Create and show login page
+login_page = LoginPage()
+
+# Connect login success to show dashboard
+def on_login_success():
+    """Show dashboard after successful login"""
+    dashboard.showMaximized()  # Open window maximized
+
+login_page.login_successful.connect(on_login_success)
+login_page.showMaximized()  # Show login page maximized
+
 sys.exit(app.exec_())

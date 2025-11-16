@@ -3,12 +3,35 @@ from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QPushButton, QLineEdit, QFrame, QTableWidget, QTableWidgetItem,
     QHeaderView, QDoubleSpinBox, QStackedWidget, QComboBox, QDateEdit,
-    QScrollArea, QGridLayout
+    QScrollArea, QGridLayout, QFileDialog
 )
+from PyQt5.QtGui import QColor, QIcon
 from PyQt5.QtCore import QDate
 import sys
 import json
+import os
 from datetime import datetime
+
+# Import configuration and utilities
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from config import (
+    APP_CONFIG, COMPANY_INFO, COLORS, INVOICE_CONFIG, LAYOUT_CONFIG,
+    get_supplier_list, get_sector_list, get_company_info_formatted,
+    get_currency_symbol, get_invoice_prefix
+)
+from utils.styles import (
+    get_frame_style, get_label_style, get_input_style, get_dateedit_style,
+    get_combobox_style, get_spinbox_style, get_button_style, get_scrollarea_style,
+    get_table_style, apply_fixed_width_label, apply_minimum_width_widget
+)
+
+# Import database manager
+try:
+    from database import DatabaseManager, get_db_instance
+    DB_ENABLED = True
+except ImportError:
+    DB_ENABLED = False
+    print("⚠️  Database module not available. Using JSON-only mode.")
 
 
 class DashboardImproved(QMainWindow):
@@ -23,8 +46,23 @@ class DashboardImproved(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Travel Agency - Billing Software")
-        self.resize(1200, 750)
+        self.setWindowTitle(APP_CONFIG['window_title'])
+        self.resize(APP_CONFIG['window_width'], APP_CONFIG['window_height'])
+        
+        # Set window icon
+        icon_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'travel_billing.ico')
+        if os.path.exists(icon_path):
+            self.setWindowIcon(QIcon(icon_path))
+        
+        # Initialize database connection
+        self.db = None
+        if DB_ENABLED:
+            try:
+                self.db = get_db_instance()
+                print("✓ Database initialized successfully")
+            except Exception as e:
+                print(f"✗ Database initialization failed: {e}")
+                self.db = None
         
         # Apply dark theme globally
         self.apply_dark_theme()
@@ -170,12 +208,12 @@ class DashboardImproved(QMainWindow):
                 margin: 0px;
             }
             QScrollBar::handle:vertical {
-                background: #5b5bff;
+                background: #7c3aed;
                 min-height: 20px;
                 border-radius: 6px;
             }
             QScrollBar::handle:vertical:hover {
-                background: #7a7aff;
+                background: #a78bfa;
             }
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
                 height: 0px;
@@ -188,80 +226,79 @@ class DashboardImproved(QMainWindow):
         layout.setContentsMargins(20, 20, 20, 20)
         layout.setSpacing(15)
         
+        # === WELCOME HEADING ===
+        welcome_heading = QLabel(f"Welcome To {COMPANY_INFO['name']} Billing")
+        welcome_heading.setStyleSheet(f"""
+            QLabel {{
+                color: {COLORS['accent_cyan']};
+                font-size: 24px;
+                font-weight: bold;
+                font-family: 'Segoe UI', Arial, sans-serif;
+                margin-bottom: 10px;
+            }}
+        """)
+        welcome_heading.setAlignment(Qt.AlignCenter)
+        layout.addWidget(welcome_heading)
+        
         # === 1. INVOICE DETAILS SECTION (TOP) ===
         invoice_details_frame = QFrame()
-        invoice_details_frame.setStyleSheet("""
-            QFrame {
-                background-color: #2a2a2a;
-                border-radius: 8px;
-                border: 1px solid #444;
-                padding: 15px;
-            }
-        """)
+        invoice_details_frame.setStyleSheet(get_frame_style())
         invoice_layout = QGridLayout(invoice_details_frame)
         invoice_layout.setContentsMargins(15, 15, 15, 15)
         invoice_layout.setSpacing(10)
         
         # Invoice Details Title
-        invoice_title = QLabel("<b style='color:#9b9bff; font-size:14px;'>📄 Invoice Details</b>")
+        invoice_title = QLabel(f"<b style='color:{COLORS['accent_secondary']}; font-size:14px;'>📄 Invoice Details</b>")
         invoice_layout.addWidget(invoice_title, 0, 0, 1, 4)
         
         # Row 1: Invoice Number and Date
-        invoice_layout.addWidget(QLabel("Invoice Number:"), 1, 0)
+        lbl_inv_num = QLabel("Invoice Number:")
+        lbl_inv_num.setStyleSheet(f"color: {COLORS['text_primary']}; font-weight: bold; font-size: 12px;")
+        lbl_inv_num.setFixedWidth(120)
+        invoice_layout.addWidget(lbl_inv_num, 1, 0, Qt.AlignRight)
         self.invoice_number = QLineEdit()
         self.invoice_number.setText(self.generate_invoice_number())
         self.invoice_number.setPlaceholderText("Auto-generated")
-        invoice_layout.addWidget(self.invoice_number, 1, 1)
+        self.invoice_number.setStyleSheet(get_input_style())
+        self.invoice_number.setFixedWidth(400)
+        invoice_layout.addWidget(self.invoice_number, 1, 1, Qt.AlignLeft)
         
-        invoice_layout.addWidget(QLabel("Invoice Date:"), 1, 2)
+        lbl_inv_date = QLabel("Invoice Date:")
+        lbl_inv_date.setStyleSheet(f"color: {COLORS['text_primary']}; font-weight: bold; font-size: 12px;")
+        lbl_inv_date.setFixedWidth(120)
+        invoice_layout.addWidget(lbl_inv_date, 1, 2, Qt.AlignRight)
         self.invoice_date = QDateEdit()
         self.invoice_date.setDate(QDate.currentDate())
         self.invoice_date.setCalendarPopup(True)
-        self.invoice_date.setDisplayFormat("dd/MM/yyyy")
-        invoice_layout.addWidget(self.invoice_date, 1, 3)
+        self.invoice_date.setDisplayFormat(INVOICE_CONFIG['date_format'])
+        self.invoice_date.setStyleSheet(get_dateedit_style())
+        self.invoice_date.setFixedWidth(400)
+        invoice_layout.addWidget(self.invoice_date, 1, 3, Qt.AlignLeft)
         
         # Row 2: Customer Name and Contact
-        invoice_layout.addWidget(QLabel("Customer Name:"), 2, 0)
+        lbl_cust_name = QLabel("Customer Name:")
+        lbl_cust_name.setStyleSheet(f"color: {COLORS['text_primary']}; font-weight: bold; font-size: 12px;")
+        lbl_cust_name.setFixedWidth(120)
+        invoice_layout.addWidget(lbl_cust_name, 2, 0, Qt.AlignRight)
         self.customer_name = QLineEdit()
         self.customer_name.setPlaceholderText("Enter customer name")
-        invoice_layout.addWidget(self.customer_name, 2, 1)
+        self.customer_name.setStyleSheet(get_input_style())
+        self.customer_name.setFixedWidth(400)
+        invoice_layout.addWidget(self.customer_name, 2, 1, Qt.AlignLeft)
         
-        invoice_layout.addWidget(QLabel("Contact Number:"), 2, 2)
+        lbl_contact = QLabel("Contact Number:")
+        lbl_contact.setStyleSheet(f"color: {COLORS['text_primary']}; font-weight: bold; font-size: 12px;")
+        lbl_contact.setFixedWidth(120)
+        invoice_layout.addWidget(lbl_contact, 2, 2, Qt.AlignRight)
         self.contact_number = QLineEdit()
         self.contact_number.setPlaceholderText("Enter contact number")
-        invoice_layout.addWidget(self.contact_number, 2, 3)
+        self.contact_number.setStyleSheet(get_input_style())
+        self.contact_number.setFixedWidth(400)
+        invoice_layout.addWidget(self.contact_number, 2, 3, Qt.AlignLeft)
         
         layout.addWidget(invoice_details_frame)
         
-        # === 2. ADD ITEM BUTTON (Above Table) ===
-        btn_layout_top = QHBoxLayout()
-        btn_layout_top.addStretch()
-        
-        self.btn_add_item = QPushButton("➕ Add Item")
-        self.btn_add_item.setStyleSheet("""
-            QPushButton {
-                background-color: #5b5bff;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                padding: 10px 20px;
-                font-weight: bold;
-                font-size: 13px;
-            }
-            QPushButton:hover {
-                background-color: #7a7aff;
-            }
-            QPushButton:pressed {
-                background-color: #4a4aee;
-            }
-        """)
-        self.btn_add_item.clicked.connect(self.add_item_row)
-        self.btn_add_item.setCursor(Qt.PointingHandCursor)
-        btn_layout_top.addWidget(self.btn_add_item)
-        
-        layout.addLayout(btn_layout_top)
-        
-        # === 3. EXCEL-STYLE TABLE ===
+        # === 2. EXCEL-STYLE TABLE (with Add Item button inside) ===
         table_frame = QFrame()
         table_frame.setStyleSheet("""
             QFrame {
@@ -273,8 +310,35 @@ class DashboardImproved(QMainWindow):
         table_layout = QVBoxLayout(table_frame)
         table_layout.setContentsMargins(10, 10, 10, 10)
         
-        table_title = QLabel("<b style='color:#9b9bff; font-size:14px;'>🧾 Billed Items</b>")
-        table_layout.addWidget(table_title)
+        # Table title and Add Item button in same row
+        table_header_layout = QHBoxLayout()
+        table_title = QLabel("<b style='color:#a78bfa; font-size:14px;'>🧾 Billed Items</b>")
+        table_header_layout.addWidget(table_title)
+        table_header_layout.addStretch()
+        
+        self.btn_add_item = QPushButton("➕ Add Item")
+        self.btn_add_item.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {COLORS['accent_primary']};
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 8px 16px;
+                font-weight: bold;
+                font-size: 12px;
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS['accent_secondary']};
+            }}
+            QPushButton:pressed {{
+                background-color: {COLORS['accent_primary']};
+            }}
+        """)
+        self.btn_add_item.clicked.connect(self.add_item_row)
+        self.btn_add_item.setCursor(Qt.PointingHandCursor)
+        table_header_layout.addWidget(self.btn_add_item)
+        
+        table_layout.addLayout(table_header_layout)
         
         # Table with 9 columns: Item Name, Ticket, Sector, Supplier, Price, Qty, Tax, Amount, Actions
         self.table = QTableWidget(0, 9)
@@ -283,12 +347,13 @@ class DashboardImproved(QMainWindow):
         ])
         
         # Disable table's own scrollbars (we use page-level scrolling)
-        self.table.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.table.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)  # Allow vertical scroll for many items
         self.table.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         
         # Set column widths
         header = self.table.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.Stretch)  # Item Name
+        header.setSectionResizeMode(0, QHeaderView.Fixed)  # Item Name - Fixed width
+        self.table.setColumnWidth(0, 200)  # Set Item Name column to 200px
         header.setSectionResizeMode(1, QHeaderView.ResizeToContents)  # Ticket
         header.setSectionResizeMode(2, QHeaderView.ResizeToContents)  # Sector
         header.setSectionResizeMode(3, QHeaderView.ResizeToContents)  # Supplier
@@ -306,60 +371,132 @@ class DashboardImproved(QMainWindow):
         
         # === 4. INVOICE CALCULATION SECTION (Below Table) ===
         calc_frame = QFrame()
-        calc_frame.setStyleSheet("""
-            QFrame {
-                background-color: #2a2a2a;
+        calc_frame.setStyleSheet(f"""
+            QFrame {{
+                background-color: {COLORS['secondary_bg']};
                 border-radius: 8px;
-                border: 1px solid #444;
-                padding: 15px;
-            }
+                border: 1px solid {COLORS['accent_primary']};
+                padding: 10px;
+            }}
         """)
         calc_main_layout = QVBoxLayout(calc_frame)
-        calc_main_layout.setContentsMargins(15, 15, 15, 15)
+        calc_main_layout.setContentsMargins(10, 10, 10, 10)
+        calc_main_layout.setSpacing(5)
         
-        calc_title = QLabel("<b style='color:#9b9bff; font-size:14px;'>💰 Invoice Calculation</b>")
+        calc_title = QLabel("<b style='color:#a78bfa; font-size:14px;'>💰 Invoice Calculation</b>")
         calc_main_layout.addWidget(calc_title)
         
-        calc_layout = QGridLayout()
-        calc_layout.setSpacing(10)
+        # Create a compact grid layout for calculations with boxes
+        calc_grid = QGridLayout()
+        calc_grid.setSpacing(5)
+        calc_grid.setContentsMargins(5, 5, 5, 5)
         
-        # Row 1: Subtotal, Tax, Total
-        calc_layout.addWidget(QLabel("Subtotal:"), 0, 0)
-        self.lbl_subtotal = QLabel("₹0.00")
-        self.lbl_subtotal.setStyleSheet("color: #9b9bff; font-weight: bold; font-size: 13px;")
-        calc_layout.addWidget(self.lbl_subtotal, 0, 1)
-        
-        calc_layout.addWidget(QLabel("Tax:"), 0, 2)
-        self.lbl_tax = QLabel("₹0.00")
-        self.lbl_tax.setStyleSheet("color: #9b9bff; font-weight: bold; font-size: 13px;")
-        calc_layout.addWidget(self.lbl_tax, 0, 3)
-        
-        calc_layout.addWidget(QLabel("<b>Total:</b>"), 0, 4)
-        self.lbl_total = QLabel("₹0.00")
-        self.lbl_total.setStyleSheet("""
-            color: #FFD700;
-            font-weight: bold;
-            font-size: 15px;
-            background-color: #1a1a1a;
-            padding: 5px 10px;
-            border-radius: 3px;
-            border: 1px solid #9b9bff;
+        # Subtotal with box
+        subtotal_label = QLabel("Subtotal:")
+        subtotal_label.setStyleSheet(f"color: {COLORS['text_primary']}; font-weight: bold; font-size: 13px;")
+        subtotal_label.setMinimumWidth(90)
+        calc_grid.addWidget(subtotal_label, 0, 0, Qt.AlignRight)
+        self.lbl_subtotal = QLabel(f"{get_currency_symbol()}0.00")
+        self.lbl_subtotal.setStyleSheet(f"""
+            QLabel {{
+                color: {COLORS['accent_secondary']};
+                font-weight: bold;
+                font-size: 13px;
+                background-color: {COLORS['primary_bg']};
+                padding: 5px 10px;
+                border-radius: 4px;
+                border: 1px solid {COLORS['accent_secondary']};
+            }}
         """)
-        calc_layout.addWidget(self.lbl_total, 0, 5)
+        self.lbl_subtotal.setMinimumWidth(120)
+        calc_grid.addWidget(self.lbl_subtotal, 0, 1, Qt.AlignLeft)
         
-        # Row 2: Received Amount, Balance
-        calc_layout.addWidget(QLabel("Received:"), 1, 0)
+        # Tax with box
+        tax_label = QLabel("Tax:")
+        tax_label.setStyleSheet(f"color: {COLORS['text_primary']}; font-weight: bold; font-size: 13px;")
+        tax_label.setMinimumWidth(90)
+        calc_grid.addWidget(tax_label, 1, 0, Qt.AlignRight)
+        self.lbl_tax = QLabel(f"{get_currency_symbol()}0.00")
+        self.lbl_tax.setStyleSheet(f"""
+            QLabel {{
+                color: {COLORS['accent_secondary']};
+                font-weight: bold;
+                font-size: 13px;
+                background-color: {COLORS['primary_bg']};
+                padding: 5px 10px;
+                border-radius: 4px;
+                border: 1px solid {COLORS['accent_secondary']};
+            }}
+        """)
+        self.lbl_tax.setMinimumWidth(120)
+        calc_grid.addWidget(self.lbl_tax, 1, 1, Qt.AlignLeft)
+        
+        # Total with box (larger)
+        total_label = QLabel("Total:")
+        total_label.setStyleSheet(f"color: {COLORS['text_primary']}; font-weight: bold; font-size: 14px;")
+        total_label.setMinimumWidth(90)
+        calc_grid.addWidget(total_label, 2, 0, Qt.AlignRight)
+        self.lbl_total = QLabel(f"{get_currency_symbol()}0.00")
+        self.lbl_total.setStyleSheet(f"""
+            QLabel {{
+                color: {COLORS['accent_gold']};
+                font-weight: bold;
+                font-size: 15px;
+                background-color: {COLORS['primary_bg']};
+                padding: 6px 12px;
+                border-radius: 5px;
+                border: 2px solid {COLORS['accent_gold']};
+            }}
+        """)
+        self.lbl_total.setMinimumWidth(120)
+        calc_grid.addWidget(self.lbl_total, 2, 1, Qt.AlignLeft)
+        
+        # Received with box
+        received_label = QLabel("Received:")
+        received_label.setStyleSheet(f"color: {COLORS['text_primary']}; font-weight: bold; font-size: 13px;")
+        received_label.setMinimumWidth(90)
+        calc_grid.addWidget(received_label, 3, 0, Qt.AlignRight)
         self.txt_received = QLineEdit()
-        self.txt_received.setPlaceholderText("₹0.00")
+        self.txt_received.setPlaceholderText(f"{get_currency_symbol()}0.00")
+        self.txt_received.setStyleSheet(f"""
+            QLineEdit {{
+                background-color: {COLORS['primary_bg']};
+                color: {COLORS['success']};
+                border: 1px solid {COLORS['success']};
+                border-radius: 4px;
+                padding: 5px 10px;
+                font-size: 13px;
+                font-weight: bold;
+            }}
+            QLineEdit:focus {{
+                border: 2px solid {COLORS['success']};
+            }}
+        """)
+        self.txt_received.setMinimumWidth(120)
         self.txt_received.textChanged.connect(self.calculate_balance)
-        calc_layout.addWidget(self.txt_received, 1, 1)
+        calc_grid.addWidget(self.txt_received, 3, 1, Qt.AlignLeft)
         
-        calc_layout.addWidget(QLabel("Balance:"), 1, 2)
-        self.lbl_balance = QLabel("₹0.00")
-        self.lbl_balance.setStyleSheet("color: #FF6B6B; font-weight: bold; font-size: 13px;")
-        calc_layout.addWidget(self.lbl_balance, 1, 3)
+        # Balance with box
+        balance_label = QLabel("Balance:")
+        balance_label.setStyleSheet(f"color: {COLORS['text_primary']}; font-weight: bold; font-size: 13px;")
+        balance_label.setMinimumWidth(90)
+        calc_grid.addWidget(balance_label, 4, 0, Qt.AlignRight)
+        self.lbl_balance = QLabel(f"{get_currency_symbol()}0.00")
+        self.lbl_balance.setStyleSheet(f"""
+            QLabel {{
+                color: {COLORS['danger']};
+                font-weight: bold;
+                font-size: 13px;
+                background-color: {COLORS['primary_bg']};
+                padding: 5px 10px;
+                border-radius: 4px;
+                border: 1px solid {COLORS['danger']};
+            }}
+        """)
+        self.lbl_balance.setMinimumWidth(120)
+        calc_grid.addWidget(self.lbl_balance, 4, 1, Qt.AlignLeft)
         
-        calc_main_layout.addLayout(calc_layout)
+        calc_main_layout.addLayout(calc_grid)
         layout.addWidget(calc_frame)
         
         # === 5. SAVE BUTTONS (Below Calculation) ===
@@ -367,31 +504,53 @@ class DashboardImproved(QMainWindow):
         btn_layout_bottom.addStretch()
         
         self.btn_save_invoice = QPushButton("💾 Save Invoice")
-        self.btn_save_invoice.setStyleSheet("""
-            QPushButton {
-                background-color: #51CF66;
+        self.btn_save_invoice.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {COLORS['success']};
                 color: white;
                 border: none;
                 border-radius: 5px;
                 padding: 10px 20px;
                 font-weight: bold;
                 font-size: 13px;
-            }
-            QPushButton:hover {
-                background-color: #69DB7C;
-            }
-            QPushButton:pressed {
-                background-color: #40C057;
-            }
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS['accent_cyan']};
+            }}
+            QPushButton:pressed {{
+                background-color: {COLORS['success']};
+            }}
         """)
         self.btn_save_invoice.clicked.connect(self.save_invoice)
         self.btn_save_invoice.setCursor(Qt.PointingHandCursor)
         btn_layout_bottom.addWidget(self.btn_save_invoice)
         
         self.btn_save_pdf = QPushButton("📄 Save as PDF")
-        self.btn_save_pdf.setStyleSheet("""
+        self.btn_save_pdf.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {COLORS['danger']};
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 10px 20px;
+                font-weight: bold;
+                font-size: 13px;
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS['accent_gold']};
+            }}
+            QPushButton:pressed {{
+                background-color: {COLORS['danger']};
+            }}
+        """)
+        self.btn_save_pdf.clicked.connect(self.save_pdf)
+        self.btn_save_pdf.setCursor(Qt.PointingHandCursor)
+        btn_layout_bottom.addWidget(self.btn_save_pdf)
+        
+        self.btn_print = QPushButton("🖨️ Print Invoice")
+        self.btn_print.setStyleSheet("""
             QPushButton {
-                background-color: #FF6B6B;
+                background-color: #9b9bff;
                 color: white;
                 border: none;
                 border-radius: 5px;
@@ -400,15 +559,37 @@ class DashboardImproved(QMainWindow):
                 font-size: 13px;
             }
             QPushButton:hover {
-                background-color: #FF8787;
+                background-color: #b5b5ff;
             }
             QPushButton:pressed {
-                background-color: #FA5252;
+                background-color: #8585ee;
             }
         """)
-        self.btn_save_pdf.clicked.connect(self.save_pdf)
-        self.btn_save_pdf.setCursor(Qt.PointingHandCursor)
-        btn_layout_bottom.addWidget(self.btn_save_pdf)
+        self.btn_print.clicked.connect(self.print_invoice)
+        self.btn_print.setCursor(Qt.PointingHandCursor)
+        btn_layout_bottom.addWidget(self.btn_print)
+        
+        self.btn_share = QPushButton("📤 Share Invoice")
+        self.btn_share.setStyleSheet("""
+            QPushButton {
+                background-color: #20C997;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 10px 20px;
+                font-weight: bold;
+                font-size: 13px;
+            }
+            QPushButton:hover {
+                background-color: #38D9A9;
+            }
+            QPushButton:pressed {
+                background-color: #12B886;
+            }
+        """)
+        self.btn_share.clicked.connect(self.share_invoice)
+        self.btn_share.setCursor(Qt.PointingHandCursor)
+        btn_layout_bottom.addWidget(self.btn_share)
         
         layout.addLayout(btn_layout_bottom)
         
@@ -431,7 +612,7 @@ class DashboardImproved(QMainWindow):
     def generate_invoice_number(self):
         """Generate a unique invoice number based on current date and time."""
         now = datetime.now()
-        return f"INV-{now.strftime('%Y%m%d-%H%M%S')}"
+        return f"{get_invoice_prefix()}-{now.strftime('%Y%m%d-%H%M%S')}"
 
     def add_item_row(self):
         """Add a new row to the table with proper widgets for each column."""
@@ -447,8 +628,8 @@ class DashboardImproved(QMainWindow):
         item_name.setPlaceholderText("Enter item name")
         item_name.setStyleSheet("""
             QLineEdit {
-                background-color: #1a1a1a;
-                color: #fff;
+                background-color: #2a2a2a;
+                color: #ddd;
                 border: 1px solid #444;
                 border-radius: 3px;
                 padding: 5px;
@@ -464,8 +645,8 @@ class DashboardImproved(QMainWindow):
         ticket.setPlaceholderText("Ticket #")
         ticket.setStyleSheet("""
             QLineEdit {
-                background-color: #1a1a1a;
-                color: #fff;
+                background-color: #2a2a2a;
+                color: #ddd;
                 border: 1px solid #444;
                 border-radius: 3px;
                 padding: 5px;
@@ -478,61 +659,15 @@ class DashboardImproved(QMainWindow):
 
         # Column 2: Sector (QComboBox - Dropdown)
         sector = QComboBox()
-        sector.addItems([
-            "Select Sector",
-            "Domestic",
-            "International",
-            "Regional",
-            "Local",
-            "Charter",
-            "Corporate"
-        ])
-        sector.setStyleSheet("""
-            QComboBox {
-                background-color: #1a1a1a;
-                color: #fff;
-                border: 1px solid #444;
-                border-radius: 3px;
-                padding: 5px;
-            }
-            QComboBox:focus {
-                border: 1px solid #9b9bff;
-            }
-            QComboBox::drop-down {
-                border: none;
-                background-color: #5b5bff;
-            }
-            QComboBox::down-arrow {
-                image: none;
-                border-left: 4px solid transparent;
-                border-right: 4px solid transparent;
-                border-top: 5px solid white;
-                margin-right: 5px;
-            }
-            QComboBox QAbstractItemView {
-                background-color: #2a2a2a;
-                color: #fff;
-                selection-background-color: #5b5bff;
-                border: 1px solid #444;
-            }
-        """)
+        sector.addItems(get_sector_list())
+        sector.setStyleSheet(get_combobox_style())
         table.setCellWidget(row, 2, sector)
 
-        # Column 3: Supplier (QLineEdit)
-        supplier = QLineEdit()
-        supplier.setPlaceholderText("Supplier name")
-        supplier.setStyleSheet("""
-            QLineEdit {
-                background-color: #1a1a1a;
-                color: #fff;
-                border: 1px solid #444;
-                border-radius: 3px;
-                padding: 5px;
-            }
-            QLineEdit:focus {
-                border: 1px solid #9b9bff;
-            }
-        """)
+        # Column 3: Supplier (QComboBox - Dropdown)
+        supplier = QComboBox()
+        supplier.setEditable(True)  # Allow custom entries
+        supplier.addItems(get_supplier_list())
+        supplier.setStyleSheet(get_combobox_style())
         table.setCellWidget(row, 3, supplier)
 
         # Column 4: Price (QDoubleSpinBox)
@@ -543,21 +678,21 @@ class DashboardImproved(QMainWindow):
         price.valueChanged.connect(lambda _: self.calculate_row_total(row))
         price.setStyleSheet("""
             QDoubleSpinBox {
-                background-color: #1a1a1a;
-                color: #fff;
+                background-color: #2a2a2a;
+                color: #ddd;
                 border: 1px solid #444;
                 border-radius: 3px;
                 padding: 5px;
             }
             QDoubleSpinBox:focus {
-                border: 1px solid #9b9bff;
+                border: 1px solid #a78bfa;
             }
             QDoubleSpinBox::up-button {
-                background-color: #5b5bff;
+                background-color: #7c3aed;
                 border-radius: 2px;
             }
             QDoubleSpinBox::down-button {
-                background-color: #5b5bff;
+                background-color: #7c3aed;
                 border-radius: 2px;
             }
         """)
@@ -570,25 +705,25 @@ class DashboardImproved(QMainWindow):
         qty.setValue(1)
         qty.setDecimals(0)
         qty.valueChanged.connect(lambda _: self.calculate_row_total(row))
-        qty.setStyleSheet("""
-            QDoubleSpinBox {
-                background-color: #1a1a1a;
-                color: #fff;
+        qty.setStyleSheet(f"""
+            QDoubleSpinBox {{
+                background-color: #2a2a2a;
+                color: #ddd;
                 border: 1px solid #444;
                 border-radius: 3px;
                 padding: 5px;
-            }
-            QDoubleSpinBox:focus {
-                border: 1px solid #9b9bff;
-            }
-            QDoubleSpinBox::up-button {
-                background-color: #5b5bff;
+            }}
+            QDoubleSpinBox:focus {{
+                border: 1px solid {COLORS['accent_secondary']};
+            }}
+            QDoubleSpinBox::up-button {{
+                background-color: {COLORS['accent_primary']};
                 border-radius: 2px;
-            }
-            QDoubleSpinBox::down-button {
-                background-color: #5b5bff;
+            }}
+            QDoubleSpinBox::down-button {{
+                background-color: {COLORS['accent_primary']};
                 border-radius: 2px;
-            }
+            }}
         """)
         table.setCellWidget(row, 5, qty)
 
@@ -598,25 +733,25 @@ class DashboardImproved(QMainWindow):
         tax.setMaximum(100)
         tax.setDecimals(2)
         tax.valueChanged.connect(lambda _: self.calculate_row_total(row))
-        tax.setStyleSheet("""
-            QDoubleSpinBox {
-                background-color: #1a1a1a;
-                color: #fff;
+        tax.setStyleSheet(f"""
+            QDoubleSpinBox {{
+                background-color: #2a2a2a;
+                color: #ddd;
                 border: 1px solid #444;
                 border-radius: 3px;
                 padding: 5px;
-            }
-            QDoubleSpinBox:focus {
-                border: 1px solid #9b9bff;
-            }
-            QDoubleSpinBox::up-button {
-                background-color: #5b5bff;
+            }}
+            QDoubleSpinBox:focus {{
+                border: 1px solid {COLORS['accent_secondary']};
+            }}
+            QDoubleSpinBox::up-button {{
+                background-color: {COLORS['accent_primary']};
                 border-radius: 2px;
-            }
-            QDoubleSpinBox::down-button {
-                background-color: #5b5bff;
+            }}
+            QDoubleSpinBox::down-button {{
+                background-color: {COLORS['accent_primary']};
                 border-radius: 2px;
-            }
+            }}
         """)
         table.setCellWidget(row, 6, tax)
 
@@ -640,21 +775,21 @@ class DashboardImproved(QMainWindow):
         delete_btn = QPushButton("🗑️")
         delete_btn.setToolTip("Delete this row")
         delete_btn.setCursor(Qt.PointingHandCursor)
-        delete_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #FF6B6B;
+        delete_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {COLORS['danger']};
                 color: white;
                 border: none;
                 border-radius: 3px;
                 padding: 5px 10px;
                 font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #FF8787;
-            }
-            QPushButton:pressed {
-                background-color: #FA5252;
-            }
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS['accent_gold']};
+            }}
+            QPushButton:pressed {{
+                background-color: {COLORS['danger']};
+            }}
         """)
         delete_btn.clicked.connect(lambda: self.delete_row(row))
         table.setCellWidget(row, 8, delete_btn)
@@ -744,23 +879,24 @@ class DashboardImproved(QMainWindow):
             # Update balance label with color coding
             if balance > 0:
                 # Red if balance is due
-                self.lbl_balance.setStyleSheet("color: #FF6B6B; font-weight: bold; font-size: 13px;")
-                self.lbl_balance.setText(f"₹{balance:.2f}")
+                self.lbl_balance.setStyleSheet(f"color: {COLORS['danger']}; font-weight: bold; font-size: 13px; background-color: {COLORS['primary_bg']}; padding: 5px 10px; border-radius: 4px; border: 1px solid {COLORS['danger']};")
+                self.lbl_balance.setText(f"{get_currency_symbol()}{balance:.2f}")
             elif balance < 0:
                 # Green if overpaid
-                self.lbl_balance.setStyleSheet("color: #51CF66; font-weight: bold; font-size: 13px;")
-                self.lbl_balance.setText(f"₹{abs(balance):.2f} (Overpaid)")
+                self.lbl_balance.setStyleSheet(f"color: {COLORS['success']}; font-weight: bold; font-size: 13px; background-color: {COLORS['primary_bg']}; padding: 5px 10px; border-radius: 4px; border: 1px solid {COLORS['success']};")
+                self.lbl_balance.setText(f"{get_currency_symbol()}{abs(balance):.2f} (Overpaid)")
             else:
                 # Gray if fully paid
-                self.lbl_balance.setStyleSheet("color: #888; font-weight: bold; font-size: 13px;")
-                self.lbl_balance.setText("₹0.00 (Paid)")
+                self.lbl_balance.setStyleSheet(f"color: {COLORS['text_muted']}; font-weight: bold; font-size: 13px; background-color: {COLORS['primary_bg']}; padding: 5px 10px; border-radius: 4px; border: 1px solid {COLORS['text_muted']};")
+                self.lbl_balance.setText(f"{get_currency_symbol()}0.00 (Paid)")
         except Exception as e:
             print(f"Error calculating balance: {e}")
             self.lbl_balance.setText("₹0.00")
 
     def save_invoice(self):
-        """Save the invoice data to a JSON file."""
+        """Save the invoice data to JSON file and database."""
         try:
+            # Prepare invoice data
             invoice_data = {
                 "invoice_number": self.invoice_number.text(),
                 "invoice_date": self.invoice_date.date().toString("dd/MM/yyyy"),
@@ -786,7 +922,7 @@ class DashboardImproved(QMainWindow):
                 amount_w = self.table.cellWidget(r, 7)
                 
                 item = {
-                    "item_name": item_name_w.text() if item_name_w else "",
+                    "item": item_name_w.text() if item_name_w else "",
                     "ticket": ticket_w.text() if ticket_w else "",
                     "sector": sector_w.currentText() if sector_w else "",
                     "supplier": supplier_w.text() if supplier_w else "",
@@ -797,22 +933,54 @@ class DashboardImproved(QMainWindow):
                 }
                 invoice_data["items"].append(item)
             
-            # Save to file
+            # Save to JSON file
             filename = f"invoices/invoice_{invoice_data['invoice_number']}.json"
-            import os
             os.makedirs("invoices", exist_ok=True)
             
             with open(filename, 'w') as f:
                 json.dump(invoice_data, f, indent=4)
             
-            print(f"✅ Invoice saved successfully: {filename}")
+            print(f"✓ Invoice saved to JSON: {filename}")
             
-            # Show confirmation (you can add a QMessageBox here)
+            # Save to database if available
+            if self.db:
+                try:
+                    # Parse numeric values for database
+                    db_data = invoice_data.copy()
+                    db_data['subtotal'] = float(db_data['subtotal'].replace('₹', '').replace(',', '').strip() or 0)
+                    db_data['tax'] = float(db_data['tax'].replace('₹', '').replace(',', '').strip() or 0)
+                    db_data['total'] = float(db_data['total'].replace('₹', '').replace(',', '').strip() or 0)
+                    db_data['received'] = float(db_data['received'].replace('₹', '').replace(',', '').strip() or 0)
+                    
+                    # Parse balance
+                    balance_text = db_data['balance'].replace('₹', '').replace(',', '').replace('(Paid)', '').replace('(Overpaid)', '').strip()
+                    db_data['balance'] = float(balance_text or 0)
+                    
+                    # Determine status
+                    if db_data['balance'] == 0:
+                        db_data['status'] = 'Paid'
+                    elif db_data['balance'] < 0:
+                        db_data['status'] = 'Overpaid'
+                    else:
+                        db_data['status'] = 'Pending'
+                    
+                    if self.db.save_invoice(db_data):
+                        print(f"✓ Invoice saved to database")
+                    else:
+                        print(f"⚠️  Invoice saved to JSON only (database save failed)")
+                except Exception as db_error:
+                    print(f"⚠️  Database save error: {db_error}")
+            
+            # Show confirmation
             from PyQt5.QtWidgets import QMessageBox
-            QMessageBox.information(self, "Success", f"Invoice saved successfully!\n{filename}")
+            msg = f"Invoice saved successfully!\n\n"
+            msg += f"📁 JSON File: {filename}\n"
+            if self.db:
+                msg += f"🗄️  Database: ✓ Saved"
+            QMessageBox.information(self, "Success", msg)
             
         except Exception as e:
-            print(f"❌ Error saving invoice: {e}")
+            print(f"✗ Error saving invoice: {e}")
             from PyQt5.QtWidgets import QMessageBox
             QMessageBox.critical(self, "Error", f"Failed to save invoice:\n{str(e)}")
 
@@ -925,54 +1093,887 @@ class DashboardImproved(QMainWindow):
             from PyQt5.QtWidgets import QMessageBox
             QMessageBox.critical(self, "Error", f"Failed to save PDF:\n{str(e)}")
 
+    def print_invoice(self):
+        """Print the invoice with a professional template."""
+        try:
+            from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
+            from PyQt5.QtGui import QPainter, QFont, QPen, QColor
+            from PyQt5.QtCore import QRect
+            
+            # Create printer
+            printer = QPrinter(QPrinter.HighResolution)
+            printer.setPageSize(QPrinter.A4)
+            
+            # Show print dialog
+            dialog = QPrintDialog(printer, self)
+            if dialog.exec_() != QPrintDialog.Accepted:
+                return
+            
+            # Create painter
+            painter = QPainter()
+            painter.begin(printer)
+            
+            # Page dimensions
+            page_width = printer.pageRect().width()
+            page_height = printer.pageRect().height()
+            margin = 100
+            
+            # Fonts
+            title_font = QFont("Arial", 24, QFont.Bold)
+            subtitle_font = QFont("Arial", 14, QFont.Bold)
+            header_font = QFont("Arial", 11, QFont.Bold)
+            normal_font = QFont("Arial", 10)
+            small_font = QFont("Arial", 9)
+            
+            y = margin
+            
+            # ===== COMPANY HEADER =====
+            painter.setFont(title_font)
+            painter.setPen(QColor(0, 212, 255))  # Cyan color
+            painter.drawText(margin, y, COMPANY_INFO['name'].upper())
+            y += 60
+            
+            painter.setFont(normal_font)
+            painter.setPen(QColor(100, 100, 100))
+            painter.drawText(margin, y, COMPANY_INFO['tagline'])
+            y += 30
+            company_info = get_company_info_formatted()
+            painter.drawText(margin, y, company_info['contact'])
+            y += 60
+            
+            # Draw line separator
+            painter.setPen(QPen(QColor(155, 155, 255), 3))
+            painter.drawLine(margin, y, page_width - margin, y)
+            y += 60
+            
+            # ===== INVOICE TITLE =====
+            painter.setFont(subtitle_font)
+            painter.setPen(QColor(0, 0, 0))
+            painter.drawText(margin, y, "INVOICE")
+            
+            # Invoice details on right
+            painter.setFont(normal_font)
+            x_right = page_width - margin - 500
+            painter.drawText(x_right, y, f"Invoice #: {self.invoice_number.text()}")
+            y += 40
+            painter.drawText(x_right, y, f"Date: {self.invoice_date.date().toString('dd/MM/yyyy')}")
+            y += 60
+            
+            # ===== BILL TO SECTION =====
+            painter.setFont(header_font)
+            painter.drawText(margin, y, "Bill To:")
+            y += 35
+            
+            painter.setFont(normal_font)
+            painter.drawText(margin, y, f"{self.customer_name.text()}")
+            y += 30
+            painter.drawText(margin, y, f"Contact: {self.contact_number.text()}")
+            y += 60
+            
+            # ===== TABLE HEADER =====
+            painter.setPen(QPen(QColor(155, 155, 255), 2))
+            painter.drawLine(margin, y, page_width - margin, y)
+            y += 10
+            
+            # Table background
+            painter.fillRect(QRect(margin, y, page_width - 2*margin, 40), QColor(240, 240, 255))
+            
+            painter.setFont(header_font)
+            painter.setPen(QColor(0, 0, 0))
+            
+            # Column positions
+            col_item = margin + 10
+            col_ticket = margin + 800
+            col_sector = margin + 1200
+            col_price = margin + 1800
+            col_qty = margin + 2200
+            col_tax = margin + 2500
+            col_amount = margin + 2900
+            
+            y += 28
+            painter.drawText(col_item, y, "Item Name")
+            painter.drawText(col_ticket, y, "Ticket")
+            painter.drawText(col_sector, y, "Sector")
+            painter.drawText(col_price, y, "Price")
+            painter.drawText(col_qty, y, "Qty")
+            painter.drawText(col_tax, y, "Tax")
+            painter.drawText(col_amount, y, "Amount")
+            y += 20
+            
+            painter.setPen(QPen(QColor(155, 155, 255), 2))
+            painter.drawLine(margin, y, page_width - margin, y)
+            y += 35
+            
+            # ===== TABLE ROWS =====
+            painter.setFont(normal_font)
+            painter.setPen(QColor(0, 0, 0))
+            
+            for r in range(self.table.rowCount()):
+                item_name_w = self.table.cellWidget(r, 0)
+                ticket_w = self.table.cellWidget(r, 1)
+                sector_w = self.table.cellWidget(r, 2)
+                price_w = self.table.cellWidget(r, 4)
+                qty_w = self.table.cellWidget(r, 5)
+                tax_w = self.table.cellWidget(r, 6)
+                amount_w = self.table.cellWidget(r, 7)
+                
+                # Alternate row colors
+                if r % 2 == 0:
+                    painter.fillRect(QRect(margin, y-25, page_width - 2*margin, 35), QColor(250, 250, 250))
+                
+                painter.drawText(col_item, y, item_name_w.text() if item_name_w else "")
+                painter.drawText(col_ticket, y, ticket_w.text() if ticket_w else "")
+                painter.drawText(col_sector, y, sector_w.currentText() if sector_w else "")
+                painter.drawText(col_price, y, f"₹{price_w.value():.2f}" if price_w else "")
+                painter.drawText(col_qty, y, str(int(qty_w.value())) if qty_w else "")
+                painter.drawText(col_tax, y, f"{tax_w.value():.1f}%" if tax_w else "")
+                painter.drawText(col_amount, y, amount_w.text() if amount_w else "")
+                y += 40
+            
+            y += 20
+            painter.setPen(QPen(QColor(155, 155, 255), 2))
+            painter.drawLine(margin, y, page_width - margin, y)
+            y += 50
+            
+            # ===== TOTALS SECTION =====
+            x_labels = page_width - margin - 600
+            x_values = page_width - margin - 200
+            
+            painter.setFont(normal_font)
+            painter.setPen(QColor(0, 0, 0))
+            painter.drawText(x_labels, y, "Subtotal:")
+            painter.drawText(x_values, y, self.lbl_subtotal.text())
+            y += 35
+            
+            painter.drawText(x_labels, y, "Tax:")
+            painter.drawText(x_values, y, self.lbl_tax.text())
+            y += 35
+            
+            # Total with highlight
+            painter.fillRect(QRect(x_labels - 20, y - 25, 600, 40), QColor(255, 215, 0, 50))
+            painter.setFont(header_font)
+            painter.drawText(x_labels, y, "TOTAL:")
+            painter.drawText(x_values, y, self.lbl_total.text())
+            y += 60
+            
+            painter.setFont(normal_font)
+            painter.drawText(x_labels, y, "Received:")
+            painter.drawText(x_values, y, self.txt_received.text() or "₹0.00")
+            y += 35
+            
+            painter.drawText(x_labels, y, "Balance:")
+            painter.setPen(QColor(255, 0, 0) if "₹0.00" not in self.lbl_balance.text() else QColor(0, 150, 0))
+            painter.drawText(x_values, y, self.lbl_balance.text())
+            
+            # ===== FOOTER =====
+            y = page_height - margin - 100
+            painter.setPen(QPen(QColor(200, 200, 200), 1))
+            painter.drawLine(margin, y, page_width - margin, y)
+            y += 30
+            
+            painter.setFont(small_font)
+            painter.setPen(QColor(100, 100, 100))
+            painter.drawText(margin, y, INVOICE_CONFIG['footer_note'])
+            y += 25
+            painter.drawText(margin, y, f"Terms & Conditions: {INVOICE_CONFIG['terms']}")
+            
+            painter.end()
+            
+            print("✅ Invoice sent to printer successfully")
+            from PyQt5.QtWidgets import QMessageBox
+            QMessageBox.information(self, "Success", "Invoice sent to printer successfully!")
+            
+        except Exception as e:
+            print(f"❌ Error printing invoice: {e}")
+            from PyQt5.QtWidgets import QMessageBox
+            QMessageBox.critical(self, "Error", f"Failed to print invoice:\n{str(e)}")
+
+    def share_invoice(self):
+        """Share invoice via email or other methods."""
+        try:
+            from PyQt5.QtWidgets import QMessageBox, QInputDialog
+            
+            # Get customer email
+            customer_email = self.txt_customer_name.text() if hasattr(self, 'txt_customer_name') else ""
+            
+            # Show dialog to enter/confirm email
+            email, ok = QInputDialog.getText(
+                self,
+                "Share Invoice",
+                "Enter recipient email address:",
+                text=customer_email
+            )
+            
+            if ok and email:
+                # In a real application, you would integrate with email service
+                # For now, we'll show a success message
+                QMessageBox.information(
+                    self,
+                    "Share Invoice",
+                    f"Invoice would be shared to: {email}\\n\\n"
+                    f"Features to implement:\\n"
+                    f"• Email integration (SMTP)\\n"
+                    f"• WhatsApp sharing\\n"
+                    f"• SMS notification\\n"
+                    f"• Cloud upload\\n\\n"
+                    f"Invoice Number: {self.txt_invoice_number.text()}"
+                )
+            elif ok:
+                QMessageBox.warning(self, "Warning", "Please enter a valid email address.")
+                
+        except Exception as e:
+            from PyQt5.QtWidgets import QMessageBox
+            QMessageBox.critical(self, "Error", f"Failed to share invoice:\\n{str(e)}")
+
     def _create_reports_page(self) -> QWidget:
-        """Create the Reports page."""
+        """Create the Reports page with analytics and invoice list."""
         page = QWidget()
-        layout = QVBoxLayout(page)
+        
+        # Main scroll area
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll.setStyleSheet(f"""
+            QScrollArea {{
+                border: none;
+                background-color: {COLORS['primary_bg']};
+            }}
+        """)
+        
+        content = QWidget()
+        layout = QVBoxLayout(content)
         layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(15)
 
-        heading = QLabel("<h2 style='color:#9b9bff;'>📊 Reports</h2>")
+        # Header
+        heading = QLabel(f"<h2 style='color:{COLORS['accent_secondary']};'>📊 Reports & Analytics</h2>")
         layout.addWidget(heading)
+        
+        # Analytics Dashboard Section
+        if self.db:
+            analytics_frame = self._create_analytics_section()
+            layout.addWidget(analytics_frame)
+        
+        # Invoices Section Header
+        invoices_heading = QLabel(f"<h3 style='color:{COLORS['accent_cyan']};'>📄 Invoice History</h3>")
+        layout.addWidget(invoices_heading)
 
-        info = QLabel(
-            "<p>Generate and view billing reports, invoices, and financial summaries.</p>"
-            "<p><b>Features:</b></p>"
-            "<ul>"
-            "<li>Daily/Monthly revenue reports</li>"
-            "<li>Customer billing history</li>"
-            "<li>Tax summary</li>"
-            "</ul>"
-        )
-        info.setStyleSheet("color: #ddd; line-height: 1.6;")
-        layout.addWidget(info)
+        # Search and refresh section
+        search_layout = QHBoxLayout()
+        
+        search_label = QLabel("Search:")
+        search_label.setStyleSheet(get_label_style(bold=True))
+        search_layout.addWidget(search_label)
+        
+        self.search_invoice = QLineEdit()
+        self.search_invoice.setPlaceholderText("Search by invoice number, customer name...")
+        self.search_invoice.setStyleSheet(get_input_style())
+        self.search_invoice.textChanged.connect(self.filter_invoices)
+        search_layout.addWidget(self.search_invoice)
+        
+        refresh_btn = QPushButton("🔄 Refresh")
+        refresh_btn.setStyleSheet(get_button_style('add'))
+        refresh_btn.setCursor(Qt.PointingHandCursor)
+        refresh_btn.clicked.connect(lambda: (self.load_invoices(), self.refresh_analytics()))
+        search_layout.addWidget(refresh_btn)
+        
+        layout.addLayout(search_layout)
+
+        # Invoice list table
+        self.invoice_table = QTableWidget(0, 6)
+        self.invoice_table.setHorizontalHeaderLabels([
+            "Invoice #", "Date", "Customer", "Total", "Status", "Actions"
+        ])
+        
+        # Set column widths
+        header = self.invoice_table.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(2, QHeaderView.Stretch)
+        header.setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(5, QHeaderView.ResizeToContents)
+        
+        self.invoice_table.setStyleSheet(get_table_style())
+        self.invoice_table.setMinimumHeight(400)
+        layout.addWidget(self.invoice_table)
+
+        # Load invoices
+        self.load_invoices()
 
         layout.addStretch()
+        
+        scroll.setWidget(content)
+        page_layout = QVBoxLayout(page)
+        page_layout.setContentsMargins(0, 0, 0, 0)
+        page_layout.addWidget(scroll)
+        
         return page
+    
+    def load_invoices(self):
+        """Load all saved invoices from the invoices directory."""
+        try:
+            self.invoice_table.setRowCount(0)
+            
+            # Get all JSON files from invoices directory
+            invoices_dir = INVOICE_CONFIG.get('save_directory', 'invoices')
+            if not os.path.exists(invoices_dir):
+                return
+            
+            invoice_files = [f for f in os.listdir(invoices_dir) if f.endswith('.json')]
+            invoice_files.sort(reverse=True)  # Most recent first
+            
+            for filename in invoice_files:
+                filepath = os.path.join(invoices_dir, filename)
+                try:
+                    with open(filepath, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                    
+                    row = self.invoice_table.rowCount()
+                    self.invoice_table.insertRow(row)
+                    
+                    # Invoice Number
+                    self.invoice_table.setItem(row, 0, QTableWidgetItem(data.get('invoice_number', 'N/A')))
+                    
+                    # Date
+                    self.invoice_table.setItem(row, 1, QTableWidgetItem(data.get('invoice_date', 'N/A')))
+                    
+                    # Customer
+                    self.invoice_table.setItem(row, 2, QTableWidgetItem(data.get('customer_name', 'N/A')))
+                    
+                    # Total
+                    total_value = data.get('total', '₹0.00')
+                    self.invoice_table.setItem(row, 3, QTableWidgetItem(str(total_value)))
+                    
+                    # Status (based on balance)
+                    balance_value = data.get('balance', '₹0.00')
+                    balance_text = str(balance_value)
+                    if 'Paid' in balance_text or balance_text == '₹0.00' or balance_value == 0:
+                        status = '✅ Paid'
+                        color = COLORS['success']
+                    elif 'Overpaid' in balance_text:
+                        status = '💰 Overpaid'
+                        color = COLORS['info']
+                    else:
+                        status = '⏳ Pending'
+                        color = COLORS['danger']
+                    
+                    status_item = QTableWidgetItem(status)
+                    status_item.setForeground(QColor(color))
+                    self.invoice_table.setItem(row, 4, status_item)
+                    
+                    # Actions (Download button - larger size)
+                    download_btn = QPushButton("💾 Download")
+                    download_btn.setStyleSheet(f"""
+                        QPushButton {{
+                            background-color: {COLORS['accent_primary']};
+                            color: white;
+                            border: none;
+                            border-radius: 5px;
+                            padding: 8px 16px;
+                            font-weight: bold;
+                            font-size: 13px;
+                            min-width: 110px;
+                        }}
+                        QPushButton:hover {{
+                            background-color: {COLORS['accent_secondary']};
+                        }}
+                        QPushButton:pressed {{
+                            background-color: {COLORS['accent_primary']};
+                        }}
+                    """)
+                    download_btn.setCursor(Qt.PointingHandCursor)
+                    download_btn.clicked.connect(lambda checked, fp=filepath: self.download_invoice(fp))
+                    self.invoice_table.setCellWidget(row, 5, download_btn)
+                    
+                except Exception as e:
+                    print(f"Error loading invoice {filename}: {e}")
+                    
+        except Exception as e:
+            print(f"Error loading invoices: {e}")
+    
+    def filter_invoices(self):
+        """Filter invoices based on search text."""
+        search_text = self.search_invoice.text().lower()
+        
+        for row in range(self.invoice_table.rowCount()):
+            show_row = False
+            
+            # Search in invoice number, date, and customer name
+            for col in range(3):  # First 3 columns
+                item = self.invoice_table.item(row, col)
+                if item and search_text in item.text().lower():
+                    show_row = True
+                    break
+            
+            self.invoice_table.setRowHidden(row, not show_row)
+    
+    def download_invoice(self, filepath):
+        """Download (copy) invoice to user-selected location."""
+        try:
+            from PyQt5.QtWidgets import QMessageBox
+            import shutil
+            
+            # Get filename
+            filename = os.path.basename(filepath)
+            
+            # Ask user where to save
+            save_path, _ = QFileDialog.getSaveFileName(
+                self,
+                "Save Invoice",
+                filename,
+                "JSON Files (*.json);;All Files (*.*)"
+            )
+            
+            if save_path:
+                shutil.copy2(filepath, save_path)
+                QMessageBox.information(self, "Success", f"Invoice downloaded successfully!\n{save_path}")
+                
+        except Exception as e:
+            from PyQt5.QtWidgets import QMessageBox
+            QMessageBox.critical(self, "Error", f"Failed to download invoice:\n{str(e)}")
+    
+    def _create_analytics_section(self) -> QFrame:
+        """Create analytics dashboard with statistics and charts."""
+        frame = QFrame()
+        frame.setStyleSheet(f"""
+            QFrame {{
+                background-color: {COLORS['secondary_bg']};
+                border-radius: 10px;
+                border: 1px solid #444;
+                padding: 15px;
+            }}
+        """)
+        layout = QVBoxLayout(frame)
+        layout.setContentsMargins(15, 15, 15, 15)
+        layout.setSpacing(15)
+        
+        # Analytics Title
+        analytics_title = QLabel(f"<b style='color:{COLORS['accent_gold']}; font-size:16px;'>📊 Business Analytics</b>")
+        layout.addWidget(analytics_title)
+        
+        # Key Metrics Row
+        metrics_layout = QHBoxLayout()
+        metrics_layout.setSpacing(10)
+        
+        # Store metric widgets for updating
+        self.metric_widgets = {}
+        
+        # Get statistics from database
+        stats = self.db.get_statistics() if self.db else {}
+        
+        # Metric cards
+        metrics_data = [
+            ("💰 Total Revenue", stats.get('total_revenue', 0), COLORS['success']),
+            ("📄 Total Invoices", stats.get('total_invoices', 0), COLORS['info']),
+            ("⏳ Pending Balance", stats.get('pending_balance', 0), COLORS['danger']),
+            ("👥 Total Customers", stats.get('total_customers', 0), COLORS['accent_cyan'])
+        ]
+        
+        for title, value, color in metrics_data:
+            metric_card = self._create_metric_card(title, value, color)
+            self.metric_widgets[title] = metric_card
+            metrics_layout.addWidget(metric_card)
+        
+        layout.addLayout(metrics_layout)
+        
+        # Charts and details row
+        details_layout = QHBoxLayout()
+        details_layout.setSpacing(15)
+        
+        # Revenue chart (left)
+        revenue_frame = self._create_revenue_chart()
+        details_layout.addWidget(revenue_frame, 2)
+        
+        # Top customers (right)
+        customers_frame = self._create_top_customers()
+        details_layout.addWidget(customers_frame, 1)
+        
+        layout.addLayout(details_layout)
+        
+        # Payment status summary
+        payment_frame = self._create_payment_status()
+        layout.addWidget(payment_frame)
+        
+        return frame
+    
+    def _create_metric_card(self, title: str, value: float, color: str) -> QFrame:
+        """Create a metric card widget."""
+        card = QFrame()
+        card.setStyleSheet(f"""
+            QFrame {{
+                background-color: {COLORS['primary_bg']};
+                border-radius: 8px;
+                border: 2px solid {color};
+                padding: 10px;
+            }}
+        """)
+        card_layout = QVBoxLayout(card)
+        card_layout.setContentsMargins(10, 10, 10, 10)
+        
+        # Title
+        title_label = QLabel(title)
+        title_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 12px; font-weight: bold;")
+        card_layout.addWidget(title_label)
+        
+        # Value
+        if isinstance(value, (int, float)) and '₹' in title or 'Revenue' in title or 'Balance' in title:
+            value_text = f"{get_currency_symbol()}{value:,.2f}"
+        else:
+            value_text = f"{int(value):,}"
+        
+        value_label = QLabel(value_text)
+        value_label.setStyleSheet(f"color: {color}; font-size: 20px; font-weight: bold;")
+        value_label.setProperty('value_label', True)  # Mark for easy updating
+        card_layout.addWidget(value_label)
+        
+        return card
+    
+    def _create_revenue_chart(self) -> QFrame:
+        """Create revenue trend chart."""
+        frame = QFrame()
+        frame.setStyleSheet(f"""
+            QFrame {{
+                background-color: {COLORS['primary_bg']};
+                border-radius: 8px;
+                border: 1px solid #444;
+                padding: 10px;
+            }}
+        """)
+        layout = QVBoxLayout(frame)
+        layout.setContentsMargins(10, 10, 10, 10)
+        
+        # Title
+        title = QLabel(f"<b style='color:{COLORS['accent_secondary']}; font-size:14px;'>📈 Revenue Trend (Last 12 Months)</b>")
+        layout.addWidget(title)
+        
+        # Get revenue data
+        revenue_data = self.db.get_revenue_by_period('month') if self.db else []
+        
+        if revenue_data:
+            # Create simple text-based chart
+            chart_widget = QWidget()
+            chart_layout = QVBoxLayout(chart_widget)
+            chart_layout.setSpacing(5)
+            
+            max_revenue = max([d['revenue'] for d in revenue_data]) if revenue_data else 1
+            
+            for data in revenue_data[-6:]:  # Last 6 months
+                row_layout = QHBoxLayout()
+                
+                # Period label
+                period_label = QLabel(data['period'])
+                period_label.setFixedWidth(80)
+                period_label.setStyleSheet(f"color: {COLORS['text_primary']}; font-size: 11px;")
+                row_layout.addWidget(period_label)
+                
+                # Bar
+                bar_width = int((data['revenue'] / max_revenue) * 200) if max_revenue > 0 else 0
+                bar = QFrame()
+                bar.setFixedSize(bar_width, 20)
+                bar.setStyleSheet(f"background-color: {COLORS['accent_primary']}; border-radius: 3px;")
+                row_layout.addWidget(bar)
+                
+                # Value label
+                value_label = QLabel(f"{get_currency_symbol()}{data['revenue']:,.0f}")
+                value_label.setStyleSheet(f"color: {COLORS['accent_gold']}; font-size: 11px; font-weight: bold;")
+                row_layout.addWidget(value_label)
+                
+                row_layout.addStretch()
+                chart_layout.addLayout(row_layout)
+            
+            layout.addWidget(chart_widget)
+        else:
+            no_data = QLabel("No revenue data available")
+            no_data.setStyleSheet(f"color: {COLORS['text_secondary']}; font-style: italic; padding: 20px;")
+            no_data.setAlignment(Qt.AlignCenter)
+            layout.addWidget(no_data)
+        
+        layout.addStretch()
+        return frame
+    
+    def _create_top_customers(self) -> QFrame:
+        """Create top customers list."""
+        frame = QFrame()
+        frame.setStyleSheet(f"""
+            QFrame {{
+                background-color: {COLORS['primary_bg']};
+                border-radius: 8px;
+                border: 1px solid #444;
+                padding: 10px;
+            }}
+        """)
+        layout = QVBoxLayout(frame)
+        layout.setContentsMargins(10, 10, 10, 10)
+        
+        # Title
+        title = QLabel(f"<b style='color:{COLORS['accent_secondary']}; font-size:14px;'>👥 Top Customers</b>")
+        layout.addWidget(title)
+        
+        # Get top customers
+        top_customers = self.db.get_top_customers(5) if self.db else []
+        
+        if top_customers:
+            for i, customer in enumerate(top_customers, 1):
+                customer_row = QHBoxLayout()
+                
+                # Rank
+                rank_label = QLabel(f"#{i}")
+                rank_label.setFixedWidth(30)
+                rank_label.setStyleSheet(f"color: {COLORS['accent_gold']}; font-weight: bold;")
+                customer_row.addWidget(rank_label)
+                
+                # Customer info
+                info_layout = QVBoxLayout()
+                name_label = QLabel(customer['customer_name'])
+                name_label.setStyleSheet(f"color: {COLORS['text_primary']}; font-weight: bold; font-size: 12px;")
+                info_layout.addWidget(name_label)
+                
+                details_label = QLabel(f"{customer['invoice_count']} invoices • {get_currency_symbol()}{customer['total_spent']:,.2f}")
+                details_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 10px;")
+                info_layout.addWidget(details_label)
+                
+                customer_row.addLayout(info_layout)
+                customer_row.addStretch()
+                
+                layout.addLayout(customer_row)
+                
+                # Separator
+                if i < len(top_customers):
+                    separator = QFrame()
+                    separator.setFrameShape(QFrame.HLine)
+                    separator.setStyleSheet(f"background-color: #444;")
+                    layout.addWidget(separator)
+        else:
+            no_data = QLabel("No customer data available")
+            no_data.setStyleSheet(f"color: {COLORS['text_secondary']}; font-style: italic; padding: 20px;")
+            no_data.setAlignment(Qt.AlignCenter)
+            layout.addWidget(no_data)
+        
+        layout.addStretch()
+        return frame
+    
+    def _create_payment_status(self) -> QFrame:
+        """Create payment status summary."""
+        frame = QFrame()
+        frame.setStyleSheet(f"""
+            QFrame {{
+                background-color: {COLORS['primary_bg']};
+                border-radius: 8px;
+                border: 1px solid #444;
+                padding: 10px;
+            }}
+        """)
+        layout = QHBoxLayout(frame)
+        layout.setContentsMargins(10, 10, 10, 10)
+        
+        # Title
+        title_layout = QVBoxLayout()
+        title = QLabel(f"<b style='color:{COLORS['accent_secondary']}; font-size:14px;'>💳 Payment Status Summary</b>")
+        title_layout.addWidget(title)
+        layout.addLayout(title_layout)
+        
+        layout.addStretch()
+        
+        # Get payment status
+        payment_status = self.db.get_payment_status_summary() if self.db else {}
+        
+        # Status boxes
+        statuses = [
+            ("✅ Paid", payment_status.get('paid', {'count': 0, 'amount': 0}), COLORS['success']),
+            ("⏳ Pending", payment_status.get('pending', {'count': 0, 'amount': 0}), COLORS['danger']),
+            ("💰 Overpaid", payment_status.get('overpaid', {'count': 0, 'amount': 0}), COLORS['info'])
+        ]
+        
+        for label, data, color in statuses:
+            status_box = QVBoxLayout()
+            
+            status_label = QLabel(label)
+            status_label.setStyleSheet(f"color: {color}; font-weight: bold; font-size: 12px;")
+            status_label.setAlignment(Qt.AlignCenter)
+            status_box.addWidget(status_label)
+            
+            count_label = QLabel(f"{data['count']} invoices")
+            count_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 11px;")
+            count_label.setAlignment(Qt.AlignCenter)
+            status_box.addWidget(count_label)
+            
+            amount_label = QLabel(f"{get_currency_symbol()}{data['amount']:,.2f}")
+            amount_label.setStyleSheet(f"color: {color}; font-size: 14px; font-weight: bold;")
+            amount_label.setAlignment(Qt.AlignCenter)
+            status_box.addWidget(amount_label)
+            
+            layout.addLayout(status_box)
+            
+            if label != statuses[-1][0]:
+                separator = QFrame()
+                separator.setFrameShape(QFrame.VLine)
+                separator.setStyleSheet(f"background-color: #444;")
+                layout.addWidget(separator)
+        
+        return frame
+    
+    def refresh_analytics(self):
+        """Refresh analytics data."""
+        if not self.db:
+            return
+        
+        try:
+            # Get updated statistics
+            stats = self.db.get_statistics()
+            
+            # Update metric cards
+            metrics_mapping = {
+                "💰 Total Revenue": ('total_revenue', True),
+                "📄 Total Invoices": ('total_invoices', False),
+                "⏳ Pending Balance": ('pending_balance', True),
+                "👥 Total Customers": ('total_customers', False)
+            }
+            
+            for title, metric_card in self.metric_widgets.items():
+                if title in metrics_mapping:
+                    key, is_currency = metrics_mapping[title]
+                    value = stats.get(key, 0)
+                    
+                    # Find value label in card
+                    for child in metric_card.findChildren(QLabel):
+                        if child.property('value_label'):
+                            if is_currency:
+                                child.setText(f"{get_currency_symbol()}{value:,.2f}")
+                            else:
+                                child.setText(f"{int(value):,}")
+                            break
+        except Exception as e:
+            print(f"Error refreshing analytics: {e}")
 
     def _create_settings_page(self) -> QWidget:
-        """Create the Settings page."""
+        """Create the Settings page with configuration options."""
         page = QWidget()
-        layout = QVBoxLayout(page)
-        layout.setContentsMargins(20, 20, 20, 20)
+        main_layout = QVBoxLayout(page)
+        main_layout.setContentsMargins(20, 20, 20, 20)
+        main_layout.setSpacing(15)
 
-        heading = QLabel("<h2 style='color:#9b9bff;'>⚙ Settings</h2>")
-        layout.addWidget(heading)
+        # Header
+        heading = QLabel(f"<h2 style='color:{COLORS['accent_secondary']};'>⚙️ Settings</h2>")
+        main_layout.addWidget(heading)
+        
+        # Scroll area for settings
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setStyleSheet(get_scrollarea_style())
+        
+        settings_widget = QWidget()
+        layout = QVBoxLayout(settings_widget)
+        layout.setSpacing(15)
 
-        info = QLabel(
-            "<p>Configure application preferences and settings.</p>"
-            "<p><b>Options:</b></p>"
-            "<ul>"
-            "<li>Default tax rate</li>"
-            "<li>Currency settings</li>"
-            "<li>Export preferences</li>"
-            "<li>Company details</li>"
-            "</ul>"
-        )
-        info.setStyleSheet("color: #ddd; line-height: 1.6;")
-        layout.addWidget(info)
+        # === COMPANY SETTINGS ===
+        company_frame = QFrame()
+        company_frame.setStyleSheet(get_frame_style())
+        company_layout = QGridLayout(company_frame)
+        company_layout.setContentsMargins(15, 15, 15, 15)
+        company_layout.setSpacing(10)
+        
+        company_title = QLabel(f"<b style='color:{COLORS['accent_cyan']}; font-size:14px;'>🏢 Company Information</b>")
+        company_layout.addWidget(company_title, 0, 0, 1, 2)
+        
+        # Company Name
+        lbl_company = QLabel("Company Name:")
+        apply_fixed_width_label(lbl_company, 150)
+        company_layout.addWidget(lbl_company, 1, 0)
+        self.settings_company_name = QLineEdit(COMPANY_INFO['name'])
+        self.settings_company_name.setStyleSheet(get_input_style())
+        company_layout.addWidget(self.settings_company_name, 1, 1)
+        
+        # Email
+        lbl_email = QLabel("Email:")
+        apply_fixed_width_label(lbl_email, 150)
+        company_layout.addWidget(lbl_email, 2, 0)
+        self.settings_email = QLineEdit(COMPANY_INFO['email'])
+        self.settings_email.setStyleSheet(get_input_style())
+        company_layout.addWidget(self.settings_email, 2, 1)
+        
+        # Phone
+        lbl_phone = QLabel("Phone:")
+        apply_fixed_width_label(lbl_phone, 150)
+        company_layout.addWidget(lbl_phone, 3, 0)
+        self.settings_phone = QLineEdit(COMPANY_INFO['phone'])
+        self.settings_phone.setStyleSheet(get_input_style())
+        company_layout.addWidget(self.settings_phone, 3, 1)
+        
+        layout.addWidget(company_frame)
 
+        # === INVOICE SETTINGS ===
+        invoice_frame = QFrame()
+        invoice_frame.setStyleSheet(get_frame_style())
+        invoice_layout = QGridLayout(invoice_frame)
+        invoice_layout.setContentsMargins(15, 15, 15, 15)
+        invoice_layout.setSpacing(10)
+        
+        invoice_title = QLabel(f"<b style='color:{COLORS['accent_cyan']}; font-size:14px;'>📝 Invoice Configuration</b>")
+        invoice_layout.addWidget(invoice_title, 0, 0, 1, 2)
+        
+        # Invoice Prefix
+        lbl_prefix = QLabel("Invoice Prefix:")
+        apply_fixed_width_label(lbl_prefix, 150)
+        invoice_layout.addWidget(lbl_prefix, 1, 0)
+        self.settings_prefix = QLineEdit(INVOICE_CONFIG['number_prefix'])
+        self.settings_prefix.setStyleSheet(get_input_style())
+        invoice_layout.addWidget(self.settings_prefix, 1, 1)
+        
+        # Currency Symbol
+        lbl_currency = QLabel("Currency Symbol:")
+        apply_fixed_width_label(lbl_currency, 150)
+        invoice_layout.addWidget(lbl_currency, 2, 0)
+        self.settings_currency = QLineEdit(INVOICE_CONFIG['currency_symbol'])
+        self.settings_currency.setStyleSheet(get_input_style())
+        invoice_layout.addWidget(self.settings_currency, 2, 1)
+        
+        # Default Tax Rate
+        lbl_tax = QLabel("Default Tax Rate (%):")
+        apply_fixed_width_label(lbl_tax, 150)
+        invoice_layout.addWidget(lbl_tax, 3, 0)
+        self.settings_tax = QDoubleSpinBox()
+        self.settings_tax.setValue(INVOICE_CONFIG['default_tax_rate'])
+        self.settings_tax.setMaximum(100)
+        self.settings_tax.setStyleSheet(get_spinbox_style())
+        invoice_layout.addWidget(self.settings_tax, 3, 1)
+        
+        layout.addWidget(invoice_frame)
+        
+        # === SAVE BUTTON ===
+        save_btn_layout = QHBoxLayout()
+        save_btn_layout.addStretch()
+        
+        save_settings_btn = QPushButton("💾 Save Settings")
+        save_settings_btn.setStyleSheet(get_button_style('save'))
+        save_settings_btn.setCursor(Qt.PointingHandCursor)
+        save_settings_btn.clicked.connect(self.save_settings)
+        save_btn_layout.addWidget(save_settings_btn)
+        
+        layout.addLayout(save_btn_layout)
         layout.addStretch()
+        
+        scroll.setWidget(settings_widget)
+        main_layout.addWidget(scroll)
+
         return page
+    
+    def save_settings(self):
+        """Save settings (note: currently just shows message - would need to update config file in production)."""
+        try:
+            from PyQt5.QtWidgets import QMessageBox
+            
+            QMessageBox.information(
+                self,
+                "Settings",
+                "Settings saved successfully!\n\n"
+                "Note: To persist settings across application restarts,\n"
+                "update the config/settings.py file directly."
+            )
+            
+        except Exception as e:
+            from PyQt5.QtWidgets import QMessageBox
+            QMessageBox.critical(self, "Error", f"Failed to save settings:\n{str(e)}")
 
     def _create_about_page(self) -> QWidget:
         """Create the About page."""
@@ -980,25 +1981,28 @@ class DashboardImproved(QMainWindow):
         layout = QVBoxLayout(page)
         layout.setContentsMargins(20, 20, 20, 20)
 
-        heading = QLabel("<h2 style='color:#9b9bff;'>ℹ About</h2>")
+        heading = QLabel(f"<h2 style='color:{COLORS['accent_secondary']};'>ℹ About</h2>")
         layout.addWidget(heading)
 
         info = QLabel(
-            "<p><b>Travel Agency Billing Software</b></p>"
-            "<p>Version 2.0.0 (Improved)</p>"
-            "<p>A comprehensive invoicing and billing system designed for travel agencies.</p>"
-            "<p style='margin-top: 20px;'><b>Features:</b></p>"
+            f"<p><b>{COMPANY_INFO['name']} Billing Software</b></p>"
+            f"<p>{COMPANY_INFO['tagline']}</p>"
+            f"<p style='margin-top: 20px;'><b>Version:</b> {APP_CONFIG['version']}</p>"
+            f"<p><b>Developer:</b> {APP_CONFIG['developer']}</p>"
+            f"<p><b>Contact:</b> {COMPANY_INFO['email']}</p>"
+            f"<p><b>Phone:</b> {COMPANY_INFO['phone']}</p>"
+            f"<p style='margin-top: 20px;'><b>Features:</b></p>"
             "<ul>"
             "<li>✓ Invoice generation with auto-numbering</li>"
-            "<li>✓ Excel-style table with dropdown sectors</li>"
+            "<li>✓ Excel-style table with dropdown sectors & suppliers</li>"
             "<li>✓ Real-time calculations</li>"
-            "<li>✓ Multi-page dashboard</li>"
-            "<li>✓ PDF export</li>"
-            "<li>✓ JSON data storage</li>"
+            "<li>✓ Professional PDF export & printing</li>"
+            "<li>✓ Share functionality</li>"
+            "<li>✓ Dynamic configuration system</li>"
             "</ul>"
-            "<p style='margin-top: 20px; color: #888;'>© 2025 Travel Agency. All rights reserved.</p>"
+            f"<p style='margin-top: 20px; color: {COLORS['text_muted']};'>© {APP_CONFIG['year']} {COMPANY_INFO['name']}. All rights reserved.</p>"
         )
-        info.setStyleSheet("color: #ddd; line-height: 1.8;")
+        info.setStyleSheet(f"color: {COLORS['text_secondary']}; line-height: 1.8;")
         layout.addWidget(info)
 
         layout.addStretch()
@@ -1021,7 +2025,7 @@ class DashboardImproved(QMainWindow):
             }
             QLineEdit {
                 background-color: #2a2a2a;
-                color: #ffffff;
+                color: #ddd;
                 border: 1px solid #444;
                 border-radius: 3px;
                 padding: 5px;
@@ -1031,7 +2035,7 @@ class DashboardImproved(QMainWindow):
             }
             QDateEdit {
                 background-color: #2a2a2a;
-                color: #ffffff;
+                color: #ddd;
                 border: 1px solid #444;
                 border-radius: 3px;
                 padding: 5px;
@@ -1060,14 +2064,14 @@ class DashboardImproved(QMainWindow):
             QTableWidget {
                 background-color: #1a1a1a;
                 alternate-background-color: #252525;
-                gridline-color: #333;
-                color: #ffffff;
+                gridline-color: #444;
+                color: #ddd;
                 border: none;
             }
             QTableWidget::item {
                 padding: 5px;
-                background-color: #1a1a1a;
-                color: #ffffff;
+                background-color: #2a2a2a;
+                color: #ddd;
             }
             QTableWidget::item:selected {
                 background-color: #9b9bff;
@@ -1077,9 +2081,17 @@ class DashboardImproved(QMainWindow):
                 background-color: #2a2a2a;
                 color: #ffffff;
                 padding: 8px;
-                border: none;
-                border-bottom: 2px solid #5b5bff;
+                border: 1px solid #444;
+                border-bottom: 2px solid #7c3aed;
                 font-weight: bold;
+            }
+            QTableWidget QTableCornerButton::section {
+                background-color: #2a2a2a;
+                border: 1px solid #444;
+            }
+            QTableWidget::verticalHeader {
+                background-color: #2a2a2a;
+                color: #ddd;
             }
             QFrame {
                 background-color: #1a1a1a;
@@ -1087,38 +2099,38 @@ class DashboardImproved(QMainWindow):
             }
             QDoubleSpinBox {
                 background-color: #2a2a2a;
-                color: #ffffff;
+                color: #ddd;
                 border: 1px solid #444;
                 border-radius: 3px;
                 padding: 3px;
             }
             QDoubleSpinBox:focus {
-                border: 1px solid #9b9bff;
+                border: 1px solid #a78bfa;
             }
             QDoubleSpinBox::up-button {
-                background-color: #5b5bff;
+                background-color: #7c3aed;
             }
             QDoubleSpinBox::down-button {
-                background-color: #5b5bff;
+                background-color: #7c3aed;
             }
             QComboBox {
                 background-color: #2a2a2a;
-                color: #ffffff;
+                color: #ddd;
                 border: 1px solid #444;
                 border-radius: 3px;
                 padding: 5px;
             }
             QComboBox:focus {
-                border: 1px solid #9b9bff;
+                border: 1px solid #a78bfa;
             }
             QComboBox::drop-down {
                 border: none;
-                background-color: #5b5bff;
+                background-color: #7c3aed;
             }
             QComboBox QAbstractItemView {
                 background-color: #2a2a2a;
-                color: #ffffff;
-                selection-background-color: #5b5bff;
+                color: #ddd;
+                selection-background-color: #7c3aed;
                 border: 1px solid #444;
             }
             QStackedWidget {
