@@ -1,0 +1,48 @@
+{
+    "invoice_number": "INV-20251117-012735",
+    "invoice_date": "17/11/2025",
+    "customer_name": "",
+    "contact_number": "",
+    "customer_address": "",
+    "items": [
+        {
+            "passenger_name": "benjamin",
+            "pnr": "",
+            "sector": "Select Sector",
+            "supplier": "Select Supplier",
+            "class": "Economy",
+            "price": 800.0,
+            "qty": 1.0,
+            "tax": 7.0,
+            "amount": "\u20b9 856.00"
+        },
+        {
+            "passenger_name": "giri",
+            "pnr": "",
+            "sector": "Select Sector",
+            "supplier": "Select Supplier",
+            "class": "Economy",
+            "price": 5601.0,
+            "qty": 1.0,
+            "tax": 4.0,
+            "amount": "\u20b9 5825.04"
+        },
+        {
+            "passenger_name": "",
+            "pnr": "",
+            "sector": "Select Sector",
+            "supplier": "Select Supplier",
+            "class": "Economy",
+            "price": 0.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 0.00"
+        }
+    ],
+    "subtotal": "\u20b96401.00",
+    "discount": "0.00",
+    "tax": "\u20b9280.04",
+    "total": "\u20b96681.04",
+    "received": "",
+    "balance": "\u20b96681.04"
+}

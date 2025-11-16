@@ -50,12 +50,13 @@ class DashboardImproved(QMainWindow):
         self.resize(APP_CONFIG['window_width'], APP_CONFIG['window_height'])
         
         # Set window icon
-        icon_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'travel_billing.ico')
+        icon_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'billing_app.ico')
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
         
         # Initialize database connection
         self.db = None
+        self.metric_widgets = {}  # Initialize to prevent AttributeError
         if DB_ENABLED:
             try:
                 self.db = get_db_instance()
@@ -244,57 +245,75 @@ class DashboardImproved(QMainWindow):
         invoice_details_frame = QFrame()
         invoice_details_frame.setStyleSheet(get_frame_style())
         invoice_layout = QGridLayout(invoice_details_frame)
-        invoice_layout.setContentsMargins(15, 15, 15, 15)
-        invoice_layout.setSpacing(10)
+        invoice_layout.setContentsMargins(20, 20, 20, 20)
+        invoice_layout.setSpacing(15)
+        invoice_layout.setColumnStretch(1, 1)
+        invoice_layout.setColumnStretch(3, 1)
         
         # Invoice Details Title
         invoice_title = QLabel(f"<b style='color:{COLORS['accent_secondary']}; font-size:14px;'>📄 Invoice Details</b>")
         invoice_layout.addWidget(invoice_title, 0, 0, 1, 4)
         
-        # Row 1: Invoice Number and Date
+        # Row 1: Invoice Number and Invoice Date
         lbl_inv_num = QLabel("Invoice Number:")
         lbl_inv_num.setStyleSheet(f"color: {COLORS['text_primary']}; font-weight: bold; font-size: 12px;")
-        lbl_inv_num.setFixedWidth(120)
+        lbl_inv_num.setFixedWidth(130)
         invoice_layout.addWidget(lbl_inv_num, 1, 0, Qt.AlignRight)
+        
         self.invoice_number = QLineEdit()
         self.invoice_number.setText(self.generate_invoice_number())
         self.invoice_number.setPlaceholderText("Auto-generated")
         self.invoice_number.setStyleSheet(get_input_style())
-        self.invoice_number.setFixedWidth(400)
-        invoice_layout.addWidget(self.invoice_number, 1, 1, Qt.AlignLeft)
+        self.invoice_number.setMinimumWidth(250)
+        invoice_layout.addWidget(self.invoice_number, 1, 1)
         
         lbl_inv_date = QLabel("Invoice Date:")
         lbl_inv_date.setStyleSheet(f"color: {COLORS['text_primary']}; font-weight: bold; font-size: 12px;")
-        lbl_inv_date.setFixedWidth(120)
+        lbl_inv_date.setFixedWidth(130)
         invoice_layout.addWidget(lbl_inv_date, 1, 2, Qt.AlignRight)
+        
         self.invoice_date = QDateEdit()
         self.invoice_date.setDate(QDate.currentDate())
         self.invoice_date.setCalendarPopup(True)
         self.invoice_date.setDisplayFormat(INVOICE_CONFIG['date_format'])
         self.invoice_date.setStyleSheet(get_dateedit_style())
-        self.invoice_date.setFixedWidth(400)
-        invoice_layout.addWidget(self.invoice_date, 1, 3, Qt.AlignLeft)
+        self.invoice_date.setMinimumWidth(250)
+        invoice_layout.addWidget(self.invoice_date, 1, 3)
         
-        # Row 2: Customer Name and Contact
+        # Row 2: Customer Name and Contact Number
         lbl_cust_name = QLabel("Customer Name:")
         lbl_cust_name.setStyleSheet(f"color: {COLORS['text_primary']}; font-weight: bold; font-size: 12px;")
-        lbl_cust_name.setFixedWidth(120)
+        lbl_cust_name.setFixedWidth(130)
         invoice_layout.addWidget(lbl_cust_name, 2, 0, Qt.AlignRight)
+        
         self.customer_name = QLineEdit()
         self.customer_name.setPlaceholderText("Enter customer name")
         self.customer_name.setStyleSheet(get_input_style())
-        self.customer_name.setFixedWidth(400)
-        invoice_layout.addWidget(self.customer_name, 2, 1, Qt.AlignLeft)
+        self.customer_name.setMinimumWidth(250)
+        invoice_layout.addWidget(self.customer_name, 2, 1)
         
         lbl_contact = QLabel("Contact Number:")
         lbl_contact.setStyleSheet(f"color: {COLORS['text_primary']}; font-weight: bold; font-size: 12px;")
-        lbl_contact.setFixedWidth(120)
+        lbl_contact.setFixedWidth(130)
         invoice_layout.addWidget(lbl_contact, 2, 2, Qt.AlignRight)
+        
         self.contact_number = QLineEdit()
         self.contact_number.setPlaceholderText("Enter contact number")
         self.contact_number.setStyleSheet(get_input_style())
-        self.contact_number.setFixedWidth(400)
-        invoice_layout.addWidget(self.contact_number, 2, 3, Qt.AlignLeft)
+        self.contact_number.setMinimumWidth(250)
+        invoice_layout.addWidget(self.contact_number, 2, 3)
+        
+        # Row 3: Address (spans both columns)
+        lbl_address = QLabel("Address:")
+        lbl_address.setStyleSheet(f"color: {COLORS['text_primary']}; font-weight: bold; font-size: 12px;")
+        lbl_address.setFixedWidth(130)
+        invoice_layout.addWidget(lbl_address, 3, 0, Qt.AlignRight)
+        
+        self.customer_address = QLineEdit()
+        self.customer_address.setPlaceholderText("Enter customer address")
+        self.customer_address.setStyleSheet(get_input_style())
+        self.customer_address.setMinimumWidth(250)
+        invoice_layout.addWidget(self.customer_address, 3, 1, 1, 3)  # Spans across 3 columns
         
         layout.addWidget(invoice_details_frame)
         
@@ -340,28 +359,19 @@ class DashboardImproved(QMainWindow):
         
         table_layout.addLayout(table_header_layout)
         
-        # Table with 9 columns: Item Name, Ticket, Sector, Supplier, Price, Qty, Tax, Amount, Actions
-        self.table = QTableWidget(0, 9)
+        # Table with 9 columns: Passenger Name, PNR, Sector, Supplier, Class, Price, Qty, Tax, Amount, Actions
+        self.table = QTableWidget(0, 10)
         self.table.setHorizontalHeaderLabels([
-            "Item Name", "Ticket", "Sector", "Supplier", "Price (₹)", "Qty", "Tax (%)", "Amount (₹)", "Actions"
+            "Passenger Name", "PNR", "Sector", "Supplier", "Class", "Price (₹)", "Qty", "Tax (%)", "Amount (₹)", "Actions"
         ])
         
         # Disable table's own scrollbars (we use page-level scrolling)
         self.table.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)  # Allow vertical scroll for many items
         self.table.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         
-        # Set column widths
+        # Set column widths to stretch and fill full width
         header = self.table.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.Fixed)  # Item Name - Fixed width
-        self.table.setColumnWidth(0, 200)  # Set Item Name column to 200px
-        header.setSectionResizeMode(1, QHeaderView.ResizeToContents)  # Ticket
-        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)  # Sector
-        header.setSectionResizeMode(3, QHeaderView.ResizeToContents)  # Supplier
-        header.setSectionResizeMode(4, QHeaderView.ResizeToContents)  # Price
-        header.setSectionResizeMode(5, QHeaderView.ResizeToContents)  # Qty
-        header.setSectionResizeMode(6, QHeaderView.ResizeToContents)  # Tax
-        header.setSectionResizeMode(7, QHeaderView.ResizeToContents)  # Amount
-        header.setSectionResizeMode(8, QHeaderView.ResizeToContents)  # Actions
+        header.setSectionResizeMode(QHeaderView.Stretch)  # All columns stretch to fill width
         
         # Set minimum height for table (adjust based on rows)
         self.table.setMinimumHeight(300)
@@ -386,16 +396,19 @@ class DashboardImproved(QMainWindow):
         calc_title = QLabel("<b style='color:#a78bfa; font-size:14px;'>💰 Invoice Calculation</b>")
         calc_main_layout.addWidget(calc_title)
         
-        # Create a compact grid layout for calculations with boxes
+        # Create a compact grid layout for calculations with boxes (right-aligned)
         calc_grid = QGridLayout()
         calc_grid.setSpacing(5)
         calc_grid.setContentsMargins(5, 5, 5, 5)
+        
+        # Add spacer to push items to the right
+        calc_grid.setColumnStretch(0, 1)
         
         # Subtotal with box
         subtotal_label = QLabel("Subtotal:")
         subtotal_label.setStyleSheet(f"color: {COLORS['text_primary']}; font-weight: bold; font-size: 13px;")
         subtotal_label.setMinimumWidth(90)
-        calc_grid.addWidget(subtotal_label, 0, 0, Qt.AlignRight)
+        calc_grid.addWidget(subtotal_label, 0, 1, Qt.AlignRight)
         self.lbl_subtotal = QLabel(f"{get_currency_symbol()}0.00")
         self.lbl_subtotal.setStyleSheet(f"""
             QLabel {{
@@ -409,13 +422,39 @@ class DashboardImproved(QMainWindow):
             }}
         """)
         self.lbl_subtotal.setMinimumWidth(120)
-        calc_grid.addWidget(self.lbl_subtotal, 0, 1, Qt.AlignLeft)
+        calc_grid.addWidget(self.lbl_subtotal, 0, 2, Qt.AlignLeft)
+        
+        # Discount with box
+        discount_label = QLabel("Discount:")
+        discount_label.setStyleSheet(f"color: {COLORS['text_primary']}; font-weight: bold; font-size: 13px;")
+        discount_label.setMinimumWidth(90)
+        calc_grid.addWidget(discount_label, 1, 1, Qt.AlignRight)
+        self.txt_discount = QLineEdit()
+        self.txt_discount.setPlaceholderText(f"{get_currency_symbol()}0.00")
+        self.txt_discount.setText("0.00")
+        self.txt_discount.setStyleSheet(f"""
+            QLineEdit {{
+                background-color: {COLORS['primary_bg']};
+                color: {COLORS['accent_secondary']};
+                border: 1px solid {COLORS['accent_secondary']};
+                border-radius: 4px;
+                padding: 5px 10px;
+                font-size: 13px;
+                font-weight: bold;
+            }}
+            QLineEdit:focus {{
+                border: 2px solid {COLORS['accent_secondary']};
+            }}
+        """)
+        self.txt_discount.setMinimumWidth(120)
+        self.txt_discount.textChanged.connect(self.update_invoice_totals)
+        calc_grid.addWidget(self.txt_discount, 1, 2, Qt.AlignLeft)
         
         # Tax with box
         tax_label = QLabel("Tax:")
         tax_label.setStyleSheet(f"color: {COLORS['text_primary']}; font-weight: bold; font-size: 13px;")
         tax_label.setMinimumWidth(90)
-        calc_grid.addWidget(tax_label, 1, 0, Qt.AlignRight)
+        calc_grid.addWidget(tax_label, 2, 1, Qt.AlignRight)
         self.lbl_tax = QLabel(f"{get_currency_symbol()}0.00")
         self.lbl_tax.setStyleSheet(f"""
             QLabel {{
@@ -429,13 +468,13 @@ class DashboardImproved(QMainWindow):
             }}
         """)
         self.lbl_tax.setMinimumWidth(120)
-        calc_grid.addWidget(self.lbl_tax, 1, 1, Qt.AlignLeft)
+        calc_grid.addWidget(self.lbl_tax, 2, 2, Qt.AlignLeft)
         
         # Total with box (larger)
         total_label = QLabel("Total:")
         total_label.setStyleSheet(f"color: {COLORS['text_primary']}; font-weight: bold; font-size: 14px;")
         total_label.setMinimumWidth(90)
-        calc_grid.addWidget(total_label, 2, 0, Qt.AlignRight)
+        calc_grid.addWidget(total_label, 3, 1, Qt.AlignRight)
         self.lbl_total = QLabel(f"{get_currency_symbol()}0.00")
         self.lbl_total.setStyleSheet(f"""
             QLabel {{
@@ -449,13 +488,13 @@ class DashboardImproved(QMainWindow):
             }}
         """)
         self.lbl_total.setMinimumWidth(120)
-        calc_grid.addWidget(self.lbl_total, 2, 1, Qt.AlignLeft)
+        calc_grid.addWidget(self.lbl_total, 3, 2, Qt.AlignLeft)
         
         # Received with box
         received_label = QLabel("Received:")
         received_label.setStyleSheet(f"color: {COLORS['text_primary']}; font-weight: bold; font-size: 13px;")
         received_label.setMinimumWidth(90)
-        calc_grid.addWidget(received_label, 3, 0, Qt.AlignRight)
+        calc_grid.addWidget(received_label, 4, 1, Qt.AlignRight)
         self.txt_received = QLineEdit()
         self.txt_received.setPlaceholderText(f"{get_currency_symbol()}0.00")
         self.txt_received.setStyleSheet(f"""
@@ -474,13 +513,13 @@ class DashboardImproved(QMainWindow):
         """)
         self.txt_received.setMinimumWidth(120)
         self.txt_received.textChanged.connect(self.calculate_balance)
-        calc_grid.addWidget(self.txt_received, 3, 1, Qt.AlignLeft)
+        calc_grid.addWidget(self.txt_received, 4, 2, Qt.AlignLeft)
         
         # Balance with box
         balance_label = QLabel("Balance:")
         balance_label.setStyleSheet(f"color: {COLORS['text_primary']}; font-weight: bold; font-size: 13px;")
         balance_label.setMinimumWidth(90)
-        calc_grid.addWidget(balance_label, 4, 0, Qt.AlignRight)
+        calc_grid.addWidget(balance_label, 5, 1, Qt.AlignRight)
         self.lbl_balance = QLabel(f"{get_currency_symbol()}0.00")
         self.lbl_balance.setStyleSheet(f"""
             QLabel {{
@@ -494,7 +533,7 @@ class DashboardImproved(QMainWindow):
             }}
         """)
         self.lbl_balance.setMinimumWidth(120)
-        calc_grid.addWidget(self.lbl_balance, 4, 1, Qt.AlignLeft)
+        calc_grid.addWidget(self.lbl_balance, 5, 2, Qt.AlignLeft)
         
         calc_main_layout.addLayout(calc_grid)
         layout.addWidget(calc_frame)
@@ -623,10 +662,10 @@ class DashboardImproved(QMainWindow):
         # Adjust table height dynamically
         self.table.setMinimumHeight(min(300 + (row * 45), 600))
 
-        # Column 0: Item Name (QLineEdit)
-        item_name = QLineEdit()
-        item_name.setPlaceholderText("Enter item name")
-        item_name.setStyleSheet("""
+        # Column 0: Passenger Name (QLineEdit)
+        passenger_name = QLineEdit()
+        passenger_name.setPlaceholderText("Enter passenger name")
+        passenger_name.setStyleSheet("""
             QLineEdit {
                 background-color: #2a2a2a;
                 color: #ddd;
@@ -638,12 +677,12 @@ class DashboardImproved(QMainWindow):
                 border: 1px solid #9b9bff;
             }
         """)
-        table.setCellWidget(row, 0, item_name)
+        table.setCellWidget(row, 0, passenger_name)
 
-        # Column 1: Ticket (QLineEdit)
-        ticket = QLineEdit()
-        ticket.setPlaceholderText("Ticket #")
-        ticket.setStyleSheet("""
+        # Column 1: PNR (QLineEdit)
+        pnr = QLineEdit()
+        pnr.setPlaceholderText("PNR")
+        pnr.setStyleSheet("""
             QLineEdit {
                 background-color: #2a2a2a;
                 color: #ddd;
@@ -655,7 +694,7 @@ class DashboardImproved(QMainWindow):
                 border: 1px solid #9b9bff;
             }
         """)
-        table.setCellWidget(row, 1, ticket)
+        table.setCellWidget(row, 1, pnr)
 
         # Column 2: Sector (QComboBox - Dropdown)
         sector = QComboBox()
@@ -670,7 +709,13 @@ class DashboardImproved(QMainWindow):
         supplier.setStyleSheet(get_combobox_style())
         table.setCellWidget(row, 3, supplier)
 
-        # Column 4: Price (QDoubleSpinBox)
+        # Column 4: Class (QComboBox - Dropdown)
+        travel_class = QComboBox()
+        travel_class.addItems(["Economy", "Premium Economy", "Business", "First Class"])
+        travel_class.setStyleSheet(get_combobox_style())
+        table.setCellWidget(row, 4, travel_class)
+
+        # Column 5: Price (QDoubleSpinBox)
         price = QDoubleSpinBox()
         price.setMaximum(10_000_000)
         price.setPrefix("₹ ")
@@ -696,9 +741,9 @@ class DashboardImproved(QMainWindow):
                 border-radius: 2px;
             }
         """)
-        table.setCellWidget(row, 4, price)
+        table.setCellWidget(row, 5, price)
 
-        # Column 5: Qty (QDoubleSpinBox)
+        # Column 6: Qty (QDoubleSpinBox)
         qty = QDoubleSpinBox()
         qty.setMinimum(1)
         qty.setMaximum(9999)
@@ -725,9 +770,9 @@ class DashboardImproved(QMainWindow):
                 border-radius: 2px;
             }}
         """)
-        table.setCellWidget(row, 5, qty)
+        table.setCellWidget(row, 6, qty)
 
-        # Column 6: Tax % (QDoubleSpinBox)
+        # Column 7: Tax % (QDoubleSpinBox)
         tax = QDoubleSpinBox()
         tax.setSuffix('%')
         tax.setMaximum(100)
@@ -753,9 +798,9 @@ class DashboardImproved(QMainWindow):
                 border-radius: 2px;
             }}
         """)
-        table.setCellWidget(row, 6, tax)
+        table.setCellWidget(row, 7, tax)
 
-        # Column 7: Amount (QLineEdit - Read-only)
+        # Column 8: Amount (QLineEdit - Read-only)
         amount = QLineEdit("₹ 0.00")
         amount.setReadOnly(True)
         amount.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
@@ -769,9 +814,9 @@ class DashboardImproved(QMainWindow):
                 font-weight: bold;
             }
         """)
-        table.setCellWidget(row, 7, amount)
+        table.setCellWidget(row, 8, amount)
 
-        # Column 8: Actions (Delete button)
+        # Column 9: Actions (Delete button)
         delete_btn = QPushButton("🗑️")
         delete_btn.setToolTip("Delete this row")
         delete_btn.setCursor(Qt.PointingHandCursor)
@@ -792,7 +837,7 @@ class DashboardImproved(QMainWindow):
             }}
         """)
         delete_btn.clicked.connect(lambda: self.delete_row(row))
-        table.setCellWidget(row, 8, delete_btn)
+        table.setCellWidget(row, 9, delete_btn)
 
     def delete_row(self, row: int):
         """Delete a specific row from the table."""
@@ -806,10 +851,10 @@ class DashboardImproved(QMainWindow):
         """Calculate the amount for a specific row based on Price, Qty, and Tax."""
         table = self.table
         try:
-            price_w = table.cellWidget(row, 4)
-            qty_w = table.cellWidget(row, 5)
-            tax_w = table.cellWidget(row, 6)
-            amount_w = table.cellWidget(row, 7)
+            price_w = table.cellWidget(row, 5)
+            qty_w = table.cellWidget(row, 6)
+            tax_w = table.cellWidget(row, 7)
+            amount_w = table.cellWidget(row, 8)
             
             price = float(price_w.value() if price_w else 0)
             qty = float(qty_w.value() if qty_w else 0)
@@ -828,7 +873,7 @@ class DashboardImproved(QMainWindow):
             self.update_invoice_totals()
 
     def update_invoice_totals(self):
-        """Update the invoice calculation section (Subtotal, Tax, Total)."""
+        """Update the invoice calculation section (Subtotal, Discount, Tax, Total)."""
         subtotal = 0.0
         total_tax = 0.0
         table = self.table
@@ -836,9 +881,9 @@ class DashboardImproved(QMainWindow):
         for r in range(table.rowCount()):
             try:
                 # Get price, qty, and tax from widgets
-                price_w = table.cellWidget(r, 4)
-                qty_w = table.cellWidget(r, 5)
-                tax_w = table.cellWidget(r, 6)
+                price_w = table.cellWidget(r, 5)
+                qty_w = table.cellWidget(r, 6)
+                tax_w = table.cellWidget(r, 7)
                 
                 price = float(price_w.value() if price_w else 0)
                 qty = float(qty_w.value() if qty_w else 0)
@@ -853,7 +898,15 @@ class DashboardImproved(QMainWindow):
             except Exception as e:
                 print(f"Error calculating totals for row {r}: {e}")
         
-        total = subtotal + total_tax
+        # Get discount amount
+        try:
+            discount_text = self.txt_discount.text().replace('₹', '').replace(',', '').strip()
+            discount = float(discount_text) if discount_text else 0.0
+        except:
+            discount = 0.0
+        
+        # Calculate total: subtotal - discount + tax
+        total = subtotal - discount + total_tax
         
         self.lbl_subtotal.setText(f"₹{subtotal:.2f}")
         self.lbl_tax.setText(f"₹{total_tax:.2f}")
@@ -902,8 +955,10 @@ class DashboardImproved(QMainWindow):
                 "invoice_date": self.invoice_date.date().toString("dd/MM/yyyy"),
                 "customer_name": self.customer_name.text(),
                 "contact_number": self.contact_number.text(),
+                "customer_address": self.customer_address.text(),
                 "items": [],
                 "subtotal": self.lbl_subtotal.text(),
+                "discount": self.txt_discount.text(),
                 "tax": self.lbl_tax.text(),
                 "total": self.lbl_total.text(),
                 "received": self.txt_received.text(),
@@ -912,20 +967,22 @@ class DashboardImproved(QMainWindow):
             
             # Collect all items from table
             for r in range(self.table.rowCount()):
-                item_name_w = self.table.cellWidget(r, 0)
-                ticket_w = self.table.cellWidget(r, 1)
+                passenger_name_w = self.table.cellWidget(r, 0)
+                pnr_w = self.table.cellWidget(r, 1)
                 sector_w = self.table.cellWidget(r, 2)
                 supplier_w = self.table.cellWidget(r, 3)
-                price_w = self.table.cellWidget(r, 4)
-                qty_w = self.table.cellWidget(r, 5)
-                tax_w = self.table.cellWidget(r, 6)
-                amount_w = self.table.cellWidget(r, 7)
+                class_w = self.table.cellWidget(r, 4)
+                price_w = self.table.cellWidget(r, 5)
+                qty_w = self.table.cellWidget(r, 6)
+                tax_w = self.table.cellWidget(r, 7)
+                amount_w = self.table.cellWidget(r, 8)
                 
                 item = {
-                    "item": item_name_w.text() if item_name_w else "",
-                    "ticket": ticket_w.text() if ticket_w else "",
+                    "passenger_name": passenger_name_w.text() if passenger_name_w else "",
+                    "pnr": pnr_w.text() if pnr_w else "",
                     "sector": sector_w.currentText() if sector_w else "",
-                    "supplier": supplier_w.text() if supplier_w else "",
+                    "supplier": supplier_w.currentText() if supplier_w else "",
+                    "class": class_w.currentText() if class_w else "",
                     "price": price_w.value() if price_w else 0,
                     "qty": qty_w.value() if qty_w else 0,
                     "tax": tax_w.value() if tax_w else 0,
@@ -952,6 +1009,10 @@ class DashboardImproved(QMainWindow):
                     db_data['total'] = float(db_data['total'].replace('₹', '').replace(',', '').strip() or 0)
                     db_data['received'] = float(db_data['received'].replace('₹', '').replace(',', '').strip() or 0)
                     
+                    # Parse discount
+                    discount_text = db_data.get('discount', '₹0.00').replace('₹', '').replace(',', '').strip()
+                    db_data['discount'] = float(discount_text or 0)
+                    
                     # Parse balance
                     balance_text = db_data['balance'].replace('₹', '').replace(',', '').replace('(Paid)', '').replace('(Overpaid)', '').strip()
                     db_data['balance'] = float(balance_text or 0)
@@ -964,12 +1025,34 @@ class DashboardImproved(QMainWindow):
                     else:
                         db_data['status'] = 'Pending'
                     
+                    # Map item fields to database format
+                    db_data['items'] = []
+                    for item in invoice_data.get('items', []):
+                        # Parse amount value
+                        amount_text = item.get('amount', '₹0.00').replace('₹', '').replace(',', '').strip()
+                        amount_value = float(amount_text or 0)
+                        
+                        db_item = {
+                            'item': item.get('passenger_name', ''),  # Map passenger_name to item
+                            'ticket': item.get('pnr', ''),  # Map pnr to ticket
+                            'sector': item.get('sector', ''),
+                            'supplier': item.get('supplier', ''),
+                            'class': item.get('class', ''),
+                            'price': float(item.get('price', 0)),
+                            'qty': float(item.get('qty', 1)),
+                            'tax': float(item.get('tax', 0)),
+                            'amount': amount_value
+                        }
+                        db_data['items'].append(db_item)
+                    
                     if self.db.save_invoice(db_data):
                         print(f"✓ Invoice saved to database")
                     else:
                         print(f"⚠️  Invoice saved to JSON only (database save failed)")
                 except Exception as db_error:
                     print(f"⚠️  Database save error: {db_error}")
+                    import traceback
+                    traceback.print_exc()
             
             # Show confirmation
             from PyQt5.QtWidgets import QMessageBox
@@ -1033,17 +1116,23 @@ class DashboardImproved(QMainWindow):
             painter.drawText(100, y, f"Customer: {self.customer_name.text()}")
             y += 40
             painter.drawText(100, y, f"Contact: {self.contact_number.text()}")
-            y += 80
+            y += 40
+            if self.customer_address.text():
+                painter.drawText(100, y, f"Address: {self.customer_address.text()}")
+                y += 40
+            y += 40
             
             # Table header
             painter.setFont(header_font)
-            painter.drawText(100, y, "Item")
-            painter.drawText(1500, y, "Ticket")
-            painter.drawText(2000, y, "Sector")
-            painter.drawText(2500, y, "Price")
-            painter.drawText(2800, y, "Qty")
-            painter.drawText(3000, y, "Tax")
-            painter.drawText(3300, y, "Amount")
+            painter.drawText(100, y, "Passenger")
+            painter.drawText(700, y, "PNR")
+            painter.drawText(1200, y, "Sector")
+            painter.drawText(1700, y, "Supplier")
+            painter.drawText(2200, y, "Class")
+            painter.drawText(2600, y, "Price")
+            painter.drawText(2900, y, "Qty")
+            painter.drawText(3100, y, "Tax")
+            painter.drawText(3400, y, "Amount")
             y += 40
             
             # Draw line
@@ -1053,21 +1142,25 @@ class DashboardImproved(QMainWindow):
             # Table items
             painter.setFont(normal_font)
             for r in range(self.table.rowCount()):
-                item_name_w = self.table.cellWidget(r, 0)
-                ticket_w = self.table.cellWidget(r, 1)
+                passenger_name_w = self.table.cellWidget(r, 0)
+                pnr_w = self.table.cellWidget(r, 1)
                 sector_w = self.table.cellWidget(r, 2)
-                price_w = self.table.cellWidget(r, 4)
-                qty_w = self.table.cellWidget(r, 5)
-                tax_w = self.table.cellWidget(r, 6)
-                amount_w = self.table.cellWidget(r, 7)
+                supplier_w = self.table.cellWidget(r, 3)
+                class_w = self.table.cellWidget(r, 4)
+                price_w = self.table.cellWidget(r, 5)
+                qty_w = self.table.cellWidget(r, 6)
+                tax_w = self.table.cellWidget(r, 7)
+                amount_w = self.table.cellWidget(r, 8)
                 
-                painter.drawText(100, y, item_name_w.text() if item_name_w else "")
-                painter.drawText(1500, y, ticket_w.text() if ticket_w else "")
-                painter.drawText(2000, y, sector_w.currentText() if sector_w else "")
-                painter.drawText(2500, y, f"₹{price_w.value():.2f}" if price_w else "")
-                painter.drawText(2800, y, str(int(qty_w.value())) if qty_w else "")
-                painter.drawText(3000, y, f"{tax_w.value():.1f}%" if tax_w else "")
-                painter.drawText(3300, y, amount_w.text() if amount_w else "")
+                painter.drawText(100, y, passenger_name_w.text() if passenger_name_w else "")
+                painter.drawText(700, y, pnr_w.text() if pnr_w else "")
+                painter.drawText(1200, y, sector_w.currentText() if sector_w else "")
+                painter.drawText(1700, y, supplier_w.currentText() if supplier_w else "")
+                painter.drawText(2200, y, class_w.currentText() if class_w else "")
+                painter.drawText(2600, y, f"₹{price_w.value():.2f}" if price_w else "")
+                painter.drawText(2900, y, str(int(qty_w.value())) if qty_w else "")
+                painter.drawText(3100, y, f"{tax_w.value():.1f}%" if tax_w else "")
+                painter.drawText(3400, y, amount_w.text() if amount_w else "")
                 y += 40
             
             y += 40
@@ -1168,7 +1261,11 @@ class DashboardImproved(QMainWindow):
             painter.drawText(margin, y, f"{self.customer_name.text()}")
             y += 30
             painter.drawText(margin, y, f"Contact: {self.contact_number.text()}")
-            y += 60
+            y += 30
+            if self.customer_address.text():
+                painter.drawText(margin, y, f"Address: {self.customer_address.text()}")
+                y += 30
+            y += 30
             
             # ===== TABLE HEADER =====
             painter.setPen(QPen(QColor(155, 155, 255), 2))
@@ -1182,18 +1279,22 @@ class DashboardImproved(QMainWindow):
             painter.setPen(QColor(0, 0, 0))
             
             # Column positions
-            col_item = margin + 10
-            col_ticket = margin + 800
-            col_sector = margin + 1200
-            col_price = margin + 1800
-            col_qty = margin + 2200
-            col_tax = margin + 2500
-            col_amount = margin + 2900
+            col_passenger = margin + 10
+            col_pnr = margin + 500
+            col_sector = margin + 900
+            col_supplier = margin + 1300
+            col_class = margin + 1700
+            col_price = margin + 2000
+            col_qty = margin + 2300
+            col_tax = margin + 2550
+            col_amount = margin + 2850
             
             y += 28
-            painter.drawText(col_item, y, "Item Name")
-            painter.drawText(col_ticket, y, "Ticket")
+            painter.drawText(col_passenger, y, "Passenger")
+            painter.drawText(col_pnr, y, "PNR")
             painter.drawText(col_sector, y, "Sector")
+            painter.drawText(col_supplier, y, "Supplier")
+            painter.drawText(col_class, y, "Class")
             painter.drawText(col_price, y, "Price")
             painter.drawText(col_qty, y, "Qty")
             painter.drawText(col_tax, y, "Tax")
@@ -1209,21 +1310,25 @@ class DashboardImproved(QMainWindow):
             painter.setPen(QColor(0, 0, 0))
             
             for r in range(self.table.rowCount()):
-                item_name_w = self.table.cellWidget(r, 0)
-                ticket_w = self.table.cellWidget(r, 1)
+                passenger_name_w = self.table.cellWidget(r, 0)
+                pnr_w = self.table.cellWidget(r, 1)
                 sector_w = self.table.cellWidget(r, 2)
-                price_w = self.table.cellWidget(r, 4)
-                qty_w = self.table.cellWidget(r, 5)
-                tax_w = self.table.cellWidget(r, 6)
-                amount_w = self.table.cellWidget(r, 7)
+                supplier_w = self.table.cellWidget(r, 3)
+                class_w = self.table.cellWidget(r, 4)
+                price_w = self.table.cellWidget(r, 5)
+                qty_w = self.table.cellWidget(r, 6)
+                tax_w = self.table.cellWidget(r, 7)
+                amount_w = self.table.cellWidget(r, 8)
                 
                 # Alternate row colors
                 if r % 2 == 0:
                     painter.fillRect(QRect(margin, y-25, page_width - 2*margin, 35), QColor(250, 250, 250))
                 
-                painter.drawText(col_item, y, item_name_w.text() if item_name_w else "")
-                painter.drawText(col_ticket, y, ticket_w.text() if ticket_w else "")
+                painter.drawText(col_passenger, y, passenger_name_w.text() if passenger_name_w else "")
+                painter.drawText(col_pnr, y, pnr_w.text() if pnr_w else "")
                 painter.drawText(col_sector, y, sector_w.currentText() if sector_w else "")
+                painter.drawText(col_supplier, y, supplier_w.currentText() if supplier_w else "")
+                painter.drawText(col_class, y, class_w.currentText() if class_w else "")
                 painter.drawText(col_price, y, f"₹{price_w.value():.2f}" if price_w else "")
                 painter.drawText(col_qty, y, str(int(qty_w.value())) if qty_w else "")
                 painter.drawText(col_tax, y, f"{tax_w.value():.1f}%" if tax_w else "")
@@ -1343,17 +1448,99 @@ class DashboardImproved(QMainWindow):
         content = QWidget()
         layout = QVBoxLayout(content)
         layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(15)
+        layout.setSpacing(20)
 
         # Header
         heading = QLabel(f"<h2 style='color:{COLORS['accent_secondary']};'>📊 Reports & Analytics</h2>")
         layout.addWidget(heading)
         
-        # Analytics Dashboard Section
-        if self.db:
-            analytics_frame = self._create_analytics_section()
-            layout.addWidget(analytics_frame)
+        # === ANALYTICS SECTION ===
+        analytics_frame = QFrame()
+        analytics_frame.setStyleSheet(f"""
+            QFrame {{
+                background-color: {COLORS['secondary_bg']};
+                border-radius: 8px;
+                padding: 20px;
+            }}
+        """)
+        analytics_layout = QVBoxLayout(analytics_frame)
+        analytics_layout.setSpacing(20)
         
+        # Analytics title
+        analytics_title = QLabel(f"<b style='color:{COLORS['accent_primary']}; font-size:16px;'>📈 Business Analytics</b>")
+        analytics_layout.addWidget(analytics_title)
+        
+        # Calculate analytics from invoices
+        self.analytics_data = self.calculate_analytics()
+        
+        # Create metric cards - simplified single color
+        self.metric_cards = {}
+        
+        # Row 1: Financial Metrics
+        financial_row = QHBoxLayout()
+        financial_row.setSpacing(15)
+        
+        revenue_card = self.create_metric_card("💰 Total Revenue", 
+                                               f"₹{self.analytics_data['total_revenue']:,.2f}")
+        financial_row.addWidget(revenue_card)
+        self.metric_cards['revenue'] = revenue_card
+        
+        received_card = self.create_metric_card("✅ Received Amount", 
+                                                f"₹{self.analytics_data['received_amount']:,.2f}")
+        financial_row.addWidget(received_card)
+        self.metric_cards['received'] = received_card
+        
+        pending_card = self.create_metric_card("⏳ Pending Amount", 
+                                               f"₹{self.analytics_data['pending_amount']:,.2f}")
+        financial_row.addWidget(pending_card)
+        self.metric_cards['pending'] = pending_card
+        
+        analytics_layout.addLayout(financial_row)
+        
+        # Row 2: Invoice Statistics
+        stats_row = QHBoxLayout()
+        stats_row.setSpacing(15)
+        
+        invoices_card = self.create_metric_card("📄 Total Invoices", 
+                                                str(self.analytics_data['total_invoices']))
+        stats_row.addWidget(invoices_card)
+        self.metric_cards['invoices'] = invoices_card
+        
+        paid_card = self.create_metric_card("✅ Paid Invoices", 
+                                           str(self.analytics_data['paid_count']))
+        stats_row.addWidget(paid_card)
+        self.metric_cards['paid'] = paid_card
+        
+        pending_inv_card = self.create_metric_card("⏳ Pending Invoices", 
+                                                   str(self.analytics_data['pending_count']))
+        stats_row.addWidget(pending_inv_card)
+        self.metric_cards['pending_inv'] = pending_inv_card
+        
+        analytics_layout.addLayout(stats_row)
+        
+        # Row 3: Additional Analytics
+        additional_row = QHBoxLayout()
+        additional_row.setSpacing(15)
+        
+        avg_invoice_card = self.create_metric_card("📊 Avg Invoice Value", 
+                                                   f"₹{self.analytics_data['avg_invoice']:,.2f}")
+        additional_row.addWidget(avg_invoice_card)
+        self.metric_cards['avg_invoice'] = avg_invoice_card
+        
+        customers_card = self.create_metric_card("👥 Total Customers", 
+                                                str(self.analytics_data['total_customers']))
+        additional_row.addWidget(customers_card)
+        self.metric_cards['customers'] = customers_card
+        
+        collection_rate_card = self.create_metric_card("📈 Collection Rate", 
+                                                       f"{self.analytics_data['collection_rate']:.1f}%")
+        additional_row.addWidget(collection_rate_card)
+        self.metric_cards['collection_rate'] = collection_rate_card
+        
+        analytics_layout.addLayout(additional_row)
+        layout.addWidget(analytics_frame)
+        
+        # === INVOICE HISTORY SECTION ===
         # Invoices Section Header
         invoices_heading = QLabel(f"<h3 style='color:{COLORS['accent_cyan']};'>📄 Invoice History</h3>")
         layout.addWidget(invoices_heading)
@@ -1374,7 +1561,7 @@ class DashboardImproved(QMainWindow):
         refresh_btn = QPushButton("🔄 Refresh")
         refresh_btn.setStyleSheet(get_button_style('add'))
         refresh_btn.setCursor(Qt.PointingHandCursor)
-        refresh_btn.clicked.connect(lambda: (self.load_invoices(), self.refresh_analytics()))
+        refresh_btn.clicked.connect(self.refresh_reports)
         search_layout.addWidget(refresh_btn)
         
         layout.addLayout(search_layout)
@@ -1410,6 +1597,151 @@ class DashboardImproved(QMainWindow):
         
         return page
     
+    def create_metric_card(self, title: str, value: str) -> QFrame:
+        """Create a metric card widget with simplified single color design."""
+        card = QFrame()
+        card.setStyleSheet(f"""
+            QFrame {{
+                background-color: {COLORS['primary_bg']};
+                border-radius: 6px;
+                padding: 18px;
+                min-width: 200px;
+            }}
+        """)
+        card_layout = QVBoxLayout(card)
+        card_layout.setSpacing(12)
+        
+        # Title
+        title_label = QLabel(title)
+        title_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 12px; font-weight: bold;")
+        card_layout.addWidget(title_label)
+        
+        # Value
+        value_label = QLabel(value)
+        value_label.setProperty('metric_value', True)  # For easy updating
+        value_label.setStyleSheet(f"color: {COLORS['accent_primary']}; font-size: 24px; font-weight: bold;")
+        card_layout.addWidget(value_label)
+        
+        return card
+    
+    def calculate_analytics(self) -> dict:
+        """Calculate comprehensive analytics from invoice files."""
+        analytics = {
+            'total_revenue': 0.0,
+            'total_invoices': 0,
+            'pending_amount': 0.0,
+            'received_amount': 0.0,
+            'paid_count': 0,
+            'pending_count': 0,
+            'overpaid_count': 0,
+            'avg_invoice': 0.0,
+            'total_customers': 0,
+            'collection_rate': 0.0
+        }
+        
+        try:
+            invoices_dir = INVOICE_CONFIG.get('save_directory', 'invoices')
+            if not os.path.exists(invoices_dir):
+                return analytics
+            
+            invoice_files = [f for f in os.listdir(invoices_dir) if f.endswith('.json')]
+            analytics['total_invoices'] = len(invoice_files)
+            
+            customers_set = set()
+            
+            for filename in invoice_files:
+                filepath = os.path.join(invoices_dir, filename)
+                try:
+                    with open(filepath, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                    
+                    # Track unique customers
+                    customer_name = data.get('customer_name', '').strip()
+                    if customer_name:
+                        customers_set.add(customer_name.lower())
+                    
+                    # Parse total
+                    total_str = str(data.get('total', '₹0.00')).replace('₹', '').replace(',', '').strip()
+                    try:
+                        total = float(total_str)
+                    except:
+                        total = 0.0
+                    analytics['total_revenue'] += total
+                    
+                    # Parse received
+                    received_str = str(data.get('received', '0.00')).replace('₹', '').replace(',', '').strip()
+                    try:
+                        received = float(received_str)
+                    except:
+                        received = 0.0
+                    analytics['received_amount'] += received
+                    
+                    # Parse balance to determine status
+                    balance_str = str(data.get('balance', '₹0.00'))
+                    
+                    if 'Paid' in balance_str or '₹0.00' in balance_str or balance_str == '0.00':
+                        analytics['paid_count'] += 1
+                    elif 'Overpaid' in balance_str:
+                        analytics['overpaid_count'] += 1
+                    else:
+                        analytics['pending_count'] += 1
+                        # Calculate pending amount
+                        pending_str = balance_str.replace('₹', '').replace(',', '').strip()
+                        try:
+                            pending = float(pending_str)
+                            analytics['pending_amount'] += pending
+                        except:
+                            pass
+                    
+                except Exception as e:
+                    print(f"Error processing invoice {filename}: {e}")
+            
+            # Calculate derived metrics
+            analytics['total_customers'] = len(customers_set)
+            
+            if analytics['total_invoices'] > 0:
+                analytics['avg_invoice'] = analytics['total_revenue'] / analytics['total_invoices']
+            
+            if analytics['total_revenue'] > 0:
+                analytics['collection_rate'] = (analytics['received_amount'] / analytics['total_revenue']) * 100
+                    
+        except Exception as e:
+            print(f"Error calculating analytics: {e}")
+        
+        return analytics
+    
+    def refresh_reports(self):
+        """Refresh reports page - reload invoices and update analytics."""
+        print("🔄 Refreshing reports...")
+        self.load_invoices()
+        
+        # Recalculate analytics
+        self.analytics_data = self.calculate_analytics()
+        
+        # Update metric cards
+        if hasattr(self, 'metric_cards'):
+            updates = {
+                'revenue': f"₹{self.analytics_data['total_revenue']:,.2f}",
+                'received': f"₹{self.analytics_data['received_amount']:,.2f}",
+                'pending': f"₹{self.analytics_data['pending_amount']:,.2f}",
+                'invoices': str(self.analytics_data['total_invoices']),
+                'paid': str(self.analytics_data['paid_count']),
+                'pending_inv': str(self.analytics_data['pending_count']),
+                'avg_invoice': f"₹{self.analytics_data['avg_invoice']:,.2f}",
+                'customers': str(self.analytics_data['total_customers']),
+                'collection_rate': f"{self.analytics_data['collection_rate']:.1f}%"
+            }
+            
+            for card_name, new_value in updates.items():
+                card = self.metric_cards.get(card_name)
+                if card:
+                    for child in card.findChildren(QLabel):
+                        if child.property('metric_value'):
+                            child.setText(new_value)
+                            break
+        
+        print("✓ Reports refreshed successfully")
+    
     def load_invoices(self):
         """Load all saved invoices from the invoices directory."""
         try:
@@ -1418,10 +1750,13 @@ class DashboardImproved(QMainWindow):
             # Get all JSON files from invoices directory
             invoices_dir = INVOICE_CONFIG.get('save_directory', 'invoices')
             if not os.path.exists(invoices_dir):
+                print("⚠️ Invoices directory does not exist")
                 return
             
             invoice_files = [f for f in os.listdir(invoices_dir) if f.endswith('.json')]
             invoice_files.sort(reverse=True)  # Most recent first
+            
+            print(f"📄 Loading {len(invoice_files)} invoices...")
             
             for filename in invoice_files:
                 filepath = os.path.join(invoices_dir, filename)
@@ -1433,17 +1768,29 @@ class DashboardImproved(QMainWindow):
                     self.invoice_table.insertRow(row)
                     
                     # Invoice Number
-                    self.invoice_table.setItem(row, 0, QTableWidgetItem(data.get('invoice_number', 'N/A')))
+                    inv_num_item = QTableWidgetItem(data.get('invoice_number', 'N/A'))
+                    inv_num_item.setForeground(QColor(COLORS['text_primary']))
+                    self.invoice_table.setItem(row, 0, inv_num_item)
+                    # Invoice Number
+                    inv_num_item = QTableWidgetItem(data.get('invoice_number', 'N/A'))
+                    inv_num_item.setForeground(QColor(COLORS['text_primary']))
+                    self.invoice_table.setItem(row, 0, inv_num_item)
                     
                     # Date
-                    self.invoice_table.setItem(row, 1, QTableWidgetItem(data.get('invoice_date', 'N/A')))
+                    date_item = QTableWidgetItem(data.get('invoice_date', 'N/A'))
+                    date_item.setForeground(QColor(COLORS['text_secondary']))
+                    self.invoice_table.setItem(row, 1, date_item)
                     
                     # Customer
-                    self.invoice_table.setItem(row, 2, QTableWidgetItem(data.get('customer_name', 'N/A')))
+                    customer_item = QTableWidgetItem(data.get('customer_name', 'N/A'))
+                    customer_item.setForeground(QColor(COLORS['text_primary']))
+                    self.invoice_table.setItem(row, 2, customer_item)
                     
                     # Total
                     total_value = data.get('total', '₹0.00')
-                    self.invoice_table.setItem(row, 3, QTableWidgetItem(str(total_value)))
+                    total_item = QTableWidgetItem(str(total_value))
+                    total_item.setForeground(QColor(COLORS['accent_gold']))
+                    self.invoice_table.setItem(row, 3, total_item)
                     
                     # Status (based on balance)
                     balance_value = data.get('balance', '₹0.00')
@@ -1462,7 +1809,7 @@ class DashboardImproved(QMainWindow):
                     status_item.setForeground(QColor(color))
                     self.invoice_table.setItem(row, 4, status_item)
                     
-                    # Actions (Download button - larger size)
+                    # Actions (Download button)
                     download_btn = QPushButton("💾 Download")
                     download_btn.setStyleSheet(f"""
                         QPushButton {{
@@ -1487,10 +1834,12 @@ class DashboardImproved(QMainWindow):
                     self.invoice_table.setCellWidget(row, 5, download_btn)
                     
                 except Exception as e:
-                    print(f"Error loading invoice {filename}: {e}")
+                    print(f"✗ Error loading invoice {filename}: {e}")
+            
+            print(f"✓ Loaded {self.invoice_table.rowCount()} invoices successfully")
                     
         except Exception as e:
-            print(f"Error loading invoices: {e}")
+            print(f"✗ Error loading invoices: {e}")
     
     def filter_invoices(self):
         """Filter invoices based on search text."""
@@ -1816,11 +2165,17 @@ class DashboardImproved(QMainWindow):
     def refresh_analytics(self):
         """Refresh analytics data."""
         if not self.db:
+            print("⚠️  Database not available, skipping analytics refresh")
+            return
+        
+        if not hasattr(self, 'metric_widgets') or not self.metric_widgets:
+            print("⚠️  Metric widgets not initialized, skipping analytics refresh")
             return
         
         try:
             # Get updated statistics
             stats = self.db.get_statistics()
+            print(f"✓ Analytics refreshed: {stats}")
             
             # Update metric cards
             metrics_mapping = {
@@ -1844,7 +2199,9 @@ class DashboardImproved(QMainWindow):
                                 child.setText(f"{int(value):,}")
                             break
         except Exception as e:
-            print(f"Error refreshing analytics: {e}")
+            print(f"✗ Error refreshing analytics: {e}")
+            import traceback
+            traceback.print_exc()
 
     def _create_settings_page(self) -> QWidget:
         """Create the Settings page with configuration options."""
@@ -1864,57 +2221,91 @@ class DashboardImproved(QMainWindow):
         
         settings_widget = QWidget()
         layout = QVBoxLayout(settings_widget)
-        layout.setSpacing(15)
+        layout.setSpacing(20)
 
         # === COMPANY SETTINGS ===
         company_frame = QFrame()
-        company_frame.setStyleSheet(get_frame_style())
+        company_frame.setStyleSheet(f"""
+            QFrame {{
+                background-color: {COLORS['secondary_bg']};
+                border-radius: 8px;
+                padding: 20px;
+            }}
+        """)
         company_layout = QGridLayout(company_frame)
-        company_layout.setContentsMargins(15, 15, 15, 15)
-        company_layout.setSpacing(10)
+        company_layout.setContentsMargins(0, 0, 0, 0)
+        company_layout.setSpacing(15)
         
-        company_title = QLabel(f"<b style='color:{COLORS['accent_cyan']}; font-size:14px;'>🏢 Company Information</b>")
+        company_title = QLabel(f"<b style='color:{COLORS['accent_primary']}; font-size:14px;'>🏢 Company Information</b>")
         company_layout.addWidget(company_title, 0, 0, 1, 2)
         
         # Company Name
         lbl_company = QLabel("Company Name:")
-        apply_fixed_width_label(lbl_company, 150)
+        lbl_company.setStyleSheet(f"color: {COLORS['text_primary']}; font-weight: bold;")
+        lbl_company.setFixedWidth(150)
         company_layout.addWidget(lbl_company, 1, 0)
         self.settings_company_name = QLineEdit(COMPANY_INFO['name'])
         self.settings_company_name.setStyleSheet(get_input_style())
         company_layout.addWidget(self.settings_company_name, 1, 1)
         
+        # Address
+        lbl_address = QLabel("Address:")
+        lbl_address.setStyleSheet(f"color: {COLORS['text_primary']}; font-weight: bold;")
+        lbl_address.setFixedWidth(150)
+        company_layout.addWidget(lbl_address, 2, 0)
+        self.settings_address = QLineEdit(COMPANY_INFO.get('address', ''))
+        self.settings_address.setStyleSheet(get_input_style())
+        company_layout.addWidget(self.settings_address, 2, 1)
+        
         # Email
         lbl_email = QLabel("Email:")
-        apply_fixed_width_label(lbl_email, 150)
-        company_layout.addWidget(lbl_email, 2, 0)
+        lbl_email.setStyleSheet(f"color: {COLORS['text_primary']}; font-weight: bold;")
+        lbl_email.setFixedWidth(150)
+        company_layout.addWidget(lbl_email, 3, 0)
         self.settings_email = QLineEdit(COMPANY_INFO['email'])
         self.settings_email.setStyleSheet(get_input_style())
-        company_layout.addWidget(self.settings_email, 2, 1)
+        company_layout.addWidget(self.settings_email, 3, 1)
         
         # Phone
         lbl_phone = QLabel("Phone:")
-        apply_fixed_width_label(lbl_phone, 150)
-        company_layout.addWidget(lbl_phone, 3, 0)
+        lbl_phone.setStyleSheet(f"color: {COLORS['text_primary']}; font-weight: bold;")
+        lbl_phone.setFixedWidth(150)
+        company_layout.addWidget(lbl_phone, 4, 0)
         self.settings_phone = QLineEdit(COMPANY_INFO['phone'])
         self.settings_phone.setStyleSheet(get_input_style())
-        company_layout.addWidget(self.settings_phone, 3, 1)
+        company_layout.addWidget(self.settings_phone, 4, 1)
+        
+        # GST Number
+        lbl_gst = QLabel("GST Number:")
+        lbl_gst.setStyleSheet(f"color: {COLORS['text_primary']}; font-weight: bold;")
+        lbl_gst.setFixedWidth(150)
+        company_layout.addWidget(lbl_gst, 5, 0)
+        self.settings_gst = QLineEdit(COMPANY_INFO.get('gst_number', ''))
+        self.settings_gst.setStyleSheet(get_input_style())
+        company_layout.addWidget(self.settings_gst, 5, 1)
         
         layout.addWidget(company_frame)
 
         # === INVOICE SETTINGS ===
         invoice_frame = QFrame()
-        invoice_frame.setStyleSheet(get_frame_style())
+        invoice_frame.setStyleSheet(f"""
+            QFrame {{
+                background-color: {COLORS['secondary_bg']};
+                border-radius: 8px;
+                padding: 20px;
+            }}
+        """)
         invoice_layout = QGridLayout(invoice_frame)
-        invoice_layout.setContentsMargins(15, 15, 15, 15)
-        invoice_layout.setSpacing(10)
+        invoice_layout.setContentsMargins(0, 0, 0, 0)
+        invoice_layout.setSpacing(15)
         
-        invoice_title = QLabel(f"<b style='color:{COLORS['accent_cyan']}; font-size:14px;'>📝 Invoice Configuration</b>")
+        invoice_title = QLabel(f"<b style='color:{COLORS['accent_primary']}; font-size:14px;'>📝 Invoice Configuration</b>")
         invoice_layout.addWidget(invoice_title, 0, 0, 1, 2)
         
         # Invoice Prefix
         lbl_prefix = QLabel("Invoice Prefix:")
-        apply_fixed_width_label(lbl_prefix, 150)
+        lbl_prefix.setStyleSheet(f"color: {COLORS['text_primary']}; font-weight: bold;")
+        lbl_prefix.setFixedWidth(150)
         invoice_layout.addWidget(lbl_prefix, 1, 0)
         self.settings_prefix = QLineEdit(INVOICE_CONFIG['number_prefix'])
         self.settings_prefix.setStyleSheet(get_input_style())
@@ -1922,7 +2313,8 @@ class DashboardImproved(QMainWindow):
         
         # Currency Symbol
         lbl_currency = QLabel("Currency Symbol:")
-        apply_fixed_width_label(lbl_currency, 150)
+        lbl_currency.setStyleSheet(f"color: {COLORS['text_primary']}; font-weight: bold;")
+        lbl_currency.setFixedWidth(150)
         invoice_layout.addWidget(lbl_currency, 2, 0)
         self.settings_currency = QLineEdit(INVOICE_CONFIG['currency_symbol'])
         self.settings_currency.setStyleSheet(get_input_style())
@@ -1930,7 +2322,8 @@ class DashboardImproved(QMainWindow):
         
         # Default Tax Rate
         lbl_tax = QLabel("Default Tax Rate (%):")
-        apply_fixed_width_label(lbl_tax, 150)
+        lbl_tax.setStyleSheet(f"color: {COLORS['text_primary']}; font-weight: bold;")
+        lbl_tax.setFixedWidth(150)
         invoice_layout.addWidget(lbl_tax, 3, 0)
         self.settings_tax = QDoubleSpinBox()
         self.settings_tax.setValue(INVOICE_CONFIG['default_tax_rate'])
@@ -1959,17 +2352,31 @@ class DashboardImproved(QMainWindow):
         return page
     
     def save_settings(self):
-        """Save settings (note: currently just shows message - would need to update config file in production)."""
+        """Save settings."""
         try:
             from PyQt5.QtWidgets import QMessageBox
             
-            QMessageBox.information(
-                self,
-                "Settings",
-                "Settings saved successfully!\n\n"
-                "Note: To persist settings across application restarts,\n"
-                "update the config/settings.py file directly."
-            )
+            # In a production app, you would update config files or database here
+            # For now, just show confirmation
+            
+            settings_text = f"""Settings Updated:
+
+Company Information:
+• Name: {self.settings_company_name.text()}
+• Address: {self.settings_address.text()}
+• Email: {self.settings_email.text()}
+• Phone: {self.settings_phone.text()}
+• GST: {self.settings_gst.text()}
+
+Invoice Configuration:
+• Prefix: {self.settings_prefix.text()}
+• Currency: {self.settings_currency.text()}
+• Default Tax: {self.settings_tax.value()}%
+
+Note: These settings are displayed but not persisted.
+To persist settings, update config/settings.py file."""
+            
+            QMessageBox.information(self, "Settings Saved", settings_text)
             
         except Exception as e:
             from PyQt5.QtWidgets import QMessageBox
@@ -1980,32 +2387,88 @@ class DashboardImproved(QMainWindow):
         page = QWidget()
         layout = QVBoxLayout(page)
         layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(20)
 
-        heading = QLabel(f"<h2 style='color:{COLORS['accent_secondary']};'>ℹ About</h2>")
+        # Header
+        heading = QLabel(f"<h2 style='color:{COLORS['accent_secondary']};'>ℹ️ About</h2>")
         layout.addWidget(heading)
-
-        info = QLabel(
-            f"<p><b>{COMPANY_INFO['name']} Billing Software</b></p>"
-            f"<p>{COMPANY_INFO['tagline']}</p>"
-            f"<p style='margin-top: 20px;'><b>Version:</b> {APP_CONFIG['version']}</p>"
-            f"<p><b>Developer:</b> {APP_CONFIG['developer']}</p>"
-            f"<p><b>Contact:</b> {COMPANY_INFO['email']}</p>"
-            f"<p><b>Phone:</b> {COMPANY_INFO['phone']}</p>"
-            f"<p style='margin-top: 20px;'><b>Features:</b></p>"
-            "<ul>"
-            "<li>✓ Invoice generation with auto-numbering</li>"
-            "<li>✓ Excel-style table with dropdown sectors & suppliers</li>"
-            "<li>✓ Real-time calculations</li>"
-            "<li>✓ Professional PDF export & printing</li>"
-            "<li>✓ Share functionality</li>"
-            "<li>✓ Dynamic configuration system</li>"
-            "</ul>"
-            f"<p style='margin-top: 20px; color: {COLORS['text_muted']};'>© {APP_CONFIG['year']} {COMPANY_INFO['name']}. All rights reserved.</p>"
-        )
-        info.setStyleSheet(f"color: {COLORS['text_secondary']}; line-height: 1.8;")
-        layout.addWidget(info)
-
+        
+        # Main info frame
+        info_frame = QFrame()
+        info_frame.setStyleSheet(f"""
+            QFrame {{
+                background-color: {COLORS['secondary_bg']};
+                border-radius: 8px;
+                padding: 30px;
+            }}
+        """)
+        info_layout = QVBoxLayout(info_frame)
+        info_layout.setSpacing(15)
+        
+        # App name and tagline
+        app_name = QLabel(f"<h1 style='color:{COLORS['accent_primary']};'>🎫 Travel Agency Billing Software</h1>")
+        app_name.setAlignment(Qt.AlignCenter)
+        info_layout.addWidget(app_name)
+        
+        tagline = QLabel(f"<p style='color:{COLORS['text_secondary']}; font-size:14px; font-style:italic;'>{COMPANY_INFO['tagline']}</p>")
+        tagline.setAlignment(Qt.AlignCenter)
+        info_layout.addWidget(tagline)
+        
+        # Separator
+        line = QFrame()
+        line.setFrameShape(QFrame.HLine)
+        line.setStyleSheet(f"background-color: {COLORS['accent_primary']}; height: 2px;")
+        info_layout.addWidget(line)
+        
+        # Version and details
+        details = QLabel(f"""
+        <p style='line-height: 1.8;'>
+        <b style='color:{COLORS['accent_primary']}; font-size:13px;'>Version:</b> <span style='color:{COLORS['text_primary']};'>{APP_CONFIG['version']}</span><br>
+        <b style='color:{COLORS['accent_primary']}; font-size:13px;'>Developer:</b> <span style='color:{COLORS['text_primary']};'>{APP_CONFIG['developer']}</span><br>
+        <b style='color:{COLORS['accent_primary']}; font-size:13px;'>Year:</b> <span style='color:{COLORS['text_primary']};'>{APP_CONFIG['year']}</span>
+        </p>
+        
+        <p style='margin-top: 20px;'>
+        <b style='color:{COLORS['accent_primary']}; font-size:13px;'>Contact Information:</b><br>
+        <span style='color:{COLORS['text_secondary']};'>
+        📧 Email: {COMPANY_INFO['email']}<br>
+        📞 Phone: {COMPANY_INFO['phone']}
+        </span>
+        </p>
+        
+        <p style='margin-top: 20px;'>
+        <b style='color:{COLORS['accent_primary']}; font-size:14px;'>✨ Key Features:</b>
+        </p>
+        """)
+        details.setStyleSheet(f"color: {COLORS['text_primary']};")
+        info_layout.addWidget(details)
+        
+        # Features list
+        features_list = QLabel(f"""
+        <ul style='color:{COLORS['text_secondary']}; line-height: 2.0; font-size:12px;'>
+        <li>🔐 Secure login system with password authentication</li>
+        <li>📄 Dynamic invoice creation with passenger details, PNR, sectors</li>
+        <li>✈️ Travel-specific fields: Class (Economy/Business/First)</li>
+        <li>💰 Automatic calculations with discount support</li>
+        <li>📊 Comprehensive analytics and reports</li>
+        <li>💾 SQLite database for reliable data storage</li>
+        <li>📄 PDF export and print functionality</li>
+        <li>⚙️ Configurable company and invoice settings</li>
+        <li>🎨 Modern dark theme interface</li>
+        <li>🔍 Search and filter invoices</li>
+        </ul>
+        """)
+        features_list.setStyleSheet(f"color: {COLORS['text_secondary']};")
+        info_layout.addWidget(features_list)
+        
+        # Copyright
+        copyright_label = QLabel(f"<p style='margin-top: 30px; color: {COLORS['text_muted']}; text-align: center; font-size:11px;'>© {APP_CONFIG['year']} {COMPANY_INFO['name']}. All rights reserved.<br>Built with ❤️ using PyQt5 and SQLite</p>")
+        copyright_label.setAlignment(Qt.AlignCenter)
+        info_layout.addWidget(copyright_label)
+        
+        layout.addWidget(info_frame)
         layout.addStretch()
+        
         return page
 
     def apply_dark_theme(self):

@@ -1,0 +1,103 @@
+{
+    "invoice_number": "INV-20251117-002300",
+    "invoice_date": "17/11/2025",
+    "customer_name": "",
+    "contact_number": "",
+    "customer_address": "",
+    "items": [
+        {
+            "passenger_name": "",
+            "pnr": "",
+            "sector": "Select Sector",
+            "supplier": "Select Supplier",
+            "class": "Economy",
+            "price": 4500.0,
+            "qty": 5.0,
+            "tax": 0.0,
+            "amount": "\u20b9 22500.00"
+        },
+        {
+            "passenger_name": "",
+            "pnr": "",
+            "sector": "Select Sector",
+            "supplier": "Select Supplier",
+            "class": "Economy",
+            "price": 6700.0,
+            "qty": 1.0,
+            "tax": 8.0,
+            "amount": "\u20b9 7236.00"
+        },
+        {
+            "passenger_name": "",
+            "pnr": "",
+            "sector": "Select Sector",
+            "supplier": "Select Supplier",
+            "class": "Economy",
+            "price": 7800.0,
+            "qty": 1.0,
+            "tax": 4.0,
+            "amount": "\u20b9 8112.00"
+        },
+        {
+            "passenger_name": "",
+            "pnr": "",
+            "sector": "Select Sector",
+            "supplier": "Select Supplier",
+            "class": "Economy",
+            "price": 8900.0,
+            "qty": 1.0,
+            "tax": 10.0,
+            "amount": "\u20b9 9790.00"
+        },
+        {
+            "passenger_name": "",
+            "pnr": "",
+            "sector": "Select Sector",
+            "supplier": "Select Supplier",
+            "class": "Economy",
+            "price": 0.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 0.00"
+        },
+        {
+            "passenger_name": "",
+            "pnr": "",
+            "sector": "Select Sector",
+            "supplier": "Select Supplier",
+            "class": "Economy",
+            "price": 0.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 0.00"
+        },
+        {
+            "passenger_name": "",
+            "pnr": "",
+            "sector": "Select Sector",
+            "supplier": "Select Supplier",
+            "class": "Economy",
+            "price": 0.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 0.00"
+        },
+        {
+            "passenger_name": "",
+            "pnr": "",
+            "sector": "Select Sector",
+            "supplier": "Select Supplier",
+            "class": "Economy",
+            "price": 0.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 0.00"
+        }
+    ],
+    "subtotal": "\u20b945900.00",
+    "discount": "0.00",
+    "tax": "\u20b91738.00",
+    "total": "\u20b947638.00",
+    "received": "",
+    "balance": "\u20b947638.00"
+}

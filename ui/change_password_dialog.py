@@ -21,7 +21,7 @@ class ChangePasswordDialog(QDialog):
         super().__init__(parent)
         self.auth_manager = AuthManager()
         self.setWindowTitle("Change Password")
-        self.setWindowIcon(QIcon(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'travel_billing.ico')))
+        # Remove icon or use a simple one
         self.setModal(True)
         self.setFixedSize(450, 400)
         self.init_ui()
@@ -30,7 +30,7 @@ class ChangePasswordDialog(QDialog):
         """Initialize the dialog UI"""
         self.setStyleSheet("""
             QDialog {
-                background: white;
+                background-color: #1a1a1a;
             }
         """)
         
@@ -39,7 +39,7 @@ class ChangePasswordDialog(QDialog):
         layout.setContentsMargins(40, 40, 40, 40)
         
         # Title
-        title_label = QLabel("Change Password")
+        title_label = QLabel("🔐 Change Password")
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setFont(QFont("Segoe UI", 20, QFont.Bold))
         title_label.setFixedHeight(40)
@@ -51,7 +51,7 @@ class ChangePasswordDialog(QDialog):
         subtitle_label.setAlignment(Qt.AlignCenter)
         subtitle_label.setFont(QFont("Segoe UI", 10))
         subtitle_label.setFixedHeight(25)
-        subtitle_label.setStyleSheet("color: #64748b; background: transparent;")
+        subtitle_label.setStyleSheet("color: #94a3b8; background: transparent;")
         layout.addWidget(subtitle_label)
         
         layout.addSpacing(10)
@@ -59,7 +59,7 @@ class ChangePasswordDialog(QDialog):
         # Current Password
         current_label = QLabel("Current Password")
         current_label.setFont(QFont("Segoe UI", 10, QFont.Bold))
-        current_label.setStyleSheet("color: #1e293b; background: transparent;")
+        current_label.setStyleSheet("color: #e2e8f0; background: transparent;")
         layout.addWidget(current_label)
         
         self.current_password = QLineEdit()
@@ -70,14 +70,14 @@ class ChangePasswordDialog(QDialog):
         self.current_password.setStyleSheet("""
             QLineEdit {
                 padding: 10px 15px;
-                border: 2px solid #e2e8f0;
+                border: none;
                 border-radius: 8px;
-                background-color: #f8fafc;
-                color: #1e293b;
+                background-color: #1e1e1e;
+                color: #ffffff;
             }
             QLineEdit:focus {
                 border: 2px solid #7c3aed;
-                background-color: white;
+                background-color: #2a2a2a;
             }
         """)
         layout.addWidget(self.current_password)
@@ -85,7 +85,7 @@ class ChangePasswordDialog(QDialog):
         # New Password
         new_label = QLabel("New Password")
         new_label.setFont(QFont("Segoe UI", 10, QFont.Bold))
-        new_label.setStyleSheet("color: #1e293b; background: transparent; margin-top: 10px;")
+        new_label.setStyleSheet("color: #e2e8f0; background: transparent; margin-top: 10px;")
         layout.addWidget(new_label)
         
         self.new_password = QLineEdit()
@@ -96,14 +96,14 @@ class ChangePasswordDialog(QDialog):
         self.new_password.setStyleSheet("""
             QLineEdit {
                 padding: 10px 15px;
-                border: 2px solid #e2e8f0;
+                border: none;
                 border-radius: 8px;
-                background-color: #f8fafc;
-                color: #1e293b;
+                background-color: #1e1e1e;
+                color: #ffffff;
             }
             QLineEdit:focus {
                 border: 2px solid #7c3aed;
-                background-color: white;
+                background-color: #2a2a2a;
             }
         """)
         layout.addWidget(self.new_password)
@@ -111,7 +111,7 @@ class ChangePasswordDialog(QDialog):
         # Confirm Password
         confirm_label = QLabel("Confirm New Password")
         confirm_label.setFont(QFont("Segoe UI", 10, QFont.Bold))
-        confirm_label.setStyleSheet("color: #1e293b; background: transparent; margin-top: 10px;")
+        confirm_label.setStyleSheet("color: #e2e8f0; background: transparent; margin-top: 10px;")
         layout.addWidget(confirm_label)
         
         self.confirm_password = QLineEdit()
@@ -122,14 +122,14 @@ class ChangePasswordDialog(QDialog):
         self.confirm_password.setStyleSheet("""
             QLineEdit {
                 padding: 10px 15px;
-                border: 2px solid #e2e8f0;
+                border: none;
                 border-radius: 8px;
-                background-color: #f8fafc;
-                color: #1e293b;
+                background-color: #1e1e1e;
+                color: #ffffff;
             }
             QLineEdit:focus {
                 border: 2px solid #7c3aed;
-                background-color: white;
+                background-color: #2a2a2a;
             }
         """)
         self.confirm_password.returnPressed.connect(self.change_password)
@@ -148,13 +148,14 @@ class ChangePasswordDialog(QDialog):
         cancel_btn.setMinimumWidth(130)
         cancel_btn.setStyleSheet("""
             QPushButton {
-                background-color: #f1f5f9;
-                color: #64748b;
+                background-color: #333;
+                color: #94a3b8;
                 border: none;
                 border-radius: 8px;
             }
             QPushButton:hover {
-                background-color: #e2e8f0;
+                background-color: #3a3a3a;
+                border: 2px solid #7c3aed;
             }
         """)
         cancel_btn.clicked.connect(self.reject)
@@ -176,6 +177,10 @@ class ChangePasswordDialog(QDialog):
             QPushButton:hover {
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                     stop:0 #6d28d9, stop:1 #0d9488);
+            }
+            QPushButton:pressed {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 #5b21b6, stop:1 #0f766e);
             }
         """)
         save_btn.clicked.connect(self.change_password)

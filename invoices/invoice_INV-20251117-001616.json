@@ -1,0 +1,81 @@
+{
+    "invoice_number": "INV-20251117-001616",
+    "invoice_date": "17/11/2025",
+    "customer_name": "",
+    "contact_number": "",
+    "customer_address": "",
+    "items": [
+        {
+            "passenger_name": "fidha",
+            "pnr": "345678",
+            "sector": "Local",
+            "supplier": "Qatar Airways",
+            "class": "Business",
+            "price": 800.0,
+            "qty": 1.0,
+            "tax": 5.0,
+            "amount": "\u20b9 840.00"
+        },
+        {
+            "passenger_name": "jaseel",
+            "pnr": "56789",
+            "sector": "Local",
+            "supplier": "IndiGo",
+            "class": "Economy",
+            "price": 780.0,
+            "qty": 1.0,
+            "tax": 6.0,
+            "amount": "\u20b9 826.80"
+        },
+        {
+            "passenger_name": "fayiz",
+            "pnr": "56789",
+            "sector": "Local",
+            "supplier": "IndiGo",
+            "class": "Economy",
+            "price": 900.0,
+            "qty": 1.0,
+            "tax": 4.0,
+            "amount": "\u20b9 936.00"
+        },
+        {
+            "passenger_name": "",
+            "pnr": "",
+            "sector": "Select Sector",
+            "supplier": "Select Supplier",
+            "class": "Economy",
+            "price": 0.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 0.00"
+        },
+        {
+            "passenger_name": "",
+            "pnr": "",
+            "sector": "Select Sector",
+            "supplier": "Select Supplier",
+            "class": "Economy",
+            "price": 0.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 0.00"
+        },
+        {
+            "passenger_name": "",
+            "pnr": "",
+            "sector": "Select Sector",
+            "supplier": "Select Supplier",
+            "class": "Economy",
+            "price": 0.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 0.00"
+        }
+    ],
+    "subtotal": "\u20b92480.00",
+    "discount": "0.00",
+    "tax": "\u20b9122.80",
+    "total": "\u20b92602.80",
+    "received": "",
+    "balance": "\u20b92602.80"
+}

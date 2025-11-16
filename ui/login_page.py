@@ -26,37 +26,35 @@ class LoginPage(QWidget):
     def __init__(self):
         super().__init__()
         self.auth_manager = AuthManager()
-        self.setWindowTitle("Billing Software - Login")
-        self.setWindowIcon(QIcon(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'travel_billing.ico')))
+        self.setWindowTitle("Travel Agency Billing Software - Login")
+        # Remove icon or use a simple one
         self.init_ui()
         
     def init_ui(self):
-        """Initialize the login UI"""
+        """Initialize the login UI with dark theme matching the dashboard"""
         # Main layout
         main_layout = QVBoxLayout()
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
         
-        # Create centered container with software theme
+        # Dark background container matching dashboard theme
         container = QFrame()
         container.setStyleSheet("""
             QFrame {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                    stop:0 #1a0b2e, stop:1 #16213e);
+                background-color: #1a1a1a;
             }
         """)
         
         container_layout = QVBoxLayout(container)
         container_layout.setAlignment(Qt.AlignCenter)
         
-        # Login card with gradient border effect
+        # Login card with dark theme
         login_card = QFrame()
         login_card.setFixedSize(500, 680)
         login_card.setStyleSheet("""
             QFrame {
-                background-color: white;
-                border-radius: 20px;
-                border: none;
+                background-color: #252525;
+                border-radius: 15px;
             }
         """)
         
@@ -64,27 +62,25 @@ class LoginPage(QWidget):
         card_layout.setSpacing(20)
         card_layout.setContentsMargins(50, 50, 50, 50)
         
-        # Logo/Icon section with gradient
+        # Logo/Icon section with purple accent
         icon_container = QLabel()
         icon_container.setAlignment(Qt.AlignCenter)
         icon_container.setFixedHeight(100)
         icon_container.setStyleSheet("""
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                stop:0 #7c3aed, stop:1 #14b8a6);
+            background-color: #7c3aed;
             border-radius: 50px;
             font-size: 72px;
         """)
-        icon_container.setText("🔐")
+        icon_container.setText("🎫")
         card_layout.addWidget(icon_container)
         
-        # Title with gradient color
+        # Title with purple accent
         title_label = QLabel("Welcome Back")
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setFont(QFont("Segoe UI", 28, QFont.Bold))
         title_label.setFixedHeight(50)
         title_label.setStyleSheet("""
-            color: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                stop:0 #7c3aed, stop:1 #14b8a6);
+            color: #7c3aed;
             background: transparent;
         """)
         card_layout.addWidget(title_label)
@@ -94,14 +90,14 @@ class LoginPage(QWidget):
         subtitle_label.setAlignment(Qt.AlignCenter)
         subtitle_label.setFont(QFont("Segoe UI", 11))
         subtitle_label.setFixedHeight(30)
-        subtitle_label.setStyleSheet("color: #64748b; background: transparent; margin-bottom: 10px;")
+        subtitle_label.setStyleSheet("color: #94a3b8; background: transparent; margin-bottom: 10px;")
         card_layout.addWidget(subtitle_label)
         
         # Password field
         password_label = QLabel("Password")
         password_label.setFont(QFont("Segoe UI", 11, QFont.Bold))
         password_label.setFixedHeight(25)
-        password_label.setStyleSheet("color: #1e293b; background: transparent; margin-top: 10px;")
+        password_label.setStyleSheet("color: #e2e8f0; background: transparent; margin-top: 10px;")
         card_layout.addWidget(password_label)
         
         self.password_input = QLineEdit()
@@ -112,15 +108,15 @@ class LoginPage(QWidget):
         self.password_input.setStyleSheet("""
             QLineEdit {
                 padding: 12px 15px;
-                border: 2px solid #e2e8f0;
+                border: none;
                 border-radius: 10px;
-                background-color: #f8fafc;
-                color: #1e293b;
+                background-color: #1e1e1e;
+                color: #ffffff;
                 font-size: 14px;
             }
             QLineEdit:focus {
                 border: 2px solid #7c3aed;
-                background-color: white;
+                background-color: #2a2a2a;
             }
         """)
         self.password_input.returnPressed.connect(self.handle_login)
@@ -131,7 +127,7 @@ class LoginPage(QWidget):
         hint_label.setAlignment(Qt.AlignCenter)
         hint_label.setFont(QFont("Segoe UI", 10))
         hint_label.setFixedHeight(30)
-        hint_label.setStyleSheet("color: #94a3b8; background: transparent;")
+        hint_label.setStyleSheet("color: #64748b; background: transparent;")
         card_layout.addWidget(hint_label)
         
         # Add spacer
@@ -149,24 +145,25 @@ class LoginPage(QWidget):
         self.reset_btn.setMinimumWidth(150)
         self.reset_btn.setStyleSheet("""
             QPushButton {
-                background-color: #f1f5f9;
-                color: #64748b;
+                background-color: #333;
+                color: #94a3b8;
                 border: none;
                 border-radius: 10px;
                 padding: 12px 30px;
                 font-size: 14px;
             }
             QPushButton:hover {
-                background-color: #e2e8f0;
+                background-color: #3a3a3a;
+                border: 2px solid #7c3aed;
             }
             QPushButton:pressed {
-                background-color: #cbd5e1;
+                background-color: #2a2a2a;
             }
         """)
         self.reset_btn.clicked.connect(self.clear_password)
         button_layout.addWidget(self.reset_btn)
         
-        # Login button
+        # Login button with purple-teal gradient
         self.login_btn = QPushButton("Login")
         self.login_btn.setFont(QFont("Segoe UI", 12, QFont.Bold))
         self.login_btn.setCursor(Qt.PointingHandCursor)
@@ -217,11 +214,11 @@ class LoginPage(QWidget):
         
         # Footer info
         card_layout.addSpacing(5)
-        footer_label = QLabel("Travel Billing Software v1.0")
+        footer_label = QLabel("Travel Agency Billing Software v2.0")
         footer_label.setAlignment(Qt.AlignCenter)
         footer_label.setFont(QFont("Segoe UI", 9))
         footer_label.setFixedHeight(25)
-        footer_label.setStyleSheet("color: #94a3b8; background: transparent;")
+        footer_label.setStyleSheet("color: #64748b; background: transparent;")
         card_layout.addWidget(footer_label)
         
         # Add card to container
@@ -235,7 +232,7 @@ class LoginPage(QWidget):
         self.password_input.setFocus()
     
     def handle_login(self):
-        """Handle login button click"""
+        """Handle login button click - direct login without popup"""
         password = self.password_input.text().strip()
         
         if not password:
@@ -243,7 +240,7 @@ class LoginPage(QWidget):
             return
         
         if self.auth_manager.verify_password(password):
-            QMessageBox.information(self, "Success", "Login successful!")
+            # Direct login - no success popup
             self.login_successful.emit()
             self.close()
         else:

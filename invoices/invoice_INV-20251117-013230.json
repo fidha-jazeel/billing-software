@@ -1,0 +1,70 @@
+{
+    "invoice_number": "INV-20251117-013230",
+    "invoice_date": "17/11/2025",
+    "customer_name": "",
+    "contact_number": "",
+    "customer_address": "",
+    "items": [
+        {
+            "passenger_name": "dfgh",
+            "pnr": "fghjk",
+            "sector": "Select Sector",
+            "supplier": "Select Supplier",
+            "class": "Economy",
+            "price": 45000.0,
+            "qty": 1.0,
+            "tax": 90.0,
+            "amount": "\u20b9 85500.00"
+        },
+        {
+            "passenger_name": "",
+            "pnr": "",
+            "sector": "Select Sector",
+            "supplier": "Select Supplier",
+            "class": "Economy",
+            "price": 0.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 0.00"
+        },
+        {
+            "passenger_name": "",
+            "pnr": "",
+            "sector": "Select Sector",
+            "supplier": "Select Supplier",
+            "class": "Economy",
+            "price": 0.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 0.00"
+        },
+        {
+            "passenger_name": "",
+            "pnr": "",
+            "sector": "Select Sector",
+            "supplier": "Select Supplier",
+            "class": "Economy",
+            "price": 0.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 0.00"
+        },
+        {
+            "passenger_name": "",
+            "pnr": "",
+            "sector": "Select Sector",
+            "supplier": "Select Supplier",
+            "class": "Economy",
+            "price": 0.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 0.00"
+        }
+    ],
+    "subtotal": "\u20b945000.00",
+    "discount": "0.00",
+    "tax": "\u20b940500.00",
+    "total": "\u20b985500.00",
+    "received": "",
+    "balance": "\u20b985500.00"
+}

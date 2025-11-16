@@ -1,0 +1,136 @@
+{
+    "invoice_number": "INV-20251117-011511",
+    "invoice_date": "17/11/2025",
+    "customer_name": "fidha",
+    "contact_number": "6578909098",
+    "customer_address": "moochikkottathil(h)",
+    "items": [
+        {
+            "passenger_name": "fidha",
+            "pnr": "34fyjkl,l",
+            "sector": "Local",
+            "supplier": "IndiGo",
+            "class": "Business",
+            "price": 7800.0,
+            "qty": 3.0,
+            "tax": 6.0,
+            "amount": "\u20b9 24804.00"
+        },
+        {
+            "passenger_name": "sneha",
+            "pnr": "erd5r67t",
+            "sector": "Leisure",
+            "supplier": "Vistara",
+            "class": "Premium Economy",
+            "price": 5598.0,
+            "qty": 7.0,
+            "tax": 50.0,
+            "amount": "\u20b9 58779.00"
+        },
+        {
+            "passenger_name": "sruthi",
+            "pnr": "drtfg678ui",
+            "sector": "International",
+            "supplier": "Air India",
+            "class": "Business",
+            "price": 900.0,
+            "qty": 5.0,
+            "tax": 40.0,
+            "amount": "\u20b9 6300.00"
+        },
+        {
+            "passenger_name": "vismaya",
+            "pnr": "vghj789",
+            "sector": "Charter",
+            "supplier": "Air Asia",
+            "class": "Business",
+            "price": 8900.0,
+            "qty": 4.0,
+            "tax": 40.0,
+            "amount": "\u20b9 49840.00"
+        },
+        {
+            "passenger_name": "unnimaya",
+            "pnr": "gyhj78",
+            "sector": "Regional",
+            "supplier": "Emirates Airlines",
+            "class": "Economy",
+            "price": 980.0,
+            "qty": 14.0,
+            "tax": 60.0,
+            "amount": "\u20b9 21952.00"
+        },
+        {
+            "passenger_name": "",
+            "pnr": "",
+            "sector": "Select Sector",
+            "supplier": "Qatar Airways",
+            "class": "Economy",
+            "price": 0.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 0.00"
+        },
+        {
+            "passenger_name": "",
+            "pnr": "",
+            "sector": "Select Sector",
+            "supplier": "Select Supplier",
+            "class": "Economy",
+            "price": 0.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 0.00"
+        },
+        {
+            "passenger_name": "",
+            "pnr": "",
+            "sector": "Select Sector",
+            "supplier": "Emirates Airlines",
+            "class": "Economy",
+            "price": 0.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 0.00"
+        },
+        {
+            "passenger_name": "",
+            "pnr": "",
+            "sector": "Select Sector",
+            "supplier": "Select Supplier",
+            "class": "Economy",
+            "price": 0.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 0.00"
+        },
+        {
+            "passenger_name": "",
+            "pnr": "",
+            "sector": "Select Sector",
+            "supplier": "Select Supplier",
+            "class": "Economy",
+            "price": 0.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 0.00"
+        },
+        {
+            "passenger_name": "",
+            "pnr": "",
+            "sector": "Select Sector",
+            "supplier": "Select Supplier",
+            "class": "Economy",
+            "price": 0.0,
+            "qty": 1.0,
+            "tax": 4.0,
+            "amount": "\u20b9 0.00"
+        }
+    ],
+    "subtotal": "\u20b9116406.00",
+    "discount": "0.00",
+    "tax": "\u20b945269.00",
+    "total": "\u20b9161675.00",
+    "received": "",
+    "balance": "\u20b9161675.00"
+}

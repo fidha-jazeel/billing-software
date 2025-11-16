@@ -26,10 +26,21 @@ class DatabaseManager:
     def _connect(self):
         """Establish database connection with proper settings."""
         try:
-            self.conn = sqlite3.connect(self.db_path, check_same_thread=False)
+            # Use timeout and WAL mode to prevent database locks
+            self.conn = sqlite3.connect(
+                self.db_path, 
+                check_same_thread=False,
+                timeout=30.0  # 30 second timeout
+            )
             self.conn.row_factory = sqlite3.Row
+            
+            # Enable WAL mode for better concurrent access
+            self.conn.execute("PRAGMA journal_mode=WAL")
             # Enable foreign keys
             self.conn.execute("PRAGMA foreign_keys = ON")
+            # Set busy timeout
+            self.conn.execute("PRAGMA busy_timeout = 30000")
+            
             print(f"✓ Database connected successfully: {self.db_path}")
         except Exception as e:
             print(f"✗ Database connection error: {e}")
@@ -125,61 +136,78 @@ class DatabaseManager:
         Returns:
             bool: True if successful, False otherwise
         """
-        try:
-            cur = self.conn.cursor()
-            
-            # Insert invoice header
-            cur.execute("""
-                INSERT INTO invoices (
-                    invoice_number, invoice_date, customer_name, contact_number,
-                    subtotal, tax, total, received, balance, status
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                invoice_data.get('invoice_number'),
-                invoice_data.get('invoice_date'),
-                invoice_data.get('customer_name'),
-                invoice_data.get('contact_number'),
-                invoice_data.get('subtotal', 0),
-                invoice_data.get('tax', 0),
-                invoice_data.get('total', 0),
-                invoice_data.get('received', 0),
-                invoice_data.get('balance', 0),
-                invoice_data.get('status', 'Pending')
-            ))
-            
-            invoice_id = cur.lastrowid
-            
-            # Insert invoice items
-            items = invoice_data.get('items', [])
-            for item in items:
+        max_retries = 3
+        retry_count = 0
+        
+        while retry_count < max_retries:
+            try:
+                cur = self.conn.cursor()
+                
+                # Insert invoice header
                 cur.execute("""
-                    INSERT INTO invoice_items (
-                        invoice_id, item_name, ticket, sector, supplier,
-                        price, qty, tax_pct, amount
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    INSERT INTO invoices (
+                        invoice_number, invoice_date, customer_name, contact_number,
+                        subtotal, tax, total, received, balance, status
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
-                    invoice_id,
-                    item.get('item'),
-                    item.get('ticket'),
-                    item.get('sector'),
-                    item.get('supplier'),
-                    item.get('price', 0),
-                    item.get('qty', 1),
-                    item.get('tax', 0),
-                    item.get('amount', 0)
+                    invoice_data.get('invoice_number'),
+                    invoice_data.get('invoice_date'),
+                    invoice_data.get('customer_name'),
+                    invoice_data.get('contact_number'),
+                    invoice_data.get('subtotal', 0),
+                    invoice_data.get('tax', 0),
+                    invoice_data.get('total', 0),
+                    invoice_data.get('received', 0),
+                    invoice_data.get('balance', 0),
+                    invoice_data.get('status', 'Pending')
                 ))
-            
-            self.conn.commit()
-            print(f"✓ Invoice {invoice_data.get('invoice_number')} saved to database")
-            return True
-            
-        except sqlite3.IntegrityError as e:
-            print(f"✗ Invoice already exists: {e}")
-            return False
-        except Exception as e:
-            print(f"✗ Error saving invoice: {e}")
-            self.conn.rollback()
-            return False
+                
+                invoice_id = cur.lastrowid
+                
+                # Insert invoice items
+                items = invoice_data.get('items', [])
+                for item in items:
+                    cur.execute("""
+                        INSERT INTO invoice_items (
+                            invoice_id, item_name, ticket, sector, supplier,
+                            price, qty, tax_pct, amount
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (
+                        invoice_id,
+                        item.get('item'),
+                        item.get('ticket'),
+                        item.get('sector'),
+                        item.get('supplier'),
+                        item.get('price', 0),
+                        item.get('qty', 1),
+                        item.get('tax', 0),
+                        item.get('amount', 0)
+                    ))
+                
+                self.conn.commit()
+                print(f"✓ Invoice {invoice_data.get('invoice_number')} saved to database")
+                return True
+                
+            except sqlite3.OperationalError as e:
+                if "database is locked" in str(e) and retry_count < max_retries - 1:
+                    retry_count += 1
+                    print(f"⚠️  Database locked, retrying ({retry_count}/{max_retries})...")
+                    import time
+                    time.sleep(0.5)  # Wait 500ms before retry
+                    continue
+                else:
+                    print(f"✗ Database operational error: {e}")
+                    self.conn.rollback()
+                    return False
+            except sqlite3.IntegrityError as e:
+                print(f"✗ Invoice already exists: {e}")
+                return False
+            except Exception as e:
+                print(f"✗ Error saving invoice: {e}")
+                self.conn.rollback()
+                return False
+        
+        return False
     
     def get_invoice(self, invoice_number: str) -> Optional[Dict[str, Any]]:
         """Retrieve invoice by invoice number.
