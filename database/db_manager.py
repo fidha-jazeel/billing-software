@@ -1,4 +1,4 @@
-"""Enhanced SQLite database manager for Travel Agency Billing Software.
+"""Enhanced SQLite database manager for Al Chishtiya Travels Billing Software.
 Provides comprehensive database operations with proper error handling.
 """
 import sqlite3
@@ -26,11 +26,12 @@ class DatabaseManager:
     def _connect(self):
         """Establish database connection with proper settings."""
         try:
-            # Use timeout and WAL mode to prevent database locks
+            # Use isolation_level=None for autocommit mode to prevent locks
             self.conn = sqlite3.connect(
                 self.db_path, 
                 check_same_thread=False,
-                timeout=30.0  # 30 second timeout
+                timeout=10.0,  # 10 second timeout
+                isolation_level=None  # Autocommit mode
             )
             self.conn.row_factory = sqlite3.Row
             
@@ -39,7 +40,10 @@ class DatabaseManager:
             # Enable foreign keys
             self.conn.execute("PRAGMA foreign_keys = ON")
             # Set busy timeout
-            self.conn.execute("PRAGMA busy_timeout = 30000")
+            self.conn.execute("PRAGMA busy_timeout = 5000")
+            # Optimize for faster writes
+            self.conn.execute("PRAGMA synchronous = NORMAL")
+            self.conn.execute("PRAGMA cache_size = 10000")
             
             print(f"✓ Database connected successfully: {self.db_path}")
         except Exception as e:
@@ -136,43 +140,38 @@ class DatabaseManager:
         Returns:
             bool: True if successful, False otherwise
         """
-        max_retries = 3
-        retry_count = 0
-        
-        while retry_count < max_retries:
-            try:
-                cur = self.conn.cursor()
-                
-                # Insert invoice header
-                cur.execute("""
-                    INSERT INTO invoices (
-                        invoice_number, invoice_date, customer_name, contact_number,
-                        subtotal, tax, total, received, balance, status
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    invoice_data.get('invoice_number'),
-                    invoice_data.get('invoice_date'),
-                    invoice_data.get('customer_name'),
-                    invoice_data.get('contact_number'),
-                    invoice_data.get('subtotal', 0),
-                    invoice_data.get('tax', 0),
-                    invoice_data.get('total', 0),
-                    invoice_data.get('received', 0),
-                    invoice_data.get('balance', 0),
-                    invoice_data.get('status', 'Pending')
-                ))
-                
-                invoice_id = cur.lastrowid
-                
-                # Insert invoice items
-                items = invoice_data.get('items', [])
-                for item in items:
-                    cur.execute("""
-                        INSERT INTO invoice_items (
-                            invoice_id, item_name, ticket, sector, supplier,
-                            price, qty, tax_pct, amount
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """, (
+        try:
+            # Since we're using autocommit mode, use BEGIN IMMEDIATE for exclusive lock
+            self.conn.execute("BEGIN IMMEDIATE")
+            
+            cur = self.conn.cursor()
+            
+            # Insert invoice header
+            cur.execute("""
+                INSERT INTO invoices (
+                    invoice_number, invoice_date, customer_name, contact_number,
+                    subtotal, tax, total, received, balance, status
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                invoice_data.get('invoice_number'),
+                invoice_data.get('invoice_date'),
+                invoice_data.get('customer_name'),
+                invoice_data.get('contact_number'),
+                invoice_data.get('subtotal', 0),
+                invoice_data.get('tax', 0),
+                invoice_data.get('total', 0),
+                invoice_data.get('received', 0),
+                invoice_data.get('balance', 0),
+                invoice_data.get('status', 'Pending')
+            ))
+            
+            invoice_id = cur.lastrowid
+            
+            # Insert invoice items in batch for better performance
+            items = invoice_data.get('items', [])
+            if items:
+                item_values = [
+                    (
                         invoice_id,
                         item.get('item'),
                         item.get('ticket'),
@@ -182,32 +181,30 @@ class DatabaseManager:
                         item.get('qty', 1),
                         item.get('tax', 0),
                         item.get('amount', 0)
-                    ))
-                
-                self.conn.commit()
-                print(f"✓ Invoice {invoice_data.get('invoice_number')} saved to database")
-                return True
-                
-            except sqlite3.OperationalError as e:
-                if "database is locked" in str(e) and retry_count < max_retries - 1:
-                    retry_count += 1
-                    print(f"⚠️  Database locked, retrying ({retry_count}/{max_retries})...")
-                    import time
-                    time.sleep(0.5)  # Wait 500ms before retry
-                    continue
-                else:
-                    print(f"✗ Database operational error: {e}")
-                    self.conn.rollback()
-                    return False
-            except sqlite3.IntegrityError as e:
-                print(f"✗ Invoice already exists: {e}")
-                return False
-            except Exception as e:
-                print(f"✗ Error saving invoice: {e}")
-                self.conn.rollback()
-                return False
-        
-        return False
+                    )
+                    for item in items
+                ]
+                cur.executemany("""
+                    INSERT INTO invoice_items (
+                        invoice_id, item_name, ticket, sector, supplier,
+                        price, qty, tax_pct, amount
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, item_values)
+            
+            self.conn.execute("COMMIT")
+            print(f"✓ Invoice {invoice_data.get('invoice_number')} saved to database")
+            return True
+            
+        except sqlite3.IntegrityError as e:
+            self.conn.execute("ROLLBACK")
+            print(f"✗ Invoice already exists: {e}")
+            return False
+        except Exception as e:
+            self.conn.execute("ROLLBACK")
+            print(f"✗ Error saving invoice: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
     
     def get_invoice(self, invoice_number: str) -> Optional[Dict[str, Any]]:
         """Retrieve invoice by invoice number.

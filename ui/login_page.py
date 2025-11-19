@@ -133,42 +133,12 @@ class LoginPage(QWidget):
         # Add spacer
         card_layout.addSpacing(15)
         
-        # Buttons layout
-        button_layout = QHBoxLayout()
-        button_layout.setSpacing(15)
-        
-        # Reset button
-        self.reset_btn = QPushButton("Reset")
-        self.reset_btn.setFont(QFont("Segoe UI", 12, QFont.Bold))
-        self.reset_btn.setCursor(Qt.PointingHandCursor)
-        self.reset_btn.setFixedHeight(50)
-        self.reset_btn.setMinimumWidth(150)
-        self.reset_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #333;
-                color: #94a3b8;
-                border: none;
-                border-radius: 10px;
-                padding: 12px 30px;
-                font-size: 14px;
-            }
-            QPushButton:hover {
-                background-color: #3a3a3a;
-                border: 2px solid #7c3aed;
-            }
-            QPushButton:pressed {
-                background-color: #2a2a2a;
-            }
-        """)
-        self.reset_btn.clicked.connect(self.clear_password)
-        button_layout.addWidget(self.reset_btn)
-        
-        # Login button with purple-teal gradient
+        # Login button with purple-teal gradient (centered)
         self.login_btn = QPushButton("Login")
         self.login_btn.setFont(QFont("Segoe UI", 12, QFont.Bold))
         self.login_btn.setCursor(Qt.PointingHandCursor)
         self.login_btn.setFixedHeight(50)
-        self.login_btn.setMinimumWidth(150)
+        self.login_btn.setFixedWidth(300)
         self.login_btn.setStyleSheet("""
             QPushButton {
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
@@ -189,9 +159,7 @@ class LoginPage(QWidget):
             }
         """)
         self.login_btn.clicked.connect(self.handle_login)
-        button_layout.addWidget(self.login_btn)
-        
-        card_layout.addLayout(button_layout)
+        card_layout.addWidget(self.login_btn, alignment=Qt.AlignCenter)
         
         # Change Password Link
         change_password_btn = QPushButton("Change Password")

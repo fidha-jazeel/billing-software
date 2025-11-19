@@ -5,19 +5,19 @@ All static values and settings are centralized here for easy management.
 
 # ==================== COMPANY INFORMATION ====================
 COMPANY_INFO = {
-    "name": "Travel Agency",
+    "name": "Al Chishtiya Travels",
     "tagline": "Your Trusted Travel Partner",
-    "email": "info@travelagency.com",
+    "email": "info@alchishtiyatravels.com",
     "phone": "+1-234-567-8900",
     "address": "123 Business Street, City, Country",
-    "website": "www.travelagency.com",
+    "website": "www.alchishtiyatravels.com",
     "tax_id": "TAX123456789",
     "logo_path": None  # Set to image path if you have a logo
 }
 
 # ==================== APPLICATION SETTINGS ====================
 APP_CONFIG = {
-    "window_title": "Travel Agency - Billing Software",
+    "window_title": "Al Chishtiya Travels - Billing Software",
     "window_width": 1200,
     "window_height": 750,
     "version": "2.2.0",

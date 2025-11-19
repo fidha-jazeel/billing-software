@@ -1,0 +1,87 @@
+{
+    "invoice_number": "INV-20251117-201205",
+    "invoice_date": "17/11/2025",
+    "customer_name": "neyaara",
+    "contact_number": "67567898908",
+    "customer_address": "detrfghjbhk(H)",
+    "items": [
+        {
+            "passenger_name": "fidha",
+            "pnr": "",
+            "sector": "",
+            "supplier": "Air India",
+            "type": "",
+            "class": "Economy",
+            "price": 4500.0,
+            "qty": 1.0,
+            "tax": 2.0,
+            "amount": "\u20b9 4590.00"
+        },
+        {
+            "passenger_name": "nela",
+            "pnr": "",
+            "sector": "",
+            "supplier": "IndiGo",
+            "type": "",
+            "class": "Economy",
+            "price": 6700.0,
+            "qty": 1.0,
+            "tax": 5.0,
+            "amount": "\u20b9 7035.00"
+        },
+        {
+            "passenger_name": "gouri",
+            "pnr": "",
+            "sector": "",
+            "supplier": "Qatar Airways",
+            "type": "",
+            "class": "Economy",
+            "price": 800.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 800.00"
+        },
+        {
+            "passenger_name": "krishna",
+            "pnr": "",
+            "sector": "",
+            "supplier": "IndiGo",
+            "type": "",
+            "class": "Economy",
+            "price": 5600.0,
+            "qty": 1.0,
+            "tax": 90.0,
+            "amount": "\u20b9 10640.00"
+        },
+        {
+            "passenger_name": "",
+            "pnr": "",
+            "sector": "",
+            "supplier": "Select Supplier",
+            "type": "",
+            "class": "Economy",
+            "price": 0.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 0.00"
+        },
+        {
+            "passenger_name": "",
+            "pnr": "",
+            "sector": "",
+            "supplier": "Select Supplier",
+            "type": "",
+            "class": "Economy",
+            "price": 0.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 0.00"
+        }
+    ],
+    "subtotal": "\u20b917600.00",
+    "discount": "0.00",
+    "tax": "\u20b95465.00",
+    "total": "\u20b923065.00",
+    "received": "",
+    "balance": "\u20b923065.00"
+}

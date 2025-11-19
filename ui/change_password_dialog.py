@@ -23,7 +23,7 @@ class ChangePasswordDialog(QDialog):
         self.setWindowTitle("Change Password")
         # Remove icon or use a simple one
         self.setModal(True)
-        self.setFixedSize(450, 400)
+        self.setFixedSize(480, 560)
         self.init_ui()
         
     def init_ui(self):
@@ -35,26 +35,38 @@ class ChangePasswordDialog(QDialog):
         """)
         
         layout = QVBoxLayout()
-        layout.setSpacing(20)
+        layout.setSpacing(15)
         layout.setContentsMargins(40, 40, 40, 40)
         
+        # Icon
+        icon_label = QLabel("🔐")
+        icon_label.setAlignment(Qt.AlignCenter)
+        icon_label.setFont(QFont("Segoe UI", 42))
+        icon_label.setFixedSize(90, 90)
+        icon_label.setStyleSheet("""
+            background-color: #7c3aed;
+            border-radius: 45px;
+        """)
+        layout.addWidget(icon_label, alignment=Qt.AlignCenter)
+        
+        layout.addSpacing(10)
+        
         # Title
-        title_label = QLabel("🔐 Change Password")
+        title_label = QLabel("Change Password")
         title_label.setAlignment(Qt.AlignCenter)
-        title_label.setFont(QFont("Segoe UI", 20, QFont.Bold))
-        title_label.setFixedHeight(40)
-        title_label.setStyleSheet("color: #7c3aed; background: transparent;")
+        title_label.setFont(QFont("Segoe UI", 22, QFont.Bold))
+        title_label.setStyleSheet("color: #ffffff; background: transparent;")
         layout.addWidget(title_label)
         
         # Subtitle
         subtitle_label = QLabel("Enter your current password and new password")
         subtitle_label.setAlignment(Qt.AlignCenter)
         subtitle_label.setFont(QFont("Segoe UI", 10))
-        subtitle_label.setFixedHeight(25)
         subtitle_label.setStyleSheet("color: #94a3b8; background: transparent;")
+        subtitle_label.setWordWrap(True)
         layout.addWidget(subtitle_label)
         
-        layout.addSpacing(10)
+        layout.addSpacing(15)
         
         # Current Password
         current_label = QLabel("Current Password")
@@ -82,15 +94,17 @@ class ChangePasswordDialog(QDialog):
         """)
         layout.addWidget(self.current_password)
         
+        layout.addSpacing(5)
+        
         # New Password
         new_label = QLabel("New Password")
         new_label.setFont(QFont("Segoe UI", 10, QFont.Bold))
-        new_label.setStyleSheet("color: #e2e8f0; background: transparent; margin-top: 10px;")
+        new_label.setStyleSheet("color: #e2e8f0; background: transparent;")
         layout.addWidget(new_label)
         
         self.new_password = QLineEdit()
         self.new_password.setEchoMode(QLineEdit.Password)
-        self.new_password.setPlaceholderText("Enter new password")
+        self.new_password.setPlaceholderText("Enter new password (min. 4 characters)")
         self.new_password.setFont(QFont("Segoe UI", 11))
         self.new_password.setFixedHeight(45)
         self.new_password.setStyleSheet("""
@@ -108,10 +122,12 @@ class ChangePasswordDialog(QDialog):
         """)
         layout.addWidget(self.new_password)
         
+        layout.addSpacing(5)
+        
         # Confirm Password
         confirm_label = QLabel("Confirm New Password")
         confirm_label.setFont(QFont("Segoe UI", 10, QFont.Bold))
-        confirm_label.setStyleSheet("color: #e2e8f0; background: transparent; margin-top: 10px;")
+        confirm_label.setStyleSheet("color: #e2e8f0; background: transparent;")
         layout.addWidget(confirm_label)
         
         self.confirm_password = QLineEdit()
@@ -139,13 +155,13 @@ class ChangePasswordDialog(QDialog):
         
         # Buttons
         button_layout = QHBoxLayout()
-        button_layout.setSpacing(15)
+        button_layout.setSpacing(12)
         
         cancel_btn = QPushButton("Cancel")
         cancel_btn.setFont(QFont("Segoe UI", 11, QFont.Bold))
         cancel_btn.setCursor(Qt.PointingHandCursor)
         cancel_btn.setFixedHeight(45)
-        cancel_btn.setMinimumWidth(130)
+        cancel_btn.setMinimumWidth(140)
         cancel_btn.setStyleSheet("""
             QPushButton {
                 background-color: #333;
@@ -156,16 +172,17 @@ class ChangePasswordDialog(QDialog):
             QPushButton:hover {
                 background-color: #3a3a3a;
                 border: 2px solid #7c3aed;
+                color: #ffffff;
             }
         """)
         cancel_btn.clicked.connect(self.reject)
         button_layout.addWidget(cancel_btn)
         
-        save_btn = QPushButton("Change Password")
+        save_btn = QPushButton("✓ Change Password")
         save_btn.setFont(QFont("Segoe UI", 11, QFont.Bold))
         save_btn.setCursor(Qt.PointingHandCursor)
         save_btn.setFixedHeight(45)
-        save_btn.setMinimumWidth(130)
+        save_btn.setMinimumWidth(140)
         save_btn.setStyleSheet("""
             QPushButton {
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:0,

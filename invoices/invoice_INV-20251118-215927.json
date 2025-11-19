@@ -1,0 +1,27 @@
+{
+    "invoice_number": "INV-20251118-215927",
+    "invoice_date": "18/11/2025",
+    "customer_name": "sooryaghandh",
+    "contact_number": "",
+    "customer_address": "xdcfgvbhnjkm",
+    "items": [
+        {
+            "passenger_name": "jazeel",
+            "pnr": "u3123",
+            "sector": "auh to koc",
+            "supplier": "IndiGo",
+            "type": "ticket",
+            "class": "First Class",
+            "price": 13000.0,
+            "qty": 1.0,
+            "tax": 5.0,
+            "amount": "\u20b9 13650.00"
+        }
+    ],
+    "subtotal": "\u20b913000.00",
+    "discount": "0.00",
+    "tax": "\u20b9650.00",
+    "total": "\u20b913650.00",
+    "received": "",
+    "balance": "\u20b913650.00"
+}

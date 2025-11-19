@@ -1,0 +1,111 @@
+{
+    "invoice_number": "INV-20251117-073808",
+    "invoice_date": "17/11/2025",
+    "customer_name": "abc ",
+    "contact_number": "6235556878",
+    "customer_address": "kolkad(H)",
+    "items": [
+        {
+            "passenger_name": "iblu",
+            "pnr": "rdf78ghj",
+            "sector": "Charter",
+            "supplier": "IndiGo",
+            "type": "",
+            "class": "Premium Economy",
+            "price": 1200.0,
+            "qty": 2.0,
+            "tax": 75.0,
+            "amount": "\u20b9 4200.00"
+        },
+        {
+            "passenger_name": "hayan",
+            "pnr": "68989jh",
+            "sector": "International",
+            "supplier": "Air India",
+            "type": "",
+            "class": "Economy",
+            "price": 5600.0,
+            "qty": 1.0,
+            "tax": 70.0,
+            "amount": "\u20b9 9520.00"
+        },
+        {
+            "passenger_name": "hisana",
+            "pnr": "xfghj5678",
+            "sector": "International",
+            "supplier": "IndiGo",
+            "type": "",
+            "class": "Business",
+            "price": 5603.0,
+            "qty": 8.0,
+            "tax": 45.0,
+            "amount": "\u20b9 64994.80"
+        },
+        {
+            "passenger_name": "theressa",
+            "pnr": "fghj78",
+            "sector": "Corporate",
+            "supplier": "Emirates Airlines",
+            "type": "",
+            "class": "Economy",
+            "price": 6503.0,
+            "qty": 6.0,
+            "tax": 67.0,
+            "amount": "\u20b9 65160.06"
+        },
+        {
+            "passenger_name": "rajesh",
+            "pnr": "rtyghu78",
+            "sector": "International",
+            "supplier": "Vistara",
+            "type": "",
+            "class": "Economy",
+            "price": 6400.0,
+            "qty": 7.0,
+            "tax": 34.0,
+            "amount": "\u20b9 60032.00"
+        },
+        {
+            "passenger_name": "",
+            "pnr": "",
+            "sector": "Select Sector",
+            "supplier": "Select Supplier",
+            "type": "",
+            "class": "First Class",
+            "price": 0.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 0.00"
+        },
+        {
+            "passenger_name": "",
+            "pnr": "",
+            "sector": "Select Sector",
+            "supplier": "Select Supplier",
+            "type": "",
+            "class": "Economy",
+            "price": 0.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 0.00"
+        },
+        {
+            "passenger_name": "",
+            "pnr": "",
+            "sector": "Select Sector",
+            "supplier": "Select Supplier",
+            "type": "",
+            "class": "Economy",
+            "price": 0.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 0.00"
+        }
+    ],
+    "subtotal": "\u20b9136642.00",
+    "discount": "0.00",
+    "tax": "\u20b967264.86",
+    "total": "\u20b9203906.86",
+    "received": "",
+    "balance": "\u20b9203906.86"
+}

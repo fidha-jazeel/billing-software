@@ -1,0 +1,75 @@
+{
+    "invoice_number": "INV-20251117-121059",
+    "invoice_date": "17/11/2025",
+    "customer_name": "rajesh",
+    "contact_number": "6235246789",
+    "customer_address": "fgujkm",
+    "items": [
+        {
+            "passenger_name": "shenna",
+            "pnr": "",
+            "sector": "",
+            "supplier": "Select Supplier",
+            "type": "",
+            "class": "Economy",
+            "price": 676.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 676.00"
+        },
+        {
+            "passenger_name": "fghhjk",
+            "pnr": "",
+            "sector": "",
+            "supplier": "Select Supplier",
+            "type": "",
+            "class": "Economy",
+            "price": 7799.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 7799.00"
+        },
+        {
+            "passenger_name": "hbbhjk",
+            "pnr": "",
+            "sector": "",
+            "supplier": "Select Supplier",
+            "type": "",
+            "class": "Economy",
+            "price": 5600.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 5600.00"
+        },
+        {
+            "passenger_name": "bjn",
+            "pnr": "",
+            "sector": "",
+            "supplier": "Select Supplier",
+            "type": "",
+            "class": "Economy",
+            "price": 78880.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 78880.00"
+        },
+        {
+            "passenger_name": "bjnkm",
+            "pnr": "",
+            "sector": "",
+            "supplier": "Select Supplier",
+            "type": "",
+            "class": "Economy",
+            "price": 466.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 466.00"
+        }
+    ],
+    "subtotal": "\u20b993421.00",
+    "discount": "0.00",
+    "tax": "\u20b90.00",
+    "total": "\u20b993421.00",
+    "received": "",
+    "balance": "\u20b993421.00"
+}

@@ -1,0 +1,51 @@
+{
+    "invoice_number": "INV-20251118-141208",
+    "invoice_date": "18/11/2025",
+    "customer_name": "hawwa",
+    "contact_number": "",
+    "customer_address": "",
+    "items": [
+        {
+            "passenger_name": "esdrftgyh",
+            "pnr": "",
+            "sector": "",
+            "supplier": "Select Supplier",
+            "type": "rty",
+            "class": "Economy",
+            "price": 45678.0,
+            "qty": 1.0,
+            "tax": 56.0,
+            "amount": "\u20b9 71257.68"
+        },
+        {
+            "passenger_name": "ertyhu",
+            "pnr": "",
+            "sector": "",
+            "supplier": "Select Supplier",
+            "type": "erwtyu",
+            "class": "Economy",
+            "price": 23456.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 23456.00"
+        },
+        {
+            "passenger_name": "e5rt6y78u",
+            "pnr": "",
+            "sector": "",
+            "supplier": "Select Supplier",
+            "type": "e4t5fryui",
+            "class": "Economy",
+            "price": 3456.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 3456.00"
+        }
+    ],
+    "subtotal": "\u20b972590.00",
+    "discount": "0.00",
+    "tax": "\u20b925579.68",
+    "total": "\u20b998169.68",
+    "received": "",
+    "balance": "\u20b998169.68"
+}
