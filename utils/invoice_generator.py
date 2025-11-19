@@ -11,7 +11,6 @@ Usage:
     from utils.invoice_generator import generate_invoice_pdf
     generate_invoice_pdf(invoice_data, "/path/to/out.pdf")
 """
-
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -25,34 +24,75 @@ import os
 from datetime import datetime
 import math
 
-# Try to register a good TTF font; fall back to Helvetica
+# ---------------------------
+# FONT REGISTRATION (Unicode-safe)
+# ---------------------------
+# Register Unicode fonts (Regular + Bold)
 try:
-    _ttf_path = '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'
-    if os.path.exists(_ttf_path):
-        pdfmetrics.registerFont(TTFont('DejaVuSans', _ttf_path))
-        DEFAULT_FONT = 'DejaVuSans'
-    else:
-        DEFAULT_FONT = 'Helvetica'
-except Exception:
-    DEFAULT_FONT = 'Helvetica'
+    base = os.path.join(os.path.dirname(__file__), '..', 'fonts')
 
+    reg_path = os.path.join(base, 'DejaVuSans.ttf')
+    bold_path = os.path.join(base, 'DejaVuSans-Bold.ttf')
+
+    if os.path.exists(reg_path):
+        pdfmetrics.registerFont(TTFont('DejaVuSans', reg_path))
+
+    if os.path.exists(bold_path):
+        pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', bold_path))
+
+    # REGISTER FAMILY (fixes bold detection)
+    pdfmetrics.registerFontFamily(
+        'DejaVuSans',
+        normal='DejaVuSans',
+        bold='DejaVuSans-Bold',
+        italic='DejaVuSans',
+        boldItalic='DejaVuSans-Bold'
+    )
+
+    DEFAULT_FONT = 'DejaVuSans'
+    DEFAULT_FONT_BOLD = 'DejaVuSans-Bold'
+
+except Exception as e:
+    print("Font registration error:", e)
+    DEFAULT_FONT = 'Helvetica'
+    DEFAULT_FONT_BOLD = 'Helvetica-Bold'
+
+
+# ---------------------------
+# STYLES
+# ---------------------------
 styles = getSampleStyleSheet()
-styles.add(ParagraphStyle(name='H1', fontName=DEFAULT_FONT, fontSize=18, leading=22, spaceAfter=6))
-styles.add(ParagraphStyle(name='H2', fontName=DEFAULT_FONT, fontSize=12, leading=14, spaceAfter=4))
+styles.add(ParagraphStyle(name='H1', fontName=DEFAULT_FONT_BOLD, fontSize=18, leading=22, spaceAfter=6))
+styles.add(ParagraphStyle(name='H2', fontName=DEFAULT_FONT_BOLD, fontSize=12, leading=14, spaceAfter=4))
 styles.add(ParagraphStyle(name='NormalSmall', fontName=DEFAULT_FONT, fontSize=9, leading=11))
 styles.add(ParagraphStyle(name='TableCell', fontName=DEFAULT_FONT, fontSize=9, leading=11))
-styles.add(ParagraphStyle(name='TableCellBold', fontName=DEFAULT_FONT, fontSize=9, leading=11, spaceAfter=2, leadingSpace=2))
+styles.add(ParagraphStyle(name='TableCellBold', fontName=DEFAULT_FONT_BOLD, fontSize=9, leading=11, spaceAfter=2))
 styles.add(ParagraphStyle(name='Footer', fontName=DEFAULT_FONT, fontSize=8, leading=10, alignment=1))
 
-CURRENCY = "₹"  # change if needed
+try:
+    styles['Normal'].fontName = DEFAULT_FONT
+    styles['NormalSmall'].fontName = DEFAULT_FONT
+    styles['TableCell'].fontName = DEFAULT_FONT
+except Exception:
+    pass
 
-def _format_currency(val):
+
+# Default currency (used only if invoice_data doesn't provide one)
+DEFAULT_CURRENCY = "₹"
+
+# ---------------------------
+# UTILITIES
+# ---------------------------
+def _format_currency(val, currency_symbol=None):
+    """Format numeric value using currency symbol. Safe fallback for non-numbers."""
     try:
         v = float(val)
-        # thousands separator, two decimals
-        return f"{CURRENCY} {v:,.2f}"
+        cur = currency_symbol or DEFAULT_CURRENCY
+        # ensure space after symbol and thousands separator
+        return f"{cur} {v:,.2f}"
     except Exception:
-        return f"{CURRENCY} 0.00"
+        cur = currency_symbol or DEFAULT_CURRENCY
+        return f"{cur} 0.00"
 
 class HorizontalLine(Flowable):
     """Simple horizontal line flowable."""
@@ -82,15 +122,14 @@ def _on_page(canvas, doc, company, invoice_meta):
     canvas.setFillColor(colors.HexColor('#0b3d91'))
     canvas.drawString(margin, header_y, company.get('name', 'Company Name'))
 
-    # Company address beneath with normal font
+    # Company address beneath with normal font (limited lines to avoid congestion)
     canvas.setFont(DEFAULT_FONT, 8)
     canvas.setFillColor(colors.HexColor('#333333'))
     addr_lines = str(company.get('address','')).splitlines()
-    for i, ln in enumerate(addr_lines[:3]):  # limit lines to avoid congestion
+    for i, ln in enumerate(addr_lines[:3]):  # limit lines
         canvas.drawString(margin, header_y - (12 + i*10), ln)
 
     # Right: Invoice meta block
-    meta_x = width - margin - 180*mm
     canvas.setFont(DEFAULT_FONT, 9)
     canvas.setFillColor(colors.black)
     canvas.drawRightString(width - margin, header_y, f"Invoice: {invoice_meta.get('number','')}")
@@ -105,17 +144,19 @@ def _on_page(canvas, doc, company, invoice_meta):
     canvas.drawCentredString(width/2.0, footer_y, f"Page {doc.page} • Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
     note = company.get('footer_note', '')
     if note:
-        # left align small footer note
-        canvas.drawString(margin, footer_y + 12, note[:140])  # trimmed
+        # left align small footer note (trimmed)
+        canvas.drawString(margin, footer_y + 12, note[:140])
 
     canvas.restoreState()
 
-def _build_items_table(items):
+# ---------------------------
+# ITEMS TABLE BUILDER (now accepts currency symbol)
+# ---------------------------
+def _build_items_table(items, currency_symbol):
     """
     Build the items table data and compute totals.
     Expects items as list of dicts with keys:
       passenger_name, pnr, sector, supplier, type, class, qty, unit_price, tax_pct
-    If the passed item uses 'description', it will be ignored in favor of structured fields.
     """
     header = [
         'S.No', 'Passenger', 'PNR', 'Sector', 'Supplier', 'Class', 'Qty', 'Unit Price', 'Tax %', 'Amount'
@@ -131,7 +172,6 @@ def _build_items_table(items):
         sector = it.get('sector','')
         supplier = it.get('supplier','')
         cls = it.get('class') or it.get('travel_class') or ''
-        typ = it.get('type') or ''
         qty = float(it.get('qty', 0) or 0)
         unit = float(it.get('unit_price', it.get('price', 0) or 0))
         tax_pct = float(it.get('tax_pct', it.get('tax', 0) or 0))
@@ -143,11 +183,10 @@ def _build_items_table(items):
         subtotal += line_sub
         total_tax += tax_amt
 
-        # Use Paragraph for passenger to allow wrapping
+        # Use Paragraph for passenger, supplier, sector so long text wraps
         passenger_para = Paragraph(str(passenger), styles['TableCell'])
         supplier_para = Paragraph(str(supplier), styles['TableCell'])
         sector_para = Paragraph(str(sector), styles['TableCell'])
-        typ_para = Paragraph(str(typ), styles['TableCell'])
 
         row = [
             str(i),
@@ -157,15 +196,18 @@ def _build_items_table(items):
             supplier_para,
             Paragraph(str(cls), styles['TableCell']),
             str(int(qty) if qty.is_integer() else f"{qty:g}"),
-            _format_currency(unit),
-            f"{tax_pct:.2f}",
-            _format_currency(line_total)
+            Paragraph(_format_currency(unit, currency_symbol), styles['TableCell']),
+            Paragraph(f"{tax_pct:.2f}", styles['TableCell']),
+            Paragraph(_format_currency(line_total, currency_symbol), styles['TableCell'])
         ]
 
         data.append(row)
 
     return data, subtotal, total_tax
 
+# ---------------------------
+# MAIN GENERATOR
+# ---------------------------
 def generate_invoice_pdf(invoice_data: dict, output_path: str):
     """
     invoice_data expected keys:
@@ -176,10 +218,12 @@ def generate_invoice_pdf(invoice_data: dict, output_path: str):
       discount: numeric (optional)
       notes: string (optional)
       terms: string (optional)
+      currency: symbol (optional, e.g. '₹' or '$')
     """
     # Ensure directory exists
     os.makedirs(os.path.dirname(output_path) or '.', exist_ok=True)
 
+    # Margins chosen to be safe for most printers
     doc = SimpleDocTemplate(output_path, pagesize=A4,
                             leftMargin=15*mm, rightMargin=15*mm,
                             topMargin=38*mm, bottomMargin=28*mm)
@@ -192,9 +236,9 @@ def generate_invoice_pdf(invoice_data: dict, output_path: str):
     notes = invoice_data.get('notes', '')
     terms = invoice_data.get('terms', '')
     discount = float(invoice_data.get('discount', 0) or 0)
+    currency_symbol = invoice_data.get('currency', DEFAULT_CURRENCY)
 
     # Header area: optionally render logo on right, company name + address on left
-    header_table_data = []
     left = []
     left.append(Paragraph(company.get('name', 'Company Name'), styles['H1']))
     if company.get('tagline'):
@@ -207,10 +251,12 @@ def generate_invoice_pdf(invoice_data: dict, output_path: str):
     logo_path = company.get('logo_path')
     if logo_path and os.path.exists(logo_path):
         try:
-            # Scale logo to fit box
             img = Image(logo_path)
-            img.drawHeight = 25*mm
-            img.drawWidth = 25*mm * (img.imageWidth / img.imageHeight)
+            # scale preserving aspect ratio; limit height
+            max_h = 22 * mm
+            aspect = img.imageWidth / float(img.imageHeight)
+            img.drawHeight = max_h
+            img.drawWidth = max_h * aspect
             right.append(img)
         except Exception:
             right.append(Paragraph('', styles['NormalSmall']))
@@ -258,8 +304,8 @@ def generate_invoice_pdf(invoice_data: dict, output_path: str):
     story.append(info_table)
     story.append(Spacer(1,10))
 
-    # Items table
-    table_data, subtotal, total_tax = _build_items_table(items)
+    # Items table (build using currency_symbol)
+    table_data, subtotal, total_tax = _build_items_table(items, currency_symbol)
 
     # Table styling: subtle grid, repeating header, alternating rows
     col_widths = [
@@ -271,7 +317,7 @@ def generate_invoice_pdf(invoice_data: dict, output_path: str):
         12*mm,   # Class
         10*mm,   # Qty
         18*mm,   # Unit Price
-        10*mm,   # Tax %
+        12*mm,   # Tax %
         22*mm    # Amount
     ]
 
@@ -279,10 +325,20 @@ def generate_invoice_pdf(invoice_data: dict, output_path: str):
     tbl_style = TableStyle([
         ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#f5f7fa')),
         ('TEXTCOLOR', (0,0), (-1,0), colors.HexColor('#333333')),
-        ('ALIGN', (0,0), (0,-1), 'CENTER'),  # S.No
-        ('ALIGN', (7,1), (7,-1), 'CENTER'),  # Qty
-        ('ALIGN', (8,1), (9,-1), 'RIGHT'),   # Unit Price and Tax
-        ('ALIGN', (10,1), (10,-1), 'RIGHT'), # Amount
+        ('ALIGN', (0,0), (0,-1), 'CENTER'),   # S.No
+        ('ALIGN', (6,1), (6,-1), 'CENTER'),   # Qty
+        # Qty centered
+        ('ALIGN', (6,1), (6,-1), 'CENTER'),
+
+        # Unit Price right aligned
+        ('ALIGN', (7,1), (7,-1), 'RIGHT'),
+
+        # Tax % centered
+        ('ALIGN', (8,1), (8,-1), 'CENTER'),
+
+        # Amount right aligned
+        ('ALIGN', (9,1), (9,-1), 'RIGHT'),
+
         ('FONTNAME', (0,0), (-1,0), DEFAULT_FONT),
         ('FONTSIZE', (0,0), (-1,-1), 9),
         ('VALIGN', (0,0), (-1,-1), 'TOP'),
@@ -292,7 +348,6 @@ def generate_invoice_pdf(invoice_data: dict, output_path: str):
         ('RIGHTPADDING', (0,0), (-1,-1), 2),
         ('TOPPADDING', (0,0), (-1,-1), 2),
         ('BOTTOMPADDING', (0,0), (-1,-1), 2),
-
     ])
     tbl.setStyle(tbl_style)
 
@@ -305,16 +360,24 @@ def generate_invoice_pdf(invoice_data: dict, output_path: str):
     story.append(tbl)
     story.append(Spacer(1,8))
 
-    # Totals block (right aligned)
+    # Totals block (right aligned) - use currency_symbol
     grand_total = subtotal + total_tax - discount
 
     totals_data = [
-        ['', '', 'Subtotal', _format_currency(subtotal)],
-        ['', '', 'Tax', _format_currency(total_tax)],
+        ['', '', Paragraph('Subtotal', styles['TableCellBold']), Paragraph(_format_currency(subtotal, currency_symbol), styles['TableCell'])],
+        ['', '', Paragraph('Tax', styles['TableCellBold']), Paragraph(_format_currency(total_tax), styles['TableCell'])],
     ]
+
     if discount:
-        totals_data.append(['', '', 'Discount', f"- {_format_currency(discount)}"])
-    totals_data.append(['', '', '<b>Total</b>', f"<b>{_format_currency(grand_total)}</b>"])
+        totals_data.append(['', '', Paragraph('Discount', styles['TableCellBold']),
+                            Paragraph(_format_currency(discount), styles['TableCell'])])
+
+    totals_data.append([
+        '',
+        '',
+        Paragraph('<b>Total</b>', styles['TableCellBold']),
+        Paragraph(_format_currency(grand_total, currency_symbol), styles['TableCellBold'])
+    ])
 
     totals_tbl = Table(totals_data, colWidths=[doc.width*0.5, doc.width*0.1, doc.width*0.2, doc.width*0.2], hAlign='RIGHT')
     totals_tbl.setStyle(TableStyle([

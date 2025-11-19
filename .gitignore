@@ -1,0 +1,232 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+.pybuilder/
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# poetry
+poetry.lock
+
+# pdm
+.pdm.toml
+
+# PEP 582
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Project specific
+uploads/
+logs/
+temp/
+cache/
+*.pid
+
+# Debug files (generated when DEBUG_MODE=true)
+debug/
+!debug/README.md
+
+# Config overrides (but keep default carriers.json)
+app/config/carriers.local.json
+app/config/*.local.json
+
+# Database
+*.db
+*.sqlite
+
+# Docker
+.dockerignore
+
+# Application specific
+alembic/versions/*.py
+!alembic/versions/README
+instance/
+uploads/*
+!uploads/.gitkeep
+.env
+.env.example
+.env.*.local
+*.env
+.venv/
+tmp.*
+*.tmp
+.temp/
+temp
+*.ini
+*.ini.local
+*.log
+logs/
+uploads/
+# *.bat
+# *.json
+temp_attachment/
+temp_attachments/
+attachments/
+*.bak
+*.backup
+Notebooks/
+*.ipynb_checkpoints
+*.csv
+*.tsv
+*.xlsx
+*.xls
+*.pdf
+*.docx
+*.pptx
+*.odt
+*.rtf
+misc/
+.venv
+.env
+notebooks
+
+scripts/
+.langgraph_api/
+.env.*
+storage/
+full_workflow
+Celery
+examples
+cloud/
+*.pdf
+*.json
+outputs/
+*.db-shm
+*.db-wal
+.temp/

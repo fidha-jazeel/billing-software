@@ -928,11 +928,12 @@ class HomePage(QWidget):
         """Generate a professional multi-page PDF invoice using the dynamic template."""
         try:
             # Ask user where to save the PDF
-            filename, _ = QFileDialog.getSaveFileName(
-                self,
-                "Save Invoice as PDF",
-                f"invoice_{self.invoice_number.text()}.pdf",
-                "PDF Files (*.pdf)"
+            default_dir = os.path.join(os.getcwd(), "output", "invoice")
+            os.makedirs(default_dir, exist_ok=True)
+
+            filename = os.path.join(
+                default_dir,
+                f"invoice_{self.invoice_number.text()}.pdf"
             )
 
             if not filename:
@@ -998,7 +999,21 @@ class HomePage(QWidget):
             # Generate PDF using professional template
             generate_invoice_pdf(invoice_data, filename)
 
-            QMessageBox.information(self, "Success", f"PDF saved successfully!\n{filename}")
+            try:
+                msg = QMessageBox(self)
+                msg.setWindowTitle("PDF Saved")
+                msg.setText(f"PDF saved successfully!\n\n{filename}")
+                msg.setIcon(QMessageBox.Information)
+
+                open_btn = msg.addButton("Open", QMessageBox.ActionRole)
+                msg.addButton("Close", QMessageBox.RejectRole)
+
+                msg.exec_()
+
+                if msg.clickedButton() == open_btn:
+                    os.startfile(filename)   # Windows
+            except Exception:
+                QMessageBox.information(self, "Success", f"PDF saved successfully!\n{filename}")
 
         except Exception as e:
             print(f"❌ Error saving PDF: {e}")
