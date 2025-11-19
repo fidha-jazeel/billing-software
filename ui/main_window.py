@@ -127,3 +127,11 @@ class MainWindow(QMainWindow):
     def get_current_page(self):
         """Get the current page widget"""
         return self.content_stack.currentWidget()
+
+if __name__ == "__main__":
+    import sys
+    from PyQt6.QtWidgets import QApplication
+    app = QApplication(sys.argv)
+    window = MainWindow()
+    window.show()
+    sys.exit(app.exec())
