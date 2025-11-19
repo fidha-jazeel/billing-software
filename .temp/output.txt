@@ -1,0 +1,54 @@
+billing-software
+├── archive
+│   ├── DOCS
+│   ├── create_icon.py
+│   ├── create_new_icon.py
+│   ├── create_travel_icon.py
+│   ├── dist
+│   │   └── main.exe
+│   ├── test_features.py
+│   ├── travel_billing
+│   │   ├── dashboard_full_clean.py
+│   │   ├── dashboard_full_dark.py
+│   │   ├── dashboard_full_old.py
+│   │   ├── dashboard_manual.py
+│   │   ├── dashboard_ui.py
+│   │   ├── main_manual.py
+│   │   ├── test_ui.py
+│   │   └── widgets.py
+│   ├── ui
+│   │   ├── dashboard.py
+│   │   ├── dashboard.ui
+│   │   ├── home_page.py
+│   │   ├── main_manual.ui
+│   │   └── main_window.py
+│   └── verify_features.py
+├── auth
+│   ├── __init__.py
+│   └── auth_manager.py
+├── config
+│   ├── __init__.py
+│   └── settings.py
+├── database
+│   ├── __init__.py
+│   └── db_manager.py
+├── downloads
+├── install.bat
+├── invoices
+├── main.py
+├── requirements.txt
+├── run.bat
+├── travel_billing
+│   ├── __init__.py
+│   ├── dashboard_improved.py
+│   ├── page_about.py
+│   ├── page_home.py
+│   ├── page_reports.py
+│   └── page_settings.py
+├── ui
+│   ├── __init__.py
+│   ├── change_password_dialog.py
+│   └── login_page.py
+└── utils
+    ├── __init__.py
+    └── styles.py

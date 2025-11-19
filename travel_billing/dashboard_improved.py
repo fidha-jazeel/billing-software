@@ -7,6 +7,8 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtGui import QColor, QIcon
 from PyQt5.QtCore import QDate
+from PyQt5.QtWidgets import QFileDialog, QMessageBox
+from utils.invoice_generator import generate_invoice_pdf
 import sys
 import json
 import os
@@ -1221,79 +1223,21 @@ class DashboardImproved(QMainWindow):
             QMessageBox.critical(self, "Error", f"Failed to save invoice:\n{str(e)}")
 
     def save_pdf(self):
-        """Save the invoice as a PDF file."""
+        """Generate a professional multi-page PDF invoice using the dynamic template."""
         try:
-            from PyQt5.QtPrintSupport import QPrinter
-            from PyQt5.QtGui import QPainter, QFont
-            from PyQt5.QtWidgets import QFileDialog
-            
-            # Ask user for save location
+            # Ask user where to save the PDF
             filename, _ = QFileDialog.getSaveFileName(
                 self,
                 "Save Invoice as PDF",
                 f"invoice_{self.invoice_number.text()}.pdf",
                 "PDF Files (*.pdf)"
             )
-            
+
             if not filename:
                 return
-            
-            # Create PDF printer
-            printer = QPrinter(QPrinter.HighResolution)
-            printer.setOutputFormat(QPrinter.PdfFormat)
-            printer.setOutputFileName(filename)
-            printer.setPageSize(QPrinter.A4)
-            
-            # Create painter
-            painter = QPainter()
-            painter.begin(printer)
-            
-            # Set fonts
-            title_font = QFont("Arial", 18, QFont.Bold)
-            header_font = QFont("Arial", 12, QFont.Bold)
-            normal_font = QFont("Arial", 10)
-            
-            y = 100
-            
-            # Title
-            painter.setFont(title_font)
-            painter.drawText(100, y, "TRAVEL AGENCY INVOICE")
-            y += 80
-            
-            # Invoice details
-            painter.setFont(header_font)
-            painter.drawText(100, y, f"Invoice Number: {self.invoice_number.text()}")
-            y += 40
-            painter.drawText(100, y, f"Date: {self.invoice_date.date().toString('dd/MM/yyyy')}")
-            y += 40
-            painter.drawText(100, y, f"Customer: {self.customer_name.text()}")
-            y += 40
-            painter.drawText(100, y, f"Contact: {self.contact_number.text()}")
-            y += 40
-            if self.customer_address.text():
-                painter.drawText(100, y, f"Address: {self.customer_address.text()}")
-                y += 40
-            y += 40
-            
-            # Table header
-            painter.setFont(header_font)
-            painter.drawText(100, y, "Passenger")
-            painter.drawText(700, y, "PNR")
-            painter.drawText(1200, y, "Sector")
-            painter.drawText(1700, y, "Supplier")
-            painter.drawText(2200, y, "Class")
-            painter.drawText(2600, y, "Price")
-            painter.drawText(2900, y, "Qty")
-            painter.drawText(3100, y, "Tax")
-            painter.drawText(3400, y, "Amount")
-            y += 40
-            
-            # Draw line
-            painter.drawLine(100, y, 3500, y)
-            y += 20
-            
-            # Table items
-            painter.setFont(normal_font)
+
+            # Collect invoice items
+            items = []
             for r in range(self.table.rowCount()):
                 passenger_name_w = self.table.cellWidget(r, 0)
                 pnr_w = self.table.cellWidget(r, 1)
@@ -1305,41 +1249,59 @@ class DashboardImproved(QMainWindow):
                 qty_w = self.table.cellWidget(r, 7)
                 tax_w = self.table.cellWidget(r, 8)
                 amount_w = self.table.cellWidget(r, 9)
-                
-                painter.drawText(100, y, passenger_name_w.text() if passenger_name_w else "")
-                painter.drawText(700, y, pnr_w.text() if pnr_w else "")
-                painter.drawText(1200, y, sector_w.text() if sector_w else "")
-                painter.drawText(1700, y, supplier_w.currentText() if supplier_w else "")
-                painter.drawText(2200, y, type_w.text() if type_w else "")
-                painter.drawText(2600, y, class_w.currentText() if class_w else "")
-                painter.drawText(2900, y, f"₹{price_w.value():.2f}" if price_w else "")
-                painter.drawText(3200, y, str(int(qty_w.value())) if qty_w else "")
-                painter.drawText(3400, y, f"{tax_w.value():.1f}%" if tax_w else "")
-                painter.drawText(3700, y, amount_w.text() if amount_w else "")
-                y += 40
-            
-            y += 40
-            painter.drawLine(100, y, 3500, y)
-            y += 40
-            
-            # Totals
-            painter.setFont(header_font)
-            painter.drawText(2800, y, f"Subtotal: {self.lbl_subtotal.text()}")
-            y += 40
-            painter.drawText(2800, y, f"Tax: {self.lbl_tax.text()}")
-            y += 40
-            painter.drawText(2800, y, f"Total: {self.lbl_total.text()}")
-            
-            painter.end()
-            
-            print(f"✅ PDF saved successfully: {filename}")
-            from PyQt5.QtWidgets import QMessageBox
+
+                # Safely extract values
+                passenger = passenger_name_w.text() if passenger_name_w else ""
+                pnr = pnr_w.text() if pnr_w else ""
+                sector = sector_w.text() if sector_w else ""
+                supplier = supplier_w.currentText() if supplier_w else ""
+                type_val = type_w.text() if type_w else ""
+                class_val = class_w.currentText() if class_w else ""
+                price = float(price_w.value()) if price_w else 0
+                qty = float(qty_w.value()) if qty_w else 0
+                tax_pct = float(tax_w.value()) if tax_w else 0
+
+                # Combine description for nicer invoice appearance
+                desc = f"{passenger} | PNR: {pnr} | {sector} | {supplier} | {class_val} | {type_val}"
+
+                items.append({
+                    "description": desc,
+                    "qty": qty,
+                    "unit_price": price,
+                    "tax_pct": tax_pct
+                })
+
+            # Build invoice data to pass to template
+            invoice_data = {
+                "company": {
+                    "name": COMPANY_INFO["name"],
+                    "address": COMPANY_INFO.get("address", ""),
+                    "footer_note": INVOICE_CONFIG.get("footer_note", "")
+                },
+                "invoice_meta": {
+                    "number": self.invoice_number.text(),
+                    "date": self.invoice_date.date().toString("dd/MM/yyyy"),
+                    "customer_id": ""  # optional field
+                },
+                "customer": {
+                    "name": self.customer_name.text(),
+                    "address": self.customer_address.text(),
+                    "contact": self.contact_number.text(),
+                },
+                "items": items,
+                "notes": "Generated from Travel Billing System",
+                "terms": INVOICE_CONFIG.get("terms", "Payment due within 7 days.")
+            }
+
+            # Generate PDF using professional template
+            generate_invoice_pdf(invoice_data, filename)
+
             QMessageBox.information(self, "Success", f"PDF saved successfully!\n{filename}")
-            
+
         except Exception as e:
             print(f"❌ Error saving PDF: {e}")
-            from PyQt5.QtWidgets import QMessageBox
-            QMessageBox.critical(self, "Error", f"Failed to save PDF:\n{str(e)}")
+            QMessageBox.critical(self, "Error", f"Failed to generate PDF:\n{str(e)}")
+
 
     def print_invoice(self):
         """Print the invoice with a professional template."""

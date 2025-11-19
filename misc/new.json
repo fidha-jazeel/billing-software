@@ -1,0 +1,87 @@
+{
+    "invoice_number": "INV-20251118-134423",
+    "invoice_date": "18/11/2025",
+    "customer_name": "yaara",
+    "contact_number": "34567878",
+    "customer_address": "dxcfgvhbjk(H)",
+    "items": [
+        {
+            "passenger_name": "xdgcfhgvjbhm,j",
+            "pnr": "",
+            "sector": "",
+            "supplier": "Select Supplier",
+            "type": "",
+            "class": "Economy",
+            "price": 4500.0,
+            "qty": 88.0,
+            "tax": 0.0,
+            "amount": "\u20b9 396000.00"
+        },
+        {
+            "passenger_name": "drytfugyihujl",
+            "pnr": "",
+            "sector": "",
+            "supplier": "Select Supplier",
+            "type": "",
+            "class": "Economy",
+            "price": 900.0,
+            "qty": 167.0,
+            "tax": 0.0,
+            "amount": "\u20b9 150300.00"
+        },
+        {
+            "passenger_name": "zsfdxgcfhgvjbhk",
+            "pnr": "",
+            "sector": "",
+            "supplier": "Select Supplier",
+            "type": "",
+            "class": "Economy",
+            "price": 5668.0,
+            "qty": 14.0,
+            "tax": 0.0,
+            "amount": "\u20b9 79352.00"
+        },
+        {
+            "passenger_name": "sredtrgyuhjul",
+            "pnr": "",
+            "sector": "",
+            "supplier": "Select Supplier",
+            "type": "",
+            "class": "Economy",
+            "price": 6792.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 6792.00"
+        },
+        {
+            "passenger_name": "e5rgyuijo",
+            "pnr": "",
+            "sector": "",
+            "supplier": "Select Supplier",
+            "type": "",
+            "class": "Economy",
+            "price": 477.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 477.00"
+        },
+        {
+            "passenger_name": "derftguyiho",
+            "pnr": "",
+            "sector": "",
+            "supplier": "Select Supplier",
+            "type": "",
+            "class": "Economy",
+            "price": 2.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 2.00"
+        }
+    ],
+    "subtotal": "\u20b9632923.00",
+    "discount": "0.00",
+    "tax": "\u20b90.00",
+    "total": "\u20b9632923.00",
+    "received": "",
+    "balance": "\u20b9632923.00"
+}

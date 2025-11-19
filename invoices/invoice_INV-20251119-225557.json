@@ -1,0 +1,87 @@
+{
+    "invoice_number": "INV-20251119-225557",
+    "invoice_date": "19/11/2025",
+    "customer_name": "fvsfv",
+    "contact_number": "erfwef",
+    "customer_address": "efvewfv",
+    "items": [
+        {
+            "passenger_name": "",
+            "pnr": "",
+            "sector": "",
+            "supplier": "Select Supplier",
+            "type": "",
+            "class": "Economy",
+            "price": 0.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 0.00"
+        },
+        {
+            "passenger_name": "",
+            "pnr": "",
+            "sector": "",
+            "supplier": "Select Supplier",
+            "type": "",
+            "class": "Economy",
+            "price": 0.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 0.00"
+        },
+        {
+            "passenger_name": "",
+            "pnr": "",
+            "sector": "",
+            "supplier": "Select Supplier",
+            "type": "",
+            "class": "Economy",
+            "price": 0.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 0.00"
+        },
+        {
+            "passenger_name": "",
+            "pnr": "",
+            "sector": "",
+            "supplier": "Select Supplier",
+            "type": "",
+            "class": "Economy",
+            "price": 0.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 0.00"
+        },
+        {
+            "passenger_name": "",
+            "pnr": "",
+            "sector": "",
+            "supplier": "Select Supplier",
+            "type": "",
+            "class": "Economy",
+            "price": 0.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 0.00"
+        },
+        {
+            "passenger_name": "",
+            "pnr": "",
+            "sector": "",
+            "supplier": "Select Supplier",
+            "type": "",
+            "class": "Economy",
+            "price": 0.0,
+            "qty": 1.0,
+            "tax": 0.0,
+            "amount": "\u20b9 0.00"
+        }
+    ],
+    "subtotal": "\u20b90.00",
+    "discount": "0.00",
+    "tax": "\u20b90.00",
+    "total": "\u20b90.00",
+    "received": "",
+    "balance": "\u20b90.00"
+}

@@ -11,7 +11,9 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLa
                              QInputDialog, QHeaderView)
 from PyQt5.QtCore import Qt, QDate, QRect
 from PyQt5.QtGui import QFont, QPen, QColor
-from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
+
+from PyQt5.QtWidgets import QFileDialog, QMessageBox
+from utils.invoice_generator import generate_invoice_pdf
 
 
 class HomePage(QWidget):
@@ -923,144 +925,22 @@ class HomePage(QWidget):
             QMessageBox.critical(self, "Error", f"Failed to save invoice:\n{str(e)}")
 
     def save_pdf(self):
-        """Save invoice as PDF with professional layout."""
+        """Generate a professional multi-page PDF invoice using the dynamic template."""
         try:
-            from PyQt5.QtGui import QPainter, QFont, QBrush
-            from PyQt5.QtCore import QRect, Qt as QtCore
-            
+            # Ask user where to save the PDF
             filename, _ = QFileDialog.getSaveFileName(
                 self,
                 "Save Invoice as PDF",
                 f"invoice_{self.invoice_number.text()}.pdf",
                 "PDF Files (*.pdf)"
             )
-            
+
             if not filename:
                 return
-            
-            # Use HighResolution for better quality
-            printer = QPrinter(QPrinter.HighResolution)
-            printer.setOutputFormat(QPrinter.PdfFormat)
-            printer.setOutputFileName(filename)
-            printer.setPageSize(QPrinter.A4)
-            printer.setPageMargins(15, 15, 15, 15, QPrinter.Millimeter)
-            
-            painter = QPainter()
-            painter.begin(printer)
-            # Enable maximum quality rendering for PDF
-            painter.setRenderHint(QPainter.Antialiasing, True)
-            painter.setRenderHint(QPainter.TextAntialiasing, True)
-            painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
-            painter.setRenderHint(QPainter.HighQualityAntialiasing, True)
-            
-            # Get page dimensions
-            page_width = printer.pageRect().width()
-            page_height = printer.pageRect().height()
-            margin = 100
-            
-            # Larger, bolder fonts for crystal clear PDF
-            company_font = QFont("Arial", 20, QFont.Bold)
-            title_font = QFont("Arial", 32, QFont.Bold)
-            section_font = QFont("Arial", 15, QFont.Bold)
-            header_font = QFont("Arial", 13, QFont.Bold)
-            normal_font = QFont("Arial", 12)
-            small_font = QFont("Arial", 10)
-            
-            y = margin
-            
-            # ===== HEADER SECTION =====
-            # Company Name
-            painter.setFont(company_font)
-            painter.setPen(QColor(124, 58, 237))  # Purple
-            company_name = self.company_info['name'].upper()
-            painter.drawText(margin, y, company_name)
-            y += 50
-            
-            # Company Details
-            painter.setFont(normal_font)
-            painter.setPen(QColor(80, 80, 80))
-            company_info = self.get_company_info_formatted()
-            painter.drawText(margin, y, f"{self.company_info['tagline']}")
-            y += 25
-            painter.drawText(margin, y, company_info['contact'])
-            y += 50
-            
-            # Divider Line
-            painter.setPen(QPen(QColor(124, 58, 237), 3))
-            painter.drawLine(margin, y, page_width - margin, y)
-            y += 50
-            
-            # ===== INVOICE TITLE & INFO =====
-            painter.setFont(title_font)
-            painter.setPen(QColor(0, 0, 0))
-            painter.drawText(margin, y, "INVOICE")
-            
-            # Invoice details on right side
-            x_right = page_width - margin - 700
-            painter.setFont(section_font)
-            painter.drawText(x_right, y, f"Invoice #: {self.invoice_number.text()}")
-            y += 45
-            painter.setFont(normal_font)
-            painter.drawText(x_right, y, f"Date: {self.invoice_date.date().toString('dd/MM/yyyy')}")
-            y += 50
-            
-            # ===== BILL TO SECTION =====
-            painter.setFont(section_font)
-            painter.setPen(QColor(0, 0, 0))
-            painter.drawText(margin, y, "BILL TO:")
-            y += 40
-            
-            painter.setFont(normal_font)
-            painter.drawText(margin, y, self.customer_name.text())
-            y += 30
-            painter.drawText(margin, y, f"Phone: {self.contact_number.text()}")
-            y += 30
-            if self.customer_address.text():
-                painter.drawText(margin, y, f"Address: {self.customer_address.text()}")
-                y += 30
-            y += 30
-            
-            # ===== TABLE SECTION =====
-            # Table header background - larger for better visibility
-            painter.fillRect(QRect(margin, y, page_width - 2*margin, 60), QColor(124, 58, 237))
-            
-            # Column positions - optimized spacing for clarity
-            col_passenger = margin + 20
-            col_pnr = margin + 300
-            col_sector = margin + 560
-            col_supplier = margin + 860
-            col_type = margin + 1180
-            col_class = margin + 1420
-            col_price = margin + 1660
-            col_qty = margin + 1900
-            col_tax = margin + 2080
-            col_amount = margin + 2280
-            
-            # Table headers - bolder white text
-            painter.setFont(header_font)
-            painter.setPen(QPen(QColor(255, 255, 255), 2))  # Bolder pen
-            y += 42
-            painter.drawText(col_passenger, y, "Passenger Name")
-            painter.drawText(col_pnr, y, "PNR")
-            painter.drawText(col_sector, y, "Sector")
-            painter.drawText(col_supplier, y, "Supplier")
-            painter.drawText(col_type, y, "Type")
-            painter.drawText(col_class, y, "Class")
-            painter.drawText(col_price, y, "Price")
-            painter.drawText(col_qty, y, "Qty")
-            painter.drawText(col_tax, y, "Tax")
-            painter.drawText(col_amount, y, "Amount")
-            y += 25
-            
-            # Table rows
-            painter.setFont(normal_font)
+
+            # Collect invoice items
+            items = []
             for r in range(self.table.rowCount()):
-                # Alternate row colors for better readability
-                if r % 2 == 0:
-                    painter.fillRect(QRect(margin, y-30, page_width - 2*margin, 55), QColor(245, 245, 250))
-                
-                painter.setPen(QPen(QColor(0, 0, 0), 1.5))  # Slightly bolder
-                
                 passenger_name_w = self.table.cellWidget(r, 0)
                 pnr_w = self.table.cellWidget(r, 1)
                 sector_w = self.table.cellWidget(r, 2)
@@ -1071,84 +951,59 @@ class HomePage(QWidget):
                 qty_w = self.table.cellWidget(r, 7)
                 tax_w = self.table.cellWidget(r, 8)
                 amount_w = self.table.cellWidget(r, 9)
-                
-                y += 38
-                painter.drawText(col_passenger, y, passenger_name_w.text() if passenger_name_w else "")
-                painter.drawText(col_pnr, y, pnr_w.text() if pnr_w else "")
-                painter.drawText(col_sector, y, sector_w.text() if sector_w else "")
-                painter.drawText(col_supplier, y, supplier_w.currentText() if supplier_w else "")
-                painter.drawText(col_type, y, type_w.text() if type_w else "")
-                painter.drawText(col_class, y, class_w.currentText() if class_w else "")
-                painter.drawText(col_price, y, f"₹{price_w.value():.2f}" if price_w else "")
-                painter.drawText(col_qty, y, str(int(qty_w.value())) if qty_w else "")
-                painter.drawText(col_tax, y, f"{tax_w.value():.1f}%" if tax_w else "")
-                painter.drawText(col_amount, y, amount_w.text() if amount_w else "")
-                y += 15
-            
-            y += 35
-            # Bottom border - thicker
-            painter.setPen(QPen(QColor(124, 58, 237), 3))
-            painter.drawLine(margin, y, page_width - margin, y)
-            y += 70
-            
-            # ===== TOTALS SECTION =====
-            x_labels = page_width - margin - 800
-            x_values = page_width - margin - 320
-            
-            painter.setFont(normal_font)
-            painter.setPen(QPen(QColor(0, 0, 0), 1.5))
-            
-            painter.drawText(x_labels, y, "Subtotal:")
-            painter.drawText(x_values, y, self.lbl_subtotal.text())
-            y += 40
-            
-            painter.drawText(x_labels, y, "Tax:")
-            painter.drawText(x_values, y, self.lbl_tax.text())
-            y += 45
-            
-            # Total with prominent highlight
-            painter.fillRect(QRect(x_labels - 40, y - 32, 850, 52), QColor(255, 215, 0, 100))
-            painter.setFont(section_font)
-            painter.setPen(QPen(QColor(0, 0, 0), 2))
-            painter.drawText(x_labels, y, "TOTAL:")
-            painter.drawText(x_values, y, self.lbl_total.text())
-            y += 40
-            
-            painter.setFont(normal_font)
-            painter.drawText(x_labels, y, "Received:")
-            painter.drawText(x_values, y, self.txt_received.text() or "₹0.00")
-            y += 35
-            
-            painter.drawText(x_labels, y, "Balance:")
-            balance_text = self.lbl_balance.text()
-            if "₹0.00" not in balance_text:
-                painter.setPen(QColor(220, 38, 38))  # Red for outstanding
-            else:
-                painter.setPen(QColor(34, 197, 94))  # Green for paid
-            painter.drawText(x_values, y, balance_text)
-            
-            # ===== FOOTER =====
-            y = page_height - margin - 80
-            painter.setPen(QPen(QColor(200, 200, 200), 1))
-            painter.drawLine(margin, y, page_width - margin, y)
-            y += 30
-            
-            painter.setFont(small_font)
-            painter.setPen(QColor(120, 120, 120))
-            painter.drawText(margin, y, self.invoice_config['footer_note'])
-            y += 25
-            painter.drawText(margin, y, f"© {self.company_info['year'] if 'year' in self.company_info else '2025'} {self.company_info['name']}. All rights reserved.")
-            
-            painter.end()
-            
-            print(f"✅ PDF saved: {filename}")
+
+                # Safely extract values
+                passenger = passenger_name_w.text() if passenger_name_w else ""
+                pnr = pnr_w.text() if pnr_w else ""
+                sector = sector_w.text() if sector_w else ""
+                supplier = supplier_w.currentText() if supplier_w else ""
+                type_val = type_w.text() if type_w else ""
+                class_val = class_w.currentText() if class_w else ""
+                price = float(price_w.value()) if price_w else 0
+                qty = float(qty_w.value()) if qty_w else 0
+                tax_pct = float(tax_w.value()) if tax_w else 0
+
+                # Combine description for nicer invoice appearance
+                desc = f"{passenger} | PNR: {pnr} | {sector} | {supplier} | {class_val} | {type_val}"
+
+                items.append({
+                    "description": desc,
+                    "qty": qty,
+                    "unit_price": price,
+                    "tax_pct": tax_pct
+                })
+
+            # Build invoice data to pass to template
+            invoice_data = {
+                "company": {
+                    "name": self.company_info["name"],
+                    "address": self.company_info.get("address", ""),
+                    "footer_note": self.invoice_config.get("footer_note", "")
+                },
+                "invoice_meta": {
+                    "number": self.invoice_number.text(),
+                    "date": self.invoice_date.date().toString("dd/MM/yyyy"),
+                    "customer_id": ""  # optional field
+                },
+                "customer": {
+                    "name": self.customer_name.text(),
+                    "address": self.customer_address.text(),
+                    "contact": self.contact_number.text(),
+                },
+                "items": items,
+                "notes": "Generated from Travel Billing System",
+                "terms": self.invoice_config.get("terms", "Payment due within 7 days.")
+            }
+
+            # Generate PDF using professional template
+            generate_invoice_pdf(invoice_data, filename)
+
             QMessageBox.information(self, "Success", f"PDF saved successfully!\n{filename}")
-            
+
         except Exception as e:
             print(f"❌ Error saving PDF: {e}")
-            import traceback
-            traceback.print_exc()
-            QMessageBox.critical(self, "Error", f"Failed to save PDF:\n{str(e)}")
+            QMessageBox.critical(self, "Error", f"Failed to generate PDF:\n{str(e)}")
+
 
     def print_invoice(self):
         """Print the invoice with professional layout."""
