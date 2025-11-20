@@ -153,13 +153,13 @@ class HomePage(QWidget):
         invoice_layout.setColumnStretch(3, 1)
         
         # Invoice Details Title
-        invoice_title = QLabel(f"<b style='color:{self.colors['accent_secondary']}; font-size:14px;'>📄 Invoice Details</b>")
+        invoice_title = QLabel(f"<b style='color:{self.colors['accent_secondary']}; font-size:16px;'>📄 Invoice Details</b>")
         invoice_layout.addWidget(invoice_title, 0, 0, 1, 4)
         
         # Row 1: Invoice Number and Date
         lbl_inv_num = QLabel("Invoice Number:")
-        lbl_inv_num.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 12px;")
-        lbl_inv_num.setFixedWidth(130)
+        lbl_inv_num.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 14px;")
+        lbl_inv_num.setFixedWidth(180)
         invoice_layout.addWidget(lbl_inv_num, 1, 0, Qt.AlignRight)
         
         self.invoice_number = QLineEdit()
@@ -170,8 +170,8 @@ class HomePage(QWidget):
         invoice_layout.addWidget(self.invoice_number, 1, 1)
         
         lbl_inv_date = QLabel("Invoice Date:")
-        lbl_inv_date.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 12px;")
-        lbl_inv_date.setFixedWidth(130)
+        lbl_inv_date.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 14px;")
+        lbl_inv_date.setFixedWidth(180)
         invoice_layout.addWidget(lbl_inv_date, 1, 2, Qt.AlignRight)
         
         self.invoice_date = QDateEdit()
@@ -184,8 +184,8 @@ class HomePage(QWidget):
         
         # Row 2: Customer Name and Contact
         lbl_cust_name = QLabel("Customer Name:")
-        lbl_cust_name.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 12px;")
-        lbl_cust_name.setFixedWidth(130)
+        lbl_cust_name.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 14px;")
+        lbl_cust_name.setFixedWidth(180)
         invoice_layout.addWidget(lbl_cust_name, 2, 0, Qt.AlignRight)
         
         self.customer_name = QLineEdit()
@@ -195,8 +195,8 @@ class HomePage(QWidget):
         invoice_layout.addWidget(self.customer_name, 2, 1)
         
         lbl_contact = QLabel("Contact Number:")
-        lbl_contact.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 12px;")
-        lbl_contact.setFixedWidth(130)
+        lbl_contact.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 14px;")
+        lbl_contact.setFixedWidth(180)
         invoice_layout.addWidget(lbl_contact, 2, 2, Qt.AlignRight)
         
         self.contact_number = QLineEdit()
@@ -207,8 +207,8 @@ class HomePage(QWidget):
         
         # Row 3: Address
         lbl_address = QLabel("Address:")
-        lbl_address.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 12px;")
-        lbl_address.setFixedWidth(130)
+        lbl_address.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 14px;")
+        lbl_address.setFixedWidth(180)
         invoice_layout.addWidget(lbl_address, 3, 0, Qt.AlignRight)
         
         self.customer_address = QLineEdit()
@@ -294,20 +294,22 @@ class HomePage(QWidget):
         calc_main_layout = QVBoxLayout(calc_frame)
         calc_main_layout.setContentsMargins(10, 10, 10, 10)
         calc_main_layout.setSpacing(5)
-        
-        calc_title = QLabel("<b style='color:#a78bfa; font-size:14px;'>💰 Invoice Calculation</b>")
+         
+        calc_title = QLabel("<b style='color:#a78bfa; font-size:16px;'>💰 Invoice Calculation</b>")
         calc_main_layout.addWidget(calc_title)
         
         calc_grid = QGridLayout()
         calc_grid.setSpacing(5)
         calc_grid.setContentsMargins(5, 5, 5, 5)
-        calc_grid.setColumnStretch(0, 1)
+        calc_grid.setHorizontalSpacing(20)
+        calc_grid.setVerticalSpacing(10)
+        # calc_grid.setColumnStretch(0, 1)
         
         # Subtotal
         subtotal_label = QLabel("Subtotal:")
-        subtotal_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 13px;")
+        subtotal_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 14px;")
         subtotal_label.setMinimumWidth(90)
-        calc_grid.addWidget(subtotal_label, 0, 1, Qt.AlignRight)
+        calc_grid.addWidget(subtotal_label, 0, 0, Qt.AlignRight)
         
         self.lbl_subtotal = QLabel(f"{self.get_currency_symbol()}0.00")
         self.lbl_subtotal.setStyleSheet(f"""
@@ -322,13 +324,13 @@ class HomePage(QWidget):
             }}
         """)
         self.lbl_subtotal.setMinimumWidth(120)
-        calc_grid.addWidget(self.lbl_subtotal, 0, 2, Qt.AlignLeft)
+        calc_grid.addWidget(self.lbl_subtotal, 0, 1, Qt.AlignLeft)
         
         # Discount
         discount_label = QLabel("Discount:")
-        discount_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 13px;")
+        discount_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 14px;")
         discount_label.setMinimumWidth(90)
-        calc_grid.addWidget(discount_label, 1, 1, Qt.AlignRight)
+        calc_grid.addWidget(discount_label, 1, 0, Qt.AlignRight)
         
         self.txt_discount = QLineEdit()
         self.txt_discount.setPlaceholderText(f"{self.get_currency_symbol()}0.00")
@@ -349,13 +351,13 @@ class HomePage(QWidget):
         """)
         self.txt_discount.setMinimumWidth(120)
         self.txt_discount.textChanged.connect(self.update_invoice_totals)
-        calc_grid.addWidget(self.txt_discount, 1, 2, Qt.AlignLeft)
+        calc_grid.addWidget(self.txt_discount, 1, 1, Qt.AlignLeft)
         
         # Tax
         tax_label = QLabel("Tax:")
-        tax_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 13px;")
+        tax_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 14px;")
         tax_label.setMinimumWidth(90)
-        calc_grid.addWidget(tax_label, 2, 1, Qt.AlignRight)
+        calc_grid.addWidget(tax_label, 2, 0, Qt.AlignRight)
         
         self.lbl_tax = QLabel(f"{self.get_currency_symbol()}0.00")
         self.lbl_tax.setStyleSheet(f"""
@@ -370,13 +372,13 @@ class HomePage(QWidget):
             }}
         """)
         self.lbl_tax.setMinimumWidth(120)
-        calc_grid.addWidget(self.lbl_tax, 2, 2, Qt.AlignLeft)
+        calc_grid.addWidget(self.lbl_tax, 2, 1, Qt.AlignLeft)
         
         # Total
         total_label = QLabel("Total:")
         total_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 14px;")
         total_label.setMinimumWidth(90)
-        calc_grid.addWidget(total_label, 3, 1, Qt.AlignRight)
+        calc_grid.addWidget(total_label, 0, 2, Qt.AlignRight)
         
         self.lbl_total = QLabel(f"{self.get_currency_symbol()}0.00")
         self.lbl_total.setStyleSheet(f"""
@@ -391,13 +393,13 @@ class HomePage(QWidget):
             }}
         """)
         self.lbl_total.setMinimumWidth(120)
-        calc_grid.addWidget(self.lbl_total, 3, 2, Qt.AlignLeft)
+        calc_grid.addWidget(self.lbl_total, 0, 3, Qt.AlignLeft)
         
         # Received
         received_label = QLabel("Received:")
-        received_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 13px;")
+        received_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 14px;")
         received_label.setMinimumWidth(90)
-        calc_grid.addWidget(received_label, 4, 1, Qt.AlignRight)
+        calc_grid.addWidget(received_label, 1, 2, Qt.AlignRight)
         
         self.txt_received = QLineEdit()
         self.txt_received.setPlaceholderText(f"{self.get_currency_symbol()}0.00")
@@ -417,13 +419,13 @@ class HomePage(QWidget):
         """)
         self.txt_received.setMinimumWidth(120)
         self.txt_received.textChanged.connect(self.calculate_balance)
-        calc_grid.addWidget(self.txt_received, 4, 2, Qt.AlignLeft)
+        calc_grid.addWidget(self.txt_received, 1, 3, Qt.AlignLeft)
         
         # Balance
         balance_label = QLabel("Balance:")
-        balance_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 13px;")
+        balance_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 14px;")
         balance_label.setMinimumWidth(90)
-        calc_grid.addWidget(balance_label, 5, 1, Qt.AlignRight)
+        calc_grid.addWidget(balance_label, 2, 2, Qt.AlignRight)
         
         self.lbl_balance = QLabel(f"{self.get_currency_symbol()}0.00")
         self.lbl_balance.setStyleSheet(f"""
@@ -438,7 +440,7 @@ class HomePage(QWidget):
             }}
         """)
         self.lbl_balance.setMinimumWidth(120)
-        calc_grid.addWidget(self.lbl_balance, 5, 2, Qt.AlignLeft)
+        calc_grid.addWidget(self.lbl_balance, 2, 3, Qt.AlignLeft)
         
         calc_main_layout.addLayout(calc_grid)
         
@@ -702,6 +704,7 @@ class HomePage(QWidget):
 
         # Column 10: Actions (Delete button)
         delete_btn = QPushButton("🗑️")
+        delete_btn.setFixedWidth(60)
         delete_btn.setToolTip("Delete this row")
         delete_btn.setCursor(Qt.PointingHandCursor)
         delete_btn.setStyleSheet(f"""
@@ -710,7 +713,7 @@ class HomePage(QWidget):
                 color: white;
                 border: none;
                 border-radius: 3px;
-                padding: 5px 10px;
+                # padding: 5px 10px;
                 font-weight: bold;
             }}
             QPushButton:hover {{
