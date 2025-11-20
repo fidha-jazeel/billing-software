@@ -57,7 +57,7 @@ class HomePage(QWidget):
         self.get_supplier_list = get_supplier_list
         self.get_company_info_formatted = get_company_info_formatted
         self.dashboard = dashboard_ref
-        self.shwo_dialog_window = False 
+        self.show_dialog_window = False 
         
         self._init_ui()
     
