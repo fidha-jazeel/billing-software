@@ -1222,6 +1222,7 @@ class DashboardImproved(QMainWindow):
             from PyQt5.QtWidgets import QMessageBox
             QMessageBox.critical(self, "Error", f"Failed to save invoice:\n{str(e)}")
 
+
     def save_pdf(self):
         """Generate a professional multi-page PDF invoice using the dynamic template."""
         try:
@@ -1304,213 +1305,74 @@ class DashboardImproved(QMainWindow):
 
 
     def print_invoice(self):
-        """Print the invoice with a professional template."""
-        try:
-            from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
-            from PyQt5.QtGui import QPainter, QFont, QPen, QColor
-            from PyQt5.QtCore import QRect
-            
-            # Create printer
-            printer = QPrinter(QPrinter.HighResolution)
-            printer.setPageSize(QPrinter.A4)
-            
-            # Show print dialog
-            dialog = QPrintDialog(printer, self)
-            if dialog.exec_() != QPrintDialog.Accepted:
+        """Print the generated PDF using the OS default PDF viewer (PyQt5 only)."""
+        import os
+        import platform
+        from PyQt5.QtWidgets import QMessageBox
+
+        # Build PDF path
+        pdf_path = os.path.join(
+            os.getcwd(), "output", "invoice",
+            f"invoice_{self.invoice_number.text()}.pdf"
+        )
+
+        # Ensure PDF exists (generate if needed)
+        if not os.path.exists(pdf_path):
+            try:
+                self.save_pdf(show_dialog=False)
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to generate invoice PDF:\n{e}")
                 return
-            
-            # Create painter
-            painter = QPainter()
-            painter.begin(printer)
-            
-            # Page dimensions
-            page_width = printer.pageRect().width()
-            page_height = printer.pageRect().height()
-            margin = 100
-            
-            # Fonts
-            title_font = QFont("Arial", 24, QFont.Bold)
-            subtitle_font = QFont("Arial", 14, QFont.Bold)
-            header_font = QFont("Arial", 11, QFont.Bold)
-            normal_font = QFont("Arial", 10)
-            small_font = QFont("Arial", 9)
-            
-            y = margin
-            
-            # ===== COMPANY HEADER =====
-            painter.setFont(title_font)
-            painter.setPen(QColor(0, 212, 255))  # Cyan color
-            painter.drawText(margin, y, COMPANY_INFO['name'].upper())
-            y += 60
-            
-            painter.setFont(normal_font)
-            painter.setPen(QColor(100, 100, 100))
-            painter.drawText(margin, y, COMPANY_INFO['tagline'])
-            y += 30
-            company_info = get_company_info_formatted()
-            painter.drawText(margin, y, company_info['contact'])
-            y += 60
-            
-            # Draw line separator
-            painter.setPen(QPen(QColor(155, 155, 255), 3))
-            painter.drawLine(margin, y, page_width - margin, y)
-            y += 60
-            
-            # ===== INVOICE TITLE =====
-            painter.setFont(subtitle_font)
-            painter.setPen(QColor(0, 0, 0))
-            painter.drawText(margin, y, "INVOICE")
-            
-            # Invoice details on right
-            painter.setFont(normal_font)
-            x_right = page_width - margin - 500
-            painter.drawText(x_right, y, f"Invoice #: {self.invoice_number.text()}")
-            y += 40
-            painter.drawText(x_right, y, f"Date: {self.invoice_date.date().toString('dd/MM/yyyy')}")
-            y += 60
-            
-            # ===== BILL TO SECTION =====
-            painter.setFont(header_font)
-            painter.drawText(margin, y, "Bill To:")
-            y += 35
-            
-            painter.setFont(normal_font)
-            painter.drawText(margin, y, f"{self.customer_name.text()}")
-            y += 30
-            painter.drawText(margin, y, f"Contact: {self.contact_number.text()}")
-            y += 30
-            if self.customer_address.text():
-                painter.drawText(margin, y, f"Address: {self.customer_address.text()}")
-                y += 30
-            y += 30
-            
-            # ===== TABLE HEADER =====
-            painter.setPen(QPen(QColor(155, 155, 255), 2))
-            painter.drawLine(margin, y, page_width - margin, y)
-            y += 10
-            
-            # Table background
-            painter.fillRect(QRect(margin, y, page_width - 2*margin, 40), QColor(240, 240, 255))
-            
-            painter.setFont(header_font)
-            painter.setPen(QColor(0, 0, 0))
-            
-            # Column positions
-            col_passenger = margin + 10
-            col_pnr = margin + 500
-            col_sector = margin + 900
-            col_supplier = margin + 1300
-            col_class = margin + 1700
-            col_price = margin + 2000
-            col_qty = margin + 2300
-            col_tax = margin + 2550
-            col_amount = margin + 2850
-            
-            y += 28
-            painter.drawText(col_passenger, y, "Passenger")
-            painter.drawText(col_pnr, y, "PNR")
-            painter.drawText(col_sector, y, "Sector")
-            painter.drawText(col_supplier, y, "Supplier")
-            painter.drawText(col_class, y, "Class")
-            painter.drawText(col_price, y, "Price")
-            painter.drawText(col_qty, y, "Qty")
-            painter.drawText(col_tax, y, "Tax")
-            painter.drawText(col_amount, y, "Amount")
-            y += 20
-            
-            painter.setPen(QPen(QColor(155, 155, 255), 2))
-            painter.drawLine(margin, y, page_width - margin, y)
-            y += 35
-            
-            # ===== TABLE ROWS =====
-            painter.setFont(normal_font)
-            painter.setPen(QColor(0, 0, 0))
-            
-            for r in range(self.table.rowCount()):
-                passenger_name_w = self.table.cellWidget(r, 0)
-                pnr_w = self.table.cellWidget(r, 1)
-                sector_w = self.table.cellWidget(r, 2)
-                supplier_w = self.table.cellWidget(r, 3)
-                type_w = self.table.cellWidget(r, 4)
-                class_w = self.table.cellWidget(r, 5)
-                price_w = self.table.cellWidget(r, 6)
-                qty_w = self.table.cellWidget(r, 7)
-                tax_w = self.table.cellWidget(r, 8)
-                amount_w = self.table.cellWidget(r, 9)
-                
-                # Alternate row colors
-                if r % 2 == 0:
-                    painter.fillRect(QRect(margin, y-25, page_width - 2*margin, 35), QColor(250, 250, 250))
-                
-                painter.drawText(col_passenger, y, passenger_name_w.text() if passenger_name_w else "")
-                painter.drawText(col_pnr, y, pnr_w.text() if pnr_w else "")
-                painter.drawText(col_sector, y, sector_w.text() if sector_w else "")
-                painter.drawText(col_supplier, y, supplier_w.currentText() if supplier_w else "")
-                painter.drawText(col_class, y, type_w.text() if type_w else "")
-                painter.drawText(col_price, y, class_w.currentText() if class_w else "")
-                painter.drawText(col_qty, y, f"₹{price_w.value():.2f}" if price_w else "")
-                painter.drawText(col_tax, y, str(int(qty_w.value())) if qty_w else "")
-                painter.drawText(col_amount, y, f"{tax_w.value():.1f}%" if tax_w else "")
-                painter.drawText(col_amount + 100, y, amount_w.text() if amount_w else "")
-                y += 40
-            
-            y += 20
-            painter.setPen(QPen(QColor(155, 155, 255), 2))
-            painter.drawLine(margin, y, page_width - margin, y)
-            y += 50
-            
-            # ===== TOTALS SECTION =====
-            x_labels = page_width - margin - 600
-            x_values = page_width - margin - 200
-            
-            painter.setFont(normal_font)
-            painter.setPen(QColor(0, 0, 0))
-            painter.drawText(x_labels, y, "Subtotal:")
-            painter.drawText(x_values, y, self.lbl_subtotal.text())
-            y += 35
-            
-            painter.drawText(x_labels, y, "Tax:")
-            painter.drawText(x_values, y, self.lbl_tax.text())
-            y += 35
-            
-            # Total with highlight
-            painter.fillRect(QRect(x_labels - 20, y - 25, 600, 40), QColor(255, 215, 0, 50))
-            painter.setFont(header_font)
-            painter.drawText(x_labels, y, "TOTAL:")
-            painter.drawText(x_values, y, self.lbl_total.text())
-            y += 60
-            
-            painter.setFont(normal_font)
-            painter.drawText(x_labels, y, "Received:")
-            painter.drawText(x_values, y, self.txt_received.text() or "₹0.00")
-            y += 35
-            
-            painter.drawText(x_labels, y, "Balance:")
-            painter.setPen(QColor(255, 0, 0) if "₹0.00" not in self.lbl_balance.text() else QColor(0, 150, 0))
-            painter.drawText(x_values, y, self.lbl_balance.text())
-            
-            # ===== FOOTER =====
-            y = page_height - margin - 100
-            painter.setPen(QPen(QColor(200, 200, 200), 1))
-            painter.drawLine(margin, y, page_width - margin, y)
-            y += 30
-            
-            painter.setFont(small_font)
-            painter.setPen(QColor(100, 100, 100))
-            painter.drawText(margin, y, INVOICE_CONFIG['footer_note'])
-            y += 25
-            painter.drawText(margin, y, f"Terms & Conditions: {INVOICE_CONFIG['terms']}")
-            
-            painter.end()
-            
-            print("✅ Invoice sent to printer successfully")
-            from PyQt5.QtWidgets import QMessageBox
-            QMessageBox.information(self, "Success", "Invoice sent to printer successfully!")
-            
+
+        if not os.path.exists(pdf_path):
+            QMessageBox.critical(self, "Error", "Failed to generate invoice PDF for printing.")
+            return
+
+        system = platform.system()
+
+        try:
+            if system == "Windows":
+                # Use the default associated app's "print" command
+                import subprocess
+                # os.startfile(pdf_path, "print") is the classic way:
+                os.startfile(pdf_path, "print")
+
+                QMessageBox.information(
+                    self,
+                    "Print",
+                    "Invoice sent to the default PDF viewer for printing.\n"
+                    "Check the print dialog that may have opened."
+                )
+
+            elif system == "Darwin":  # macOS
+                import subprocess
+                subprocess.Popen(["open", pdf_path])
+                QMessageBox.information(
+                    self,
+                    "Print",
+                    "Invoice opened in the default PDF viewer.\nPlease print from there."
+                )
+
+            else:  # Linux / others
+                import subprocess
+                try:
+                    # Try direct print if lpr is available
+                    subprocess.run(["lpr", pdf_path], check=True)
+                    QMessageBox.information(self, "Print", "Invoice sent to printer via lpr.")
+                except Exception:
+                    # Fallback: open in viewer
+                    from PyQt5.QtCore import QUrl
+                    from PyQt5.QtGui import QDesktopServices
+                    QDesktopServices.openUrl(QUrl.fromLocalFile(pdf_path))
+                    QMessageBox.information(
+                        self,
+                        "Print",
+                        "Invoice opened in the default PDF viewer.\nPlease print from there."
+                    )
+
         except Exception as e:
-            print(f"❌ Error printing invoice: {e}")
-            from PyQt5.QtWidgets import QMessageBox
-            QMessageBox.critical(self, "Error", f"Failed to print invoice:\n{str(e)}")
+            QMessageBox.critical(self, "Error", f"Failed to print invoice:\n{e}")
+
 
     def share_invoice(self):
         """Share invoice via email or other methods."""

@@ -57,6 +57,7 @@ class HomePage(QWidget):
         self.get_supplier_list = get_supplier_list
         self.get_company_info_formatted = get_company_info_formatted
         self.dashboard = dashboard_ref
+        self.shwo_dialog_window = False 
         
         self._init_ui()
     
@@ -926,7 +927,7 @@ class HomePage(QWidget):
             print(f"✗ Error saving invoice: {e}")
             QMessageBox.critical(self, "Error", f"Failed to save invoice:\n{str(e)}")
 
-    def save_pdf(self, show_dialog=True):
+    def save_pdf(self):
         """Generate a professional multi-page PDF invoice using the dynamic template."""
         try:
             # Ask user where to save the PDF
@@ -1007,7 +1008,7 @@ class HomePage(QWidget):
             # Generate PDF using professional template
             generate_invoice_pdf(invoice_data, filename)
 
-            if show_dialog:
+            if self.show_dialog_window:
                 try:
                     msg = QMessageBox(self)
                     msg.setWindowTitle("PDF Saved")
@@ -1023,61 +1024,115 @@ class HomePage(QWidget):
                         os.startfile(filename)   # Windows
                 except Exception:
                     QMessageBox.information(self, "Success", f"PDF saved successfully!\n{filename}")
-            print(f"✓ PDF saved: {filename}")
+            else:
+                print(f"✓ PDF saved: {filename} => show_dialog={self.show_dialog_window}")
 
         except Exception as e:
             print(f"❌ Error saving PDF: {e}")
             QMessageBox.critical(self, "Error", f"Failed to generate PDF:\n{str(e)}")
+        finally:
+            self.show_dialog_window = True  # Reset for next time
 
 
     def print_invoice(self):
-        """Print the generated PDF using QPrinter + QPrintDialog (professional UI)."""
+        """Print PDF using PDFium renderer inside PyQt5 (robust version)."""
+        import os
+        from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
+        from PyQt5.QtGui import QPainter, QImage
+        from PyQt5.QtWidgets import QMessageBox
+        from PyQt5.QtCore import Qt
+
+        import pypdfium2 as pdfium
+
+        # 1) Build path & ensure PDF exists
+        pdf_path = os.path.join(
+            os.getcwd(), "output", "invoice",
+            f"invoice_{self.invoice_number.text()}.pdf"
+        )
+
+        # Regenerate if missing
+        if not os.path.exists(pdf_path):
+            try:
+                self.show_dialog_window = False
+                self.save_pdf()
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to generate invoice PDF:\n{e}")
+                return
+
+        if not os.path.exists(pdf_path):
+            QMessageBox.critical(self, "Error", "Could not generate invoice PDF.")
+            return
+
+        # 2) Try to load the PDF with PDFium
         try:
-            from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
-            from PyQt5.QtGui import QPainter
-            from PyQt6.QtPdf import QPdfDocument
-            import os
-
-            # Ensure PDF exists
-            pdf_path = os.path.join(
-                os.getcwd(), "output", "invoice",
-                f"invoice_{self.invoice_number.text()}.pdf"
+            pdf = pdfium.PdfDocument(pdf_path)
+            page_count = len(pdf)
+            if page_count == 0:
+                QMessageBox.critical(self, "Error", "Invoice PDF has no pages.")
+                return
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "Error",
+                f"Unable to load invoice PDF (file may be corrupted):\n{e}"
             )
+            return
 
-            # If missing, generate PDF first
-            if not os.path.exists(pdf_path):
-                self.save_pdf(show_dialog=False)
-            if not os.path.exists(pdf_path):
-                QMessageBox.critical(self, "Error", "Failed to generate invoice PDF for printing.")
-                return
+        # 3) Setup printer + dialog
+        printer = QPrinter(QPrinter.HighResolution)
+        dialog = QPrintDialog(printer, self)
+        if dialog.exec_() != QPrintDialog.Accepted:
+            return
 
-            # Load PDF
-            pdf = QPdfDocument(self)
-            status = pdf.load(pdf_path)
-            if status != QPdfDocument.DocumentError.NoneError:
-                QMessageBox.critical(self, "Error", "Unable to load PDF for printing.")
-                return
+        painter = QPainter(printer)
 
-            # Setup printer + dialog
-            printer = QPrinter(QPrinter.HighResolution)
-            dialog = QPrintDialog(printer, self)
+        try:
+            for idx in range(page_count):
+                page = pdf[idx]
 
-            if dialog.exec_() != QPrintDialog.Accepted:
-                return
+                # Render PDF page to bitmap (scale≈DPI; 2 = roughly 200 DPI)
+                bitmap = page.render(scale=2.0)
+                pil_image = bitmap.to_pil()
 
-            # Render PDF pages to printer
-            painter = QPainter(printer)
-            for page in range(pdf.pageCount()):
-                pdf.render(painter, page)
-                if page < pdf.pageCount() - 1:
+                width, height = pil_image.size
+
+                # Convert to RGBA bytes for QImage
+                pil_image = pil_image.convert("RGBA")
+                img_bytes = pil_image.tobytes("raw", "RGBA")
+
+                # QImage using ARGB32 (matches 4-byte RGBA layout)
+                qimg = QImage(img_bytes, width, height, QImage.Format_RGBA8888)
+
+                if qimg.isNull():
+                    raise RuntimeError("Failed to convert PDF page to image.")
+
+                # 4) Scale image to fit printer page while keeping aspect ratio
+                page_rect = printer.pageRect()   # in device units
+                target_size = qimg.size()
+                target_size.scale(page_rect.size(), Qt.KeepAspectRatio)
+
+                # Center the image
+                x = page_rect.x() + (page_rect.width() - target_size.width()) // 2
+                y = page_rect.y() + (page_rect.height() - target_size.height()) // 2
+
+                painter.drawImage(
+                    x,
+                    y,
+                    qimg.scaled(target_size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                )
+
+                if idx < page_count - 1:
                     printer.newPage()
 
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed while printing invoice:\n{e}")
+        finally:
             painter.end()
 
-            QMessageBox.information(self, "Print", "Invoice sent to printer successfully!")
+        QMessageBox.information(self, "Print", "Invoice sent to printer successfully!")
 
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to print invoice:\n{e}")
+
+
 
 
     def share_invoice(self):
@@ -1090,6 +1145,7 @@ class HomePage(QWidget):
 
             # Always ensure PDF exists
             if not os.path.exists(pdf_path):
+                self.show_dialog_window = False
                 self.save_pdf()
                 if not os.path.exists(pdf_path):
                     QMessageBox.critical(self, "Error", "Failed to generate PDF for sharing.")
