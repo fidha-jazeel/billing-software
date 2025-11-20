@@ -5,7 +5,7 @@ echo ================================================
 echo.
 echo Starting application...
 echo.
-python main.py
+python -m travel_billing_software.main
 echo.
 echo Application closed.
 pause

@@ -227,6 +227,8 @@ cloud/
 *.pdf
 *.json
 outputs/
+output/
 *.db-shm
 *.db-wal
 .temp/
+invoices/
