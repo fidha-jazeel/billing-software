@@ -251,20 +251,7 @@ class SettingsPage(QWidget):
         add_supplier_btn.setFixedWidth(100)
         suppliers_action_layout.addWidget(add_supplier_btn)
         suppliers_layout.addLayout(suppliers_action_layout)
-        # remove_supplier_btn = QPushButton("➖ Remove")
-        # remove_supplier_btn.setStyleSheet(self.get_button_style('remove'))
-        # remove_supplier_btn.setCursor(Qt.PointingHandCursor)
-        # remove_supplier_btn.clicked.connect(lambda: self.remove_dropdown_item('supplier'))
-        # remove_supplier_btn.setFixedWidth(120)
-        # suppliers_action_layout.addWidget(remove_supplier_btn)
-
-        # edit_supplier_btn = QPushButton("✏️ Edit")
-        # edit_supplier_btn.setStyleSheet(self.get_button_style('edit'))
-        # edit_supplier_btn.setCursor(Qt.PointingHandCursor)
-        # edit_supplier_btn.clicked.connect(lambda: self.edit_dropdown_item('supplier'))
-        # edit_supplier_btn.setFixedWidth(120)
-        # suppliers_action_layout.addWidget(edit_supplier_btn)
-        # suppliers_layout.addLayout(suppliers_action_layout)
+        
 
         # List widget for displaying and selecting items
         self.suppliers_list = QListWidget()
@@ -377,6 +364,15 @@ class SettingsPage(QWidget):
         classes_label = QLabel("Travel Classes:")
         classes_label.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold;")
         classes_layout.addWidget(classes_label)
+
+        # self.classes_list = QListWidget()
+        # classes_layout.addWidget(self.classes_list)
+
+        # classes_layout = QHBoxLayout()
+        # classes_layout.addWidget(remove_class_btn)
+        # classes_layout.addWidget(edit_class_btn)
+        # classes_layout.addLayout(classes_layout)
+
         
         # Input field with Add button attached
         classes_input_layout = QHBoxLayout()
@@ -386,17 +382,6 @@ class SettingsPage(QWidget):
         self.class_input.setStyleSheet(self.get_input_style())
         classes_input_layout.addWidget(self.class_input)
         
-        add_class_btn = QPushButton("➕ Add")
-        add_class_btn.setStyleSheet(self.get_button_style('add'))
-        add_class_btn.setCursor(Qt.PointingHandCursor)
-        add_class_btn.clicked.connect(lambda: self.add_dropdown_item('class'))
-        add_class_btn.setFixedWidth(100)
-        classes_input_layout.addWidget(add_class_btn)
-        classes_layout.addLayout(classes_input_layout)
-        
-        # Remove and Edit buttons on separate row
-        classes_action_layout = QHBoxLayout()
-        classes_action_layout.addStretch()
         
         remove_class_btn = QPushButton("➖ Remove")
         remove_class_btn.setStyleSheet(self.get_button_style('remove'))
@@ -404,6 +389,18 @@ class SettingsPage(QWidget):
         remove_class_btn.clicked.connect(lambda: self.remove_dropdown_item('class'))
         remove_class_btn.setFixedWidth(120)
         classes_action_layout.addWidget(remove_class_btn)
+        # classes_layout.addLayout(classes_action_layout)
+        # remove_class_btn.setStyleSheet("""
+        #     QPushButton {_
+        #         background-color: #E53935;
+        #         color: white;
+        #         border-radius: 6px;
+        #         padding: 6px;
+        #     }
+        #     QPushButton:hover {
+        #         background-color: #B71C1C;
+        #     }
+        # """)
         
         edit_class_btn = QPushButton("✏️ Edit")
         edit_class_btn.setStyleSheet(self.get_button_style('edit'))
@@ -412,6 +409,48 @@ class SettingsPage(QWidget):
         edit_class_btn.setFixedWidth(120)
         classes_action_layout.addWidget(edit_class_btn)
         classes_layout.addLayout(classes_action_layout)
+
+        # classes_layout = QHBoxLayout()
+        # classes_layout.addStretch()
+
+        self.classes_list = QListWidget()
+
+        classes_section_layout = QVBoxLayout()
+        classes_section_layout.addWidget(self.classes_list)
+        classes_section_layout.addLayout(classes_action_layout)  
+
+        class_input_row = QHBoxLayout()
+
+        self.class_input = QLineEdit()
+        self.class_input.setPlaceholderText("Enter new class...")
+        class_input_row.addWidget(self.class_input)
+
+        # add_class_btn = QPushButton(" Add")
+        # add_class_btn.setStyleSheet(self.get_button_style('add'))
+        # add_class_btn.clicked.connect(lambda: self.add_dropdown_item('class'))
+        # class_input_row.addWidget(add_class_btn)
+
+        # classes_section_layout.addLayout(class_input_row) 
+        #         # classes_layout.addWidget(self.classes_list)
+
+        # classes_layout = QHBoxLayout()
+        # classes_layout.addWidget(remove_class_btn)
+        # classes_layout.addWidget(edit_class_btn)
+        # classes_layout.addLayout(classes_layout)
+        
+        
+        # # Remove and Edit buttons on separate row
+        classes_action_layout = QHBoxLayout()
+        classes_action_layout.addStretch()
+       
+        
+        add_class_btn = QPushButton("➕ Add")
+        add_class_btn.setStyleSheet(self.get_button_style('add'))
+        add_class_btn.setCursor(Qt.PointingHandCursor)
+        add_class_btn.clicked.connect(lambda: self.add_dropdown_item('class'))
+        add_class_btn.setFixedWidth(100)
+        classes_input_layout.addWidget(add_class_btn)
+        classes_input_layout.addLayout(classes_input_layout)
         
         # List widget for displaying and selecting items
         self.classes_list = QListWidget()
@@ -436,8 +475,8 @@ class SettingsPage(QWidget):
             }}
         """)
         self.classes_list.setMaximumHeight(150)
-        classes_layout.addWidget(self.classes_list)
-        dropdown_layout.addLayout(classes_layout)
+        classes_action_layout.addWidget(self.classes_list)
+        dropdown_layout.addLayout(classes_action_layout)
         
         layout.addWidget(dropdown_frame)
         
@@ -494,16 +533,12 @@ To persist settings, update config/settings.py file."""
             # Try loading from database first
             if self.db:
                 self.suppliers = self.db.get_dropdown_items('supplier')
-                self.sectors = self.db.get_dropdown_items('sector')
-                self.types = self.db.get_dropdown_items('type')
                 self.classes = self.db.get_dropdown_items('class')
                 
                 # Initialize defaults if database is empty
                 if not self.suppliers:
                     self.db.initialize_default_dropdowns()
                     self.suppliers = self.db.get_dropdown_items('supplier')
-                    self.sectors = self.db.get_dropdown_items('sector')
-                    self.types = self.db.get_dropdown_items('type')
                     self.classes = self.db.get_dropdown_items('class')
             else:
                 # Fallback to JSON file
@@ -511,13 +546,9 @@ To persist settings, update config/settings.py file."""
                     with open('dropdown_items.json', 'r') as f:
                         data = json.load(f)
                         self.suppliers = data.get('suppliers', ['Emirates Airlines', 'Qatar Airways', 'Air India'])
-                        self.sectors = data.get('sectors', ['Domestic', 'International', 'Regional'])
-                        self.types = data.get('types', ['Flight', 'Hotel', 'Tour Package'])
                         self.classes = data.get('classes', ['Economy', 'Premium Economy', 'Business', 'First Class'])
                 else:
                     self.suppliers = ['Emirates Airlines', 'Qatar Airways', 'Air India']
-                    self.sectors = ['Domestic', 'International', 'Regional']
-                    self.types = ['Flight', 'Hotel', 'Tour Package']
                     self.classes = ['Economy', 'Premium Economy', 'Business', 'First Class']
             
             self.update_dropdown_displays()
@@ -577,8 +608,6 @@ To persist settings, update config/settings.py file."""
         try:
             data = {
                 'suppliers': self.suppliers,
-                'sectors': self.sectors,
-                'types': self.types,
                 'classes': self.classes
             }
             with open('dropdown_items.json', 'w') as f:
