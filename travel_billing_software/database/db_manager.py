@@ -117,6 +117,31 @@ class DatabaseManager:
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
             
+            -- Dropdown items tables for dynamic lists
+            CREATE TABLE IF NOT EXISTS dropdown_suppliers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT UNIQUE NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+            
+            CREATE TABLE IF NOT EXISTS dropdown_sectors (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT UNIQUE NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+            
+            CREATE TABLE IF NOT EXISTS dropdown_types (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT UNIQUE NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+            
+            CREATE TABLE IF NOT EXISTS dropdown_classes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT UNIQUE NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+            
             -- Create indexes for better performance
             CREATE INDEX IF NOT EXISTS idx_invoice_number ON invoices(invoice_number);
             CREATE INDEX IF NOT EXISTS idx_invoice_date ON invoices(invoice_date);
@@ -641,6 +666,170 @@ class DatabaseManager:
                 print("✓ Database connection closed")
         except Exception as e:
             print(f"✗ Error closing database: {e}")
+    
+    # ==================== DROPDOWN ITEMS OPERATIONS ====================
+    
+    def get_dropdown_items(self, item_type: str) -> List[str]:
+        """Get all dropdown items of a specific type from database.
+        
+        Args:
+            item_type: Type of dropdown ('supplier', 'sector', 'type', 'class')
+            
+        Returns:
+            List of item names
+        """
+        try:
+            table_map = {
+                'supplier': 'dropdown_suppliers',
+                'sector': 'dropdown_sectors',
+                'type': 'dropdown_types',
+                'class': 'dropdown_classes'
+            }
+            
+            table = table_map.get(item_type)
+            if not table:
+                return []
+            
+            cur = self.conn.cursor()
+            cur.execute(f"SELECT name FROM {table} ORDER BY name")
+            return [row[0] for row in cur.fetchall()]
+            
+        except Exception as e:
+            print(f"✗ Error getting dropdown items: {e}")
+            return []
+    
+    def add_dropdown_item(self, item_type: str, name: str) -> bool:
+        """Add a new dropdown item to database.
+        
+        Args:
+            item_type: Type of dropdown ('supplier', 'sector', 'type', 'class')
+            name: Name of the item to add
+            
+        Returns:
+            bool: True if successful
+        """
+        try:
+            table_map = {
+                'supplier': 'dropdown_suppliers',
+                'sector': 'dropdown_sectors',
+                'type': 'dropdown_types',
+                'class': 'dropdown_classes'
+            }
+            
+            table = table_map.get(item_type)
+            if not table:
+                return False
+            
+            self.conn.execute("BEGIN IMMEDIATE")
+            cur = self.conn.cursor()
+            cur.execute(f"INSERT INTO {table} (name) VALUES (?)", (name,))
+            self.conn.execute("COMMIT")
+            
+            print(f"✓ Added {item_type}: {name}")
+            return True
+            
+        except sqlite3.IntegrityError:
+            self.conn.execute("ROLLBACK")
+            print(f"✗ {item_type.capitalize()} '{name}' already exists")
+            return False
+        except Exception as e:
+            self.conn.execute("ROLLBACK")
+            print(f"✗ Error adding dropdown item: {e}")
+            return False
+    
+    def update_dropdown_item(self, item_type: str, old_name: str, new_name: str) -> bool:
+        """Update a dropdown item in database.
+        
+        Args:
+            item_type: Type of dropdown ('supplier', 'sector', 'type', 'class')
+            old_name: Current name of the item
+            new_name: New name for the item
+            
+        Returns:
+            bool: True if successful
+        """
+        try:
+            table_map = {
+                'supplier': 'dropdown_suppliers',
+                'sector': 'dropdown_sectors',
+                'type': 'dropdown_types',
+                'class': 'dropdown_classes'
+            }
+            
+            table = table_map.get(item_type)
+            if not table:
+                return False
+            
+            self.conn.execute("BEGIN IMMEDIATE")
+            cur = self.conn.cursor()
+            cur.execute(f"UPDATE {table} SET name = ? WHERE name = ?", (new_name, old_name))
+            self.conn.execute("COMMIT")
+            
+            print(f"✓ Updated {item_type}: {old_name} → {new_name}")
+            return True
+            
+        except Exception as e:
+            self.conn.execute("ROLLBACK")
+            print(f"✗ Error updating dropdown item: {e}")
+            return False
+    
+    def delete_dropdown_item(self, item_type: str, name: str) -> bool:
+        """Delete a dropdown item from database.
+        
+        Args:
+            item_type: Type of dropdown ('supplier', 'sector', 'type', 'class')
+            name: Name of the item to delete
+            
+        Returns:
+            bool: True if successful
+        """
+        try:
+            table_map = {
+                'supplier': 'dropdown_suppliers',
+                'sector': 'dropdown_sectors',
+                'type': 'dropdown_types',
+                'class': 'dropdown_classes'
+            }
+            
+            table = table_map.get(item_type)
+            if not table:
+                return False
+            
+            self.conn.execute("BEGIN IMMEDIATE")
+            cur = self.conn.cursor()
+            cur.execute(f"DELETE FROM {table} WHERE name = ?", (name,))
+            self.conn.execute("COMMIT")
+            
+            print(f"✓ Deleted {item_type}: {name}")
+            return True
+            
+        except Exception as e:
+            self.conn.execute("ROLLBACK")
+            print(f"✗ Error deleting dropdown item: {e}")
+            return False
+    
+    def initialize_default_dropdowns(self):
+        """Initialize dropdown tables with default values if empty."""
+        try:
+            defaults = {
+                'supplier': ['Emirates Airlines', 'Qatar Airways', 'Air India', 'Etihad Airways', 'British Airways'],
+                'sector': ['Domestic', 'International', 'Regional', 'GCC'],
+                'type': ['Flight', 'Hotel', 'Tour Package', 'Visa', 'Insurance'],
+                'class': ['Economy', 'Premium Economy', 'Business', 'First Class']
+            }
+            
+            for item_type, items in defaults.items():
+                existing = self.get_dropdown_items(item_type)
+                if not existing:
+                    for item in items:
+                        self.add_dropdown_item(item_type, item)
+            
+            print("✓ Default dropdown items initialized")
+            return True
+            
+        except Exception as e:
+            print(f"✗ Error initializing dropdowns: {e}")
+            return False
     
     def __enter__(self):
         """Context manager entry."""

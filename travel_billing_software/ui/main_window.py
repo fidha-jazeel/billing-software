@@ -1762,7 +1762,7 @@ class DashboardImproved(QMainWindow):
         """Create the Settings page with configuration options."""
         return SettingsPage(COLORS, COMPANY_INFO, INVOICE_CONFIG, 
                           get_input_style, get_spinbox_style, 
-                          get_button_style, get_scrollarea_style)
+                          get_button_style, get_scrollarea_style, self.db)
 
     def _create_about_page(self) -> QWidget:
         """Create the About page."""

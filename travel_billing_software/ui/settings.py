@@ -3,16 +3,19 @@ Settings Page for Travel Agency Billing Software
 """
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
-    QFrame, QScrollArea, QGridLayout, QPushButton, QDoubleSpinBox, QMessageBox
+    QFrame, QScrollArea, QGridLayout, QPushButton, QDoubleSpinBox, QMessageBox,
+    QListWidget, QInputDialog
 )
 from PyQt5.QtCore import Qt
+import os
+import json
 
 
 class SettingsPage(QWidget):
     """Settings page for configuring company and invoice settings."""
     
     def __init__(self, colors, company_info, invoice_config, get_input_style, get_spinbox_style, 
-                 get_button_style, get_scrollarea_style):
+                 get_button_style, get_scrollarea_style, db=None):
         super().__init__()
         self.COLORS = colors
         self.COMPANY_INFO = company_info
@@ -21,6 +24,7 @@ class SettingsPage(QWidget):
         self.get_spinbox_style = get_spinbox_style
         self.get_button_style = get_button_style
         self.get_scrollarea_style = get_scrollarea_style
+        self.db = db
         self.init_ui()
     
     def init_ui(self):
@@ -151,6 +155,294 @@ class SettingsPage(QWidget):
         invoice_layout.addWidget(self.settings_tax, 3, 1)
         
         layout.addWidget(invoice_frame)
+    
+
+        # === DROPDOWN ITEMS MANAGEMENT ===
+        dropdown_frame = QFrame()
+        dropdown_frame.setStyleSheet(f"""
+            QFrame {{
+                background-color: {self.COLORS['secondary_bg']};
+                border-radius: 8px;
+                padding: 20px;
+            }}
+        """)
+        dropdown_layout = QVBoxLayout(dropdown_frame)
+        dropdown_layout.setContentsMargins(0, 0, 0, 0)
+        dropdown_layout.setSpacing(15)
+        
+        dropdown_title = QLabel(f"<b style='color:{self.COLORS['accent_primary']}; font-size:14px;'>📋 Dropdown Items Management</b>")
+        dropdown_layout.addWidget(dropdown_title)
+        
+        # Suppliers Section
+        suppliers_layout = QVBoxLayout()
+        suppliers_label = QLabel("Suppliers:")
+        suppliers_label.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold;")
+        suppliers_layout.addWidget(suppliers_label)
+        
+        # Input field with Add button attached
+        suppliers_action_layout = QHBoxLayout()
+        suppliers_action_layout.setSpacing(10)
+        self.supplier_input = QLineEdit()
+        self.supplier_input.setPlaceholderText("Enter new supplier name...")
+        self.supplier_input.setStyleSheet(self.get_input_style())
+        suppliers_action_layout.addWidget(self.supplier_input)
+        
+        remove_supplier_btn = QPushButton("➖ Remove")
+        remove_supplier_btn.setStyleSheet(self.get_button_style('remove'))
+        remove_supplier_btn.setCursor(Qt.PointingHandCursor)
+        remove_supplier_btn.clicked.connect(lambda: self.remove_dropdown_item('supplier'))
+        remove_supplier_btn.setFixedWidth(120)
+        suppliers_action_layout.addWidget(remove_supplier_btn)
+        remove_supplier_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #E53935;
+                color: white;
+                border-radius: 6px;
+                padding: 6px;
+            }
+            QPushButton:hover {
+                background-color: #B71C1C;
+            }
+        """)
+
+
+        edit_supplier_btn = QPushButton("✏️ Edit")
+        edit_supplier_btn.setStyleSheet(self.get_button_style('edit'))
+        edit_supplier_btn.setCursor(Qt.PointingHandCursor)
+        edit_supplier_btn.clicked.connect(lambda: self.edit_dropdown_item('supplier'))
+        edit_supplier_btn.setFixedWidth(120)
+        suppliers_action_layout.addWidget(edit_supplier_btn)
+        suppliers_layout.addLayout(suppliers_action_layout)
+        # add_supplier_btn = QPushButton("➕ Add")
+        # add_supplier_btn.setStyleSheet(self.get_button_style('add'))
+        # add_supplier_btn.setCursor(Qt.PointingHandCursor)
+        # add_supplier_btn.clicked.connect(lambda: self.add_dropdown_item('supplier'))
+        # add_supplier_btn.setFixedWidth(100)
+        # suppliers_input_layout.addWidget(add_supplier_btn)
+        # suppliers_layout.addLayout(suppliers_input_layout)
+        
+        # Remove and Edit buttons on separate row
+        suppliers_action_layout = QHBoxLayout()
+        suppliers_action_layout.addStretch()
+    # def add_dropdown_item(self, item_type):
+    #     text = ""
+
+    #     if item_type == "supplier":
+    #         text = self.supplier_input.text().strip()
+
+    #     if text == "":
+    #         QMessageBox.warning(self, "Warning", "Please enter a value before adding!")
+    #         return
+
+    #     # Save to DB
+    #     self.db.insert_dropdown_item(item_type, text)
+
+    #     # Clear textbox
+    #     if item_type == "supplier":
+    #         self.supplier_input.clear()
+
+    #     # Refresh list
+    #     self.load_dropdown_items()
+ 
+        add_supplier_btn = QPushButton("➕ Add")
+        add_supplier_btn.setStyleSheet(self.get_button_style('add'))
+        add_supplier_btn.setCursor(Qt.PointingHandCursor)
+        add_supplier_btn.clicked.connect(lambda: self.add_dropdown_item('supplier'))
+        add_supplier_btn.setFixedWidth(100)
+        suppliers_action_layout.addWidget(add_supplier_btn)
+        suppliers_layout.addLayout(suppliers_action_layout)
+        # remove_supplier_btn = QPushButton("➖ Remove")
+        # remove_supplier_btn.setStyleSheet(self.get_button_style('remove'))
+        # remove_supplier_btn.setCursor(Qt.PointingHandCursor)
+        # remove_supplier_btn.clicked.connect(lambda: self.remove_dropdown_item('supplier'))
+        # remove_supplier_btn.setFixedWidth(120)
+        # suppliers_action_layout.addWidget(remove_supplier_btn)
+
+        # edit_supplier_btn = QPushButton("✏️ Edit")
+        # edit_supplier_btn.setStyleSheet(self.get_button_style('edit'))
+        # edit_supplier_btn.setCursor(Qt.PointingHandCursor)
+        # edit_supplier_btn.clicked.connect(lambda: self.edit_dropdown_item('supplier'))
+        # edit_supplier_btn.setFixedWidth(120)
+        # suppliers_action_layout.addWidget(edit_supplier_btn)
+        # suppliers_layout.addLayout(suppliers_action_layout)
+
+        # List widget for displaying and selecting items
+        self.suppliers_list = QListWidget()
+        self.suppliers_list.setStyleSheet(f"""
+            QListWidget {{
+                color: {self.COLORS['text_secondary']};
+                background: {self.COLORS['primary_bg']};
+                border: 1px solid #444;
+                border-radius: 5px;
+                padding: 5px;
+            }}
+            QListWidget::item {{
+                padding: 5px;
+                border-radius: 3px;
+            }}
+            QListWidget::item:selected {{
+                background-color: {self.COLORS['accent_primary']};
+                color: white;
+            }}
+            QListWidget::item:hover {{
+                background-color: {self.COLORS['secondary_bg']};
+            }}
+        """)
+        self.suppliers_list.setMaximumHeight(150)
+        suppliers_layout.addWidget(self.suppliers_list)
+        dropdown_layout.addLayout(suppliers_layout)
+        
+        # Sectors Section
+        # sectors_layout = QVBoxLayout()
+        # sectors_label = QLabel("Sectors:")
+        # sectors_label.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold;")
+        # sectors_layout.addWidget(sectors_label)
+        
+        # sectors_input_layout = QHBoxLayout()
+        # self.sector_input = QLineEdit()
+        # self.sector_input.setPlaceholderText("Enter new sector...")
+        # self.sector_input.setStyleSheet(self.get_input_style())
+        # sectors_input_layout.addWidget(self.sector_input)
+        
+        # add_sector_btn = QPushButton("➕ Add")
+        # add_sector_btn.setStyleSheet(self.get_button_style('add'))
+        # add_sector_btn.setCursor(Qt.PointingHandCursor)
+        # add_sector_btn.clicked.connect(lambda: self.add_dropdown_item('sector'))
+        # sectors_input_layout.addWidget(add_sector_btn)
+        # sectors_layout.addLayout(sectors_input_layout)
+        
+
+        # remove_sector_btn = QPushButton("➖ Remove")
+        # remove_sector_btn.setStyleSheet(self.get_button_style('remove'))
+        # remove_sector_btn.setCursor(Qt.PointingHandCursor)
+        # remove_sector_btn.clicked.connect(lambda: self.remove_dropdown_item('sector'))
+        # sectors_input_layout.addWidget(remove_sector_btn)
+        # sectors_layout.addLayout(sectors_input_layout)
+ 
+
+        # edit_sector_btn = QPushButton(" Edit")
+        # edit_sector_btn.setStyleSheet(self.get_button_style('edit'))
+        # edit_sector_btn.setCursor(Qt.PointingHandCursor)
+        # edit_sector_btn.clicked.connect(lambda: self.edit_dropdown_item('sector'))
+        # sectors_input_layout.addWidget(edit_sector_btn)
+        # sectors_layout.addLayout(sectors_input_layout)
+
+        # self.sectors_list = QLabel()
+        # self.sectors_list.setWordWrap(True)
+        # self.sectors_list.setStyleSheet(f"color: {self.COLORS['text_secondary']}; padding: 10px; background: {self.COLORS['primary_bg']}; border-radius: 5px;")
+        # sectors_layout.addWidget(self.sectors_list)
+        # dropdown_layout.addLayout(sectors_layout)
+        
+        # Types Section
+        # types_layout = QVBoxLayout()
+        # types_label = QLabel("Types:")
+        # types_label.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold;")
+        # types_layout.addWidget(types_label)
+        
+        # types_input_layout = QHBoxLayout()
+        # self.type_input = QLineEdit()
+        # self.type_input.setPlaceholderText("Enter new type...")
+        # self.type_input.setStyleSheet(self.get_input_style())
+        # types_input_layout.addWidget(self.type_input)
+        
+        # add_type_btn = QPushButton("➕ Add")
+        # add_type_btn.setStyleSheet(self.get_button_style('add'))
+        # add_type_btn.setCursor(Qt.PointingHandCursor)
+        # add_type_btn.clicked.connect(lambda: self.add_dropdown_item('type'))
+        # types_input_layout.addWidget(add_type_btn)
+        # types_layout.addLayout(types_input_layout)
+
+        # remove_type_btn = QPushButton("➖ Remove")
+        # remove_type_btn.setStyleSheet(self.get_button_style('remove'))
+        # remove_type_btn.setCursor(Qt.PointingHandCursor)
+        # remove_type_btn.clicked.connect(lambda: self.remove_dropdown_item('type'))
+        # types_input_layout.addWidget(remove_type_btn)
+        # types_layout.addLayout(types_input_layout)
+        
+        # edit_type_btn = QPushButton(" Edit")
+        # edit_type_btn.setStyleSheet(self.get_button_style('edit'))
+        # edit_type_btn.setCursor(Qt.PointingHandCursor)
+        # edit_type_btn.clicked.connect(lambda: self.edit_dropdown_item('type'))
+        # types_input_layout.addWidget(edit_type_btn)
+        # types_layout.addLayout(types_input_layout)
+
+        # self.types_list = QLabel()
+        # self.types_list.setWordWrap(True)
+        # self.types_list.setStyleSheet(f"color: {self.COLORS['text_secondary']}; padding: 10px; background: {self.COLORS['primary_bg']}; border-radius: 5px;")
+        # types_layout.addWidget(self.types_list)
+        # dropdown_layout.addLayout(types_layout)
+        
+        # Classes Section
+        classes_layout = QVBoxLayout()
+        classes_label = QLabel("Travel Classes:")
+        classes_label.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold;")
+        classes_layout.addWidget(classes_label)
+        
+        # Input field with Add button attached
+        classes_input_layout = QHBoxLayout()
+        classes_input_layout.setSpacing(0)
+        self.class_input = QLineEdit()
+        self.class_input.setPlaceholderText("Enter new class...")
+        self.class_input.setStyleSheet(self.get_input_style())
+        classes_input_layout.addWidget(self.class_input)
+        
+        add_class_btn = QPushButton("➕ Add")
+        add_class_btn.setStyleSheet(self.get_button_style('add'))
+        add_class_btn.setCursor(Qt.PointingHandCursor)
+        add_class_btn.clicked.connect(lambda: self.add_dropdown_item('class'))
+        add_class_btn.setFixedWidth(100)
+        classes_input_layout.addWidget(add_class_btn)
+        classes_layout.addLayout(classes_input_layout)
+        
+        # Remove and Edit buttons on separate row
+        classes_action_layout = QHBoxLayout()
+        classes_action_layout.addStretch()
+        
+        remove_class_btn = QPushButton("➖ Remove")
+        remove_class_btn.setStyleSheet(self.get_button_style('remove'))
+        remove_class_btn.setCursor(Qt.PointingHandCursor)
+        remove_class_btn.clicked.connect(lambda: self.remove_dropdown_item('class'))
+        remove_class_btn.setFixedWidth(120)
+        classes_action_layout.addWidget(remove_class_btn)
+        
+        edit_class_btn = QPushButton("✏️ Edit")
+        edit_class_btn.setStyleSheet(self.get_button_style('edit'))
+        edit_class_btn.setCursor(Qt.PointingHandCursor)
+        edit_class_btn.clicked.connect(lambda: self.edit_dropdown_item('class'))
+        edit_class_btn.setFixedWidth(120)
+        classes_action_layout.addWidget(edit_class_btn)
+        classes_layout.addLayout(classes_action_layout)
+        
+        # List widget for displaying and selecting items
+        self.classes_list = QListWidget()
+        self.classes_list.setStyleSheet(f"""
+            QListWidget {{
+                color: {self.COLORS['text_secondary']};
+                background: {self.COLORS['primary_bg']};
+                border: 1px solid #444;
+                border-radius: 5px;
+                padding: 5px;
+            }}
+            QListWidget::item {{
+                padding: 5px;
+                border-radius: 3px;
+            }}
+            QListWidget::item:selected {{
+                background-color: {self.COLORS['accent_primary']};
+                color: white;
+            }}
+            QListWidget::item:hover {{
+                background-color: {self.COLORS['secondary_bg']};
+            }}
+        """)
+        self.classes_list.setMaximumHeight(150)
+        classes_layout.addWidget(self.classes_list)
+        dropdown_layout.addLayout(classes_layout)
+        
+        layout.addWidget(dropdown_frame)
+        
+        # Load initial dropdown items
+        self.load_dropdown_items()
         
         # === SAVE BUTTON ===
         save_btn_layout = QHBoxLayout()
@@ -195,3 +487,201 @@ To persist settings, update config/settings.py file."""
             
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to save settings:\n{str(e)}")
+    
+    def load_dropdown_items(self):
+        """Load dropdown items from database (preferred) or JSON file."""
+        try:
+            # Try loading from database first
+            if self.db:
+                self.suppliers = self.db.get_dropdown_items('supplier')
+                self.sectors = self.db.get_dropdown_items('sector')
+                self.types = self.db.get_dropdown_items('type')
+                self.classes = self.db.get_dropdown_items('class')
+                
+                # Initialize defaults if database is empty
+                if not self.suppliers:
+                    self.db.initialize_default_dropdowns()
+                    self.suppliers = self.db.get_dropdown_items('supplier')
+                    self.sectors = self.db.get_dropdown_items('sector')
+                    self.types = self.db.get_dropdown_items('type')
+                    self.classes = self.db.get_dropdown_items('class')
+            else:
+                # Fallback to JSON file
+                if os.path.exists('dropdown_items.json'):
+                    with open('dropdown_items.json', 'r') as f:
+                        data = json.load(f)
+                        self.suppliers = data.get('suppliers', ['Emirates Airlines', 'Qatar Airways', 'Air India'])
+                        self.sectors = data.get('sectors', ['Domestic', 'International', 'Regional'])
+                        self.types = data.get('types', ['Flight', 'Hotel', 'Tour Package'])
+                        self.classes = data.get('classes', ['Economy', 'Premium Economy', 'Business', 'First Class'])
+                else:
+                    self.suppliers = ['Emirates Airlines', 'Qatar Airways', 'Air India']
+                    self.sectors = ['Domestic', 'International', 'Regional']
+                    self.types = ['Flight', 'Hotel', 'Tour Package']
+                    self.classes = ['Economy', 'Premium Economy', 'Business', 'First Class']
+            
+            self.update_dropdown_displays()
+        except Exception as e:
+            print(f"Error loading dropdown items: {e}")
+    
+    def update_dropdown_displays(self):
+        """Update the display of dropdown items."""
+        self.suppliers_list.clear()
+        self.suppliers_list.addItems(self.suppliers)
+        self.classes_list.clear()
+        self.classes_list.addItems(self.classes)
+    
+    def add_dropdown_item(self, item_type):
+        """Add new item to dropdown list."""
+        try:
+            new_item = None
+            if item_type == 'supplier':
+                new_item = self.supplier_input.text().strip()
+                if new_item and new_item not in self.suppliers:
+                    if self.db:
+                        if self.db.add_dropdown_item('supplier', new_item):
+                            self.suppliers.append(new_item)
+                            self.supplier_input.clear()
+                        else:
+                            QMessageBox.warning(self, "Duplicate", "This supplier already exists.")
+                            return
+                    else:
+                        self.suppliers.append(new_item)
+                        self.supplier_input.clear()
+            elif item_type == 'class':
+                new_item = self.class_input.text().strip()
+                if new_item and new_item not in self.classes:
+                    if self.db:
+                        if self.db.add_dropdown_item('class', new_item):
+                            self.classes.append(new_item)
+                            self.class_input.clear()
+                        else:
+                            QMessageBox.warning(self, "Duplicate", "This class already exists.")
+                            return
+                    else:
+                        self.classes.append(new_item)
+                        self.class_input.clear()
+            
+            if not new_item:
+                QMessageBox.warning(self, "Empty Field", "Please enter a value.")
+                return
+                
+            self.save_dropdown_items()
+            self.update_dropdown_displays()
+            QMessageBox.information(self, "Success", f"{item_type.capitalize()} added successfully!")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to add item:\n{str(e)}")
+    
+    def save_dropdown_items(self):
+        """Save dropdown items to JSON file."""
+        try:
+            data = {
+                'suppliers': self.suppliers,
+                'sectors': self.sectors,
+                'types': self.types,
+                'classes': self.classes
+            }
+            with open('dropdown_items.json', 'w') as f:
+                json.dump(data, f, indent=4)
+            print("✓ Dropdown items saved")
+        except Exception as e:
+            print(f"Error saving dropdown items: {e}")
+    
+    def remove_dropdown_item(self, item_type):
+        """Remove selected item from dropdown list."""
+        try:
+            item_text = None
+            if item_type == 'supplier':
+                current_item = self.suppliers_list.currentItem()
+                if current_item:
+                    item_text = current_item.text()
+                    if self.db:
+                        if self.db.delete_dropdown_item('supplier', item_text):
+                            self.suppliers.remove(item_text)
+                        else:
+                            QMessageBox.warning(self, "Error", "Failed to remove from database.")
+                            return
+                    else:
+                        self.suppliers.remove(item_text)
+                else:
+                    QMessageBox.warning(self, "No Selection", "Please select a supplier to remove.")
+                    return
+            elif item_type == 'class':
+                current_item = self.classes_list.currentItem()
+                if current_item:
+                    item_text = current_item.text()
+                    if self.db:
+                        if self.db.delete_dropdown_item('class', item_text):
+                            self.classes.remove(item_text)
+                        else:
+                            QMessageBox.warning(self, "Error", "Failed to remove from database.")
+                            return
+                    else:
+                        self.classes.remove(item_text)
+                else:
+                    QMessageBox.warning(self, "No Selection", "Please select a class to remove.")
+                    return
+            
+            self.save_dropdown_items()
+            self.update_dropdown_displays()
+            QMessageBox.information(self, "Success", f"Item removed successfully!")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to remove item:\n{str(e)}")
+    
+    def edit_dropdown_item(self, item_type):
+        """Edit selected item in dropdown list."""
+        try:
+            if item_type == 'supplier':
+                current_item = self.suppliers_list.currentItem()
+                if current_item:
+                    old_text = current_item.text()
+                    new_text, ok = QInputDialog.getText(
+                        self, "Edit Supplier", "Enter new supplier name:", 
+                        QLineEdit.Normal, old_text
+                    )
+                    if ok and new_text.strip():
+                        if self.db:
+                            if self.db.update_dropdown_item('supplier', old_text, new_text.strip()):
+                                idx = self.suppliers.index(old_text)
+                                self.suppliers[idx] = new_text.strip()
+                            else:
+                                QMessageBox.warning(self, "Error", "Failed to update in database.")
+                                return
+                        else:
+                            idx = self.suppliers.index(old_text)
+                            self.suppliers[idx] = new_text.strip()
+                    else:
+                        return
+                else:
+                    QMessageBox.warning(self, "No Selection", "Please select a supplier to edit.")
+                    return
+            elif item_type == 'class':
+                current_item = self.classes_list.currentItem()
+                if current_item:
+                    old_text = current_item.text()
+                    new_text, ok = QInputDialog.getText(
+                        self, "Edit Class", "Enter new class name:", 
+                        QLineEdit.Normal, old_text
+                    )
+                    if ok and new_text.strip():
+                        if self.db:
+                            if self.db.update_dropdown_item('class', old_text, new_text.strip()):
+                                idx = self.classes.index(old_text)
+                                self.classes[idx] = new_text.strip()
+                            else:
+                                QMessageBox.warning(self, "Error", "Failed to update in database.")
+                                return
+                        else:
+                            idx = self.classes.index(old_text)
+                            self.classes[idx] = new_text.strip()
+                    else:
+                        return
+                else:
+                    QMessageBox.warning(self, "No Selection", "Please select a class to edit.")
+                    return
+            
+            self.save_dropdown_items()
+            self.update_dropdown_displays()
+            QMessageBox.information(self, "Success", f"Item updated successfully!")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to edit item:\n{str(e)}")

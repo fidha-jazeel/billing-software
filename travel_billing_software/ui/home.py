@@ -283,6 +283,7 @@ class HomePage(QWidget):
     def _create_calculation_section(self) -> QFrame:
         """Create invoice calculation section."""
         calc_frame = QFrame()
+        # calc_main_layout.addWidget(calc_frame, alignment=Qt.AlignHCenter)
         calc_frame.setStyleSheet(f"""
             QFrame {{
                 background-color: {self.colors['secondary_bg']};
@@ -294,43 +295,52 @@ class HomePage(QWidget):
         calc_main_layout = QVBoxLayout(calc_frame)
         calc_main_layout.setContentsMargins(10, 10, 10, 10)
         calc_main_layout.setSpacing(5)
+
+        
+
+            
          
         calc_title = QLabel("<b style='color:#a78bfa; font-size:16px;'>💰 Invoice Calculation</b>")
         calc_main_layout.addWidget(calc_title)
         
+        # Create two-column layout for better balance
         calc_grid = QGridLayout()
-        calc_grid.setSpacing(5)
-        calc_grid.setContentsMargins(5, 5, 5, 5)
-        calc_grid.setHorizontalSpacing(20)
+        calc_grid.setSpacing(15)
+        calc_grid.setContentsMargins(10, 10, 10, 10)
+        calc_grid.setHorizontalSpacing(3)
         calc_grid.setVerticalSpacing(10)
-        # calc_grid.setColumnStretch(0, 1)
         
+        # LEFT COLUMN - Subtotal, Discount, Tax
         # Subtotal
         subtotal_label = QLabel("Subtotal:")
         subtotal_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 14px;")
-        subtotal_label.setMinimumWidth(90)
-        calc_grid.addWidget(subtotal_label, 0, 0, Qt.AlignRight)
+        subtotal_label.setFixedWidth(250)
+        subtotal_label.setAlignment(Qt.AlignCenter)
+        calc_grid.addWidget(subtotal_label, 0, 0, alignment = Qt.AlignLeft)
         
         self.lbl_subtotal = QLabel(f"{self.get_currency_symbol()}0.00")
         self.lbl_subtotal.setStyleSheet(f"""
             QLabel {{
                 color: {self.colors['accent_secondary']};
                 font-weight: bold;
-                font-size: 13px;
+                font-size: 14px;
                 background-color: {self.colors['primary_bg']};
-                padding: 5px 10px;
-                border-radius: 4px;
+                padding: 8px 15px;
+                border-radius: 5px;
                 border: 1px solid {self.colors['accent_secondary']};
             }}
         """)
-        self.lbl_subtotal.setMinimumWidth(120)
-        calc_grid.addWidget(self.lbl_subtotal, 0, 1, Qt.AlignLeft)
+        self.lbl_subtotal.setFixedWidth(250)
+        self.lbl_subtotal.setAlignment(Qt.AlignCenter)
+        # self.lbl_subtotal.textChanged.connect(self.update_invoice_subtotals)
+        calc_grid.addWidget(self.lbl_subtotal, 0, 1, alignment = Qt.AlignRight)
         
         # Discount
         discount_label = QLabel("Discount:")
         discount_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 14px;")
-        discount_label.setMinimumWidth(90)
-        calc_grid.addWidget(discount_label, 1, 0, Qt.AlignRight)
+        discount_label.setFixedWidth(250)
+        discount_label.setAlignment(Qt.AlignCenter)
+        calc_grid.addWidget(discount_label, 1, 0, alignment = Qt.AlignLeft)
         
         self.txt_discount = QLineEdit()
         self.txt_discount.setPlaceholderText(f"{self.get_currency_symbol()}0.00")
@@ -340,45 +350,55 @@ class HomePage(QWidget):
                 background-color: {self.colors['primary_bg']};
                 color: {self.colors['accent_secondary']};
                 border: 1px solid {self.colors['accent_secondary']};
-                border-radius: 4px;
-                padding: 5px 10px;
-                font-size: 13px;
+                border-radius: 5px;
+                padding: 8px 15px;
+                font-size: 14px;
                 font-weight: bold;
             }}
             QLineEdit:focus {{
                 border: 2px solid {self.colors['accent_secondary']};
             }}
         """)
-        self.txt_discount.setMinimumWidth(120)
+        self.txt_discount.setFixedWidth(250)
+        self.txt_discount.setAlignment(Qt.AlignCenter)
         self.txt_discount.textChanged.connect(self.update_invoice_totals)
-        calc_grid.addWidget(self.txt_discount, 1, 1, Qt.AlignLeft)
+        calc_grid.addWidget(self.txt_discount, 1, 1, alignment = Qt.AlignRight)
         
         # Tax
         tax_label = QLabel("Tax:")
         tax_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 14px;")
-        tax_label.setMinimumWidth(90)
-        calc_grid.addWidget(tax_label, 2, 0, Qt.AlignRight)
+        tax_label.setFixedWidth(250)
+        tax_label.setAlignment(Qt.AlignCenter)
+        calc_grid.addWidget(tax_label, 2, 0, alignment = Qt.AlignLeft)
         
         self.lbl_tax = QLabel(f"{self.get_currency_symbol()}0.00")
         self.lbl_tax.setStyleSheet(f"""
             QLabel {{
                 color: {self.colors['accent_secondary']};
                 font-weight: bold;
-                font-size: 13px;
+                font-size: 14px;
                 background-color: {self.colors['primary_bg']};
-                padding: 5px 10px;
-                border-radius: 4px;
+                padding: 8px 15px;
+                border-radius: 5px;
                 border: 1px solid {self.colors['accent_secondary']};
             }}
         """)
-        self.lbl_tax.setMinimumWidth(120)
-        calc_grid.addWidget(self.lbl_tax, 2, 1, Qt.AlignLeft)
+        self.lbl_tax.setFixedWidth(250)
+        self.lbl_tax.setAlignment(Qt.AlignCenter)
+        calc_grid.addWidget(self.lbl_tax, 2, 1, alignment = Qt.AlignRight)
         
+        # Add spacer column
+        calc_grid.setColumnMinimumWidth(2, 60)
+       
+
+        
+        # RIGHT COLUMN - Total, Received, Balance
         # Total
         total_label = QLabel("Total:")
         total_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 14px;")
-        total_label.setMinimumWidth(90)
-        calc_grid.addWidget(total_label, 0, 2, Qt.AlignRight)
+        total_label.setFixedWidth(250)
+        total_label.setAlignment(Qt.AlignCenter)
+        calc_grid.addWidget(total_label, 0, 5, alignment = Qt.AlignRight)
         
         self.lbl_total = QLabel(f"{self.get_currency_symbol()}0.00")
         self.lbl_total.setStyleSheet(f"""
@@ -387,19 +407,21 @@ class HomePage(QWidget):
                 font-weight: bold;
                 font-size: 15px;
                 background-color: {self.colors['primary_bg']};
-                padding: 6px 12px;
+                padding: 8px 15px;
                 border-radius: 5px;
                 border: 2px solid {self.colors['accent_gold']};
             }}
         """)
-        self.lbl_total.setMinimumWidth(120)
-        calc_grid.addWidget(self.lbl_total, 0, 3, Qt.AlignLeft)
+        self.lbl_total.setFixedWidth(250)
+        self.lbl_total.setAlignment(Qt.AlignCenter)
+        calc_grid.addWidget(self.lbl_total, 0, 6)
         
         # Received
         received_label = QLabel("Received:")
         received_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 14px;")
-        received_label.setMinimumWidth(90)
-        calc_grid.addWidget(received_label, 1, 2, Qt.AlignRight)
+        received_label.setFixedWidth(250)
+        received_label.setAlignment(Qt.AlignCenter)
+        calc_grid.addWidget(received_label, 1, 5, alignment = Qt.AlignRight)
         
         self.txt_received = QLineEdit()
         self.txt_received.setPlaceholderText(f"{self.get_currency_symbol()}0.00")
@@ -408,47 +430,74 @@ class HomePage(QWidget):
                 background-color: {self.colors['primary_bg']};
                 color: {self.colors['success']};
                 border: 1px solid {self.colors['success']};
-                border-radius: 4px;
-                padding: 5px 10px;
-                font-size: 13px;
+                border-radius: 5px;
+                padding: 8px 15px;
+                font-size: 14px;
                 font-weight: bold;
             }}
             QLineEdit:focus {{
                 border: 2px solid {self.colors['success']};
             }}
         """)
-        self.txt_received.setMinimumWidth(120)
+        self.txt_received.setFixedWidth(250)
+        self.txt_received.setAlignment(Qt.AlignCenter)
         self.txt_received.textChanged.connect(self.calculate_balance)
-        calc_grid.addWidget(self.txt_received, 1, 3, Qt.AlignLeft)
+        calc_grid.addWidget(self.txt_received, 1, 6)
         
         # Balance
         balance_label = QLabel("Balance:")
         balance_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 14px;")
-        balance_label.setMinimumWidth(90)
-        calc_grid.addWidget(balance_label, 2, 2, Qt.AlignRight)
+        balance_label.setFixedWidth(250)
+        balance_label.setAlignment(Qt.AlignCenter)
+        calc_grid.addWidget(balance_label, 2, 5, alignment = Qt.AlignRight)
         
         self.lbl_balance = QLabel(f"{self.get_currency_symbol()}0.00")
         self.lbl_balance.setStyleSheet(f"""
             QLabel {{
                 color: {self.colors['danger']};
                 font-weight: bold;
-                font-size: 13px;
+                font-size: 14px;
                 background-color: {self.colors['primary_bg']};
-                padding: 5px 10px;
-                border-radius: 4px;
+                padding: 8px 15px;
+                border-radius: 5px;
                 border: 1px solid {self.colors['danger']};
             }}
         """)
-        self.lbl_balance.setMinimumWidth(120)
-        calc_grid.addWidget(self.lbl_balance, 2, 3, Qt.AlignLeft)
+        self.lbl_balance.setFixedWidth(250)
+        self.lbl_balance.setAlignment(Qt.AlignCenter)
+        calc_grid.addWidget(self.lbl_balance, 2, 6)
         
         calc_main_layout.addLayout(calc_grid)
         
         return calc_frame
     
     def _create_action_buttons(self) -> QHBoxLayout:
-        """Create action buttons (Save, PDF, Print, Share)."""
+        """Create action buttons (Save, PDF, Print, Share) with Reset button on left."""
         btn_layout = QHBoxLayout()
+        
+        # Reset button on the left
+        self.btn_reset = QPushButton("🔄 Reset Invoice")
+        self.btn_reset.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {self.colors['warning']};
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 10px 20px;
+                font-weight: bold;
+                font-size: 13px;
+            }}
+            QPushButton:hover {{
+                background-color: #f59e0b;
+            }}
+            QPushButton:pressed {{
+                background-color: #d97706;
+            }}
+        """)
+        self.btn_reset.clicked.connect(self.reset_invoice)
+        self.btn_reset.setCursor(Qt.PointingHandCursor)
+        btn_layout.addWidget(self.btn_reset)
+        
         btn_layout.addStretch()
         
         self.btn_save_invoice = QPushButton("💾 Save Invoice")
@@ -662,7 +711,7 @@ class HomePage(QWidget):
         price = QDoubleSpinBox()
         price.setMaximum(10_000_000)
         price.setPrefix("₹ ")
-        price.setDecimals(2)
+        price.setDecimals(0)
         price.valueChanged.connect(lambda _: self.calculate_row_total(row))
         price.setStyleSheet(spinbox_style)
         table.setCellWidget(row, 6, price)
@@ -681,7 +730,7 @@ class HomePage(QWidget):
         tax = QDoubleSpinBox()
         tax.setSuffix('%')
         tax.setMaximum(100)
-        tax.setDecimals(2)
+        tax.setDecimals(0)
         tax.valueChanged.connect(lambda _: self.calculate_row_total(row))
         tax.setStyleSheet(spinbox_style)
         table.setCellWidget(row, 8, tax)
@@ -731,6 +780,7 @@ class HomePage(QWidget):
         self.table.removeRow(row)
         self.table.setMinimumHeight(min(300 + (self.table.rowCount() * 45), 600))
         self.update_invoice_totals()
+    
 
     def calculate_row_total(self, row: int):
         """Calculate amount for a row."""
@@ -812,11 +862,47 @@ class HomePage(QWidget):
                 self.lbl_balance.setStyleSheet(f"color: {self.colors['success']}; font-weight: bold; font-size: 13px; background-color: {self.colors['primary_bg']}; padding: 5px 10px; border-radius: 4px; border: 1px solid {self.colors['success']};")
                 self.lbl_balance.setText(f"{self.get_currency_symbol()}{abs(balance):.2f} (Overpaid)")
             else:
-                self.lbl_balance.setStyleSheet(f"color: {self.colors['text_muted']}; font-weight: bold; font-size: 13px; background-color: {self.colors['primary_bg']}; padding: 5px 10px; border-radius: 4px; border: 1px solid {self.colors['text_muted']};")
+                self.lbl_balance.setStyleSheet(f"color: {self.colors['success']}; font-weight: bold; font-size: 13px; background-color: {self.colors['primary_bg']}; padding: 5px 10px; border-radius: 4px; border: 1px solid {self.colors['success']};")
                 self.lbl_balance.setText(f"{self.get_currency_symbol()}0.00 (Paid)")
-        except Exception as e:
-            print(f"Error calculating balance: {e}")
-            self.lbl_balance.setText("₹0.00")
+        except ValueError:
+            self.lbl_balance.setText(f"{self.get_currency_symbol()}0.00")
+    
+    def reset_invoice(self):
+        """Reset all invoice fields to default values."""
+        from PyQt5.QtWidgets import QMessageBox
+        
+        # Confirm reset action
+        reply = QMessageBox.question(
+            self, 
+            'Reset Invoice', 
+            'Are you sure you want to reset all fields? This will clear all entered data.',
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+        
+        if reply == QMessageBox.Yes:
+            try:
+                # Reset invoice details
+                self.invoice_number.setText(self.generate_invoice_number())
+                self.invoice_date.setDate(QDate.currentDate())
+                self.customer_name.clear()
+                self.contact_number.clear()
+                self.customer_address.clear()
+                
+                # Clear all table rows
+                self.table.setRowCount(0)
+                
+                # Reset calculation fields
+                self.lbl_subtotal.setText(f"{self.get_currency_symbol()}0.00")
+                self.txt_discount.setText("0.00")
+                self.lbl_tax.setText(f"{self.get_currency_symbol()}0.00")
+                self.lbl_total.setText(f"{self.get_currency_symbol()}0.00")
+                self.txt_received.clear()
+                self.lbl_balance.setText(f"{self.get_currency_symbol()}0.00")
+                
+                QMessageBox.information(self, "Success", "Invoice has been reset successfully!")
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to reset invoice:\\n{str(e)}")
 
     def save_invoice(self):
         """Save invoice to JSON and database."""
