@@ -413,18 +413,7 @@ class SettingsPage(QWidget):
         # classes_layout = QHBoxLayout()
         # classes_layout.addStretch()
 
-        self.classes_list = QListWidget()
-
-        classes_section_layout = QVBoxLayout()
-        classes_section_layout.addWidget(self.classes_list)
-        classes_section_layout.addLayout(classes_action_layout)  
-
-        class_input_row = QHBoxLayout()
-
-        self.class_input = QLineEdit()
-        self.class_input.setPlaceholderText("Enter new class...")
-        class_input_row.addWidget(self.class_input)
-
+       
         # add_class_btn = QPushButton(" Add")
         # add_class_btn.setStyleSheet(self.get_button_style('add'))
         # add_class_btn.clicked.connect(lambda: self.add_dropdown_item('class'))
@@ -476,7 +465,7 @@ class SettingsPage(QWidget):
         """)
         self.classes_list.setMaximumHeight(150)
         classes_action_layout.addWidget(self.classes_list)
-        dropdown_layout.addLayout(classes_action_layout)
+        dropdown_layout.addLayout(classes_layout)
         
         layout.addWidget(dropdown_frame)
         
