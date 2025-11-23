@@ -10,6 +10,8 @@ from PyQt5.QtCore import Qt
 import os
 import json
 
+from numpy import size
+
 
 class SettingsPage(QWidget):
     """Settings page for configuring company and invoice settings."""
@@ -59,13 +61,13 @@ class SettingsPage(QWidget):
         company_layout.setContentsMargins(0, 0, 0, 0)
         company_layout.setSpacing(15)
         
-        company_title = QLabel(f"<b style='color:{self.COLORS['accent_primary']}; font-size:14px;'>🏢 Company Information</b>")
+        company_title = QLabel(f"<b style='color:{self.COLORS['accent_primary']}; font-size:25px;'>🏢 Company Information</b>")
         company_layout.addWidget(company_title, 0, 0, 1, 2)
         
         # Company Name
         lbl_company = QLabel("Company Name:")
-        lbl_company.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold;")
-        lbl_company.setFixedWidth(150)
+        lbl_company.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size:20px;")
+        lbl_company.setFixedWidth(250)
         company_layout.addWidget(lbl_company, 1, 0)
         self.settings_company_name = QLineEdit(self.COMPANY_INFO['name'])
         self.settings_company_name.setStyleSheet(self.get_input_style())
@@ -73,8 +75,8 @@ class SettingsPage(QWidget):
         
         # Address
         lbl_address = QLabel("Address:")
-        lbl_address.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold;")
-        lbl_address.setFixedWidth(150)
+        lbl_address.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size:20px;")
+        lbl_address.setFixedWidth(250)
         company_layout.addWidget(lbl_address, 2, 0)
         self.settings_address = QLineEdit(self.COMPANY_INFO.get('address', ''))
         self.settings_address.setStyleSheet(self.get_input_style())
@@ -82,8 +84,8 @@ class SettingsPage(QWidget):
         
         # Email
         lbl_email = QLabel("Email:")
-        lbl_email.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold;")
-        lbl_email.setFixedWidth(150)
+        lbl_email.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size:20px;")
+        lbl_email.setFixedWidth(250)
         company_layout.addWidget(lbl_email, 3, 0)
         self.settings_email = QLineEdit(self.COMPANY_INFO['email'])
         self.settings_email.setStyleSheet(self.get_input_style())
@@ -91,8 +93,8 @@ class SettingsPage(QWidget):
         
         # Phone
         lbl_phone = QLabel("Phone:")
-        lbl_phone.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold;")
-        lbl_phone.setFixedWidth(150)
+        lbl_phone.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size:20px;")
+        lbl_phone.setFixedWidth(250)
         company_layout.addWidget(lbl_phone, 4, 0)
         self.settings_phone = QLineEdit(self.COMPANY_INFO['phone'])
         self.settings_phone.setStyleSheet(self.get_input_style())
@@ -100,8 +102,8 @@ class SettingsPage(QWidget):
         
         # GST Number
         lbl_gst = QLabel("GST Number:")
-        lbl_gst.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold;")
-        lbl_gst.setFixedWidth(150)
+        lbl_gst.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold;  font-size:20px;")
+        lbl_gst.setFixedWidth(250)
         company_layout.addWidget(lbl_gst, 5, 0)
         self.settings_gst = QLineEdit(self.COMPANY_INFO.get('gst_number', ''))
         self.settings_gst.setStyleSheet(self.get_input_style())
@@ -122,13 +124,13 @@ class SettingsPage(QWidget):
         invoice_layout.setContentsMargins(0, 0, 0, 0)
         invoice_layout.setSpacing(15)
         
-        invoice_title = QLabel(f"<b style='color:{self.COLORS['accent_primary']}; font-size:14px;'>📝 Invoice Configuration</b>")
+        invoice_title = QLabel(f"<b style='color:{self.COLORS['accent_primary']}; font-size:25px;'>📝 Invoice Configuration</b>")
         invoice_layout.addWidget(invoice_title, 0, 0, 1, 2)
         
         # Invoice Prefix
         lbl_prefix = QLabel("Invoice Prefix:")
-        lbl_prefix.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold;")
-        lbl_prefix.setFixedWidth(150)
+        lbl_prefix.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size:20px;")
+        lbl_prefix.setFixedWidth(250)
         invoice_layout.addWidget(lbl_prefix, 1, 0)
         self.settings_prefix = QLineEdit(self.INVOICE_CONFIG['number_prefix'])
         self.settings_prefix.setStyleSheet(self.get_input_style())
@@ -136,8 +138,8 @@ class SettingsPage(QWidget):
         
         # Currency Symbol
         lbl_currency = QLabel("Currency Symbol:")
-        lbl_currency.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold;")
-        lbl_currency.setFixedWidth(150)
+        lbl_currency.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size:20px;")
+        lbl_currency.setFixedWidth(250)
         invoice_layout.addWidget(lbl_currency, 2, 0)
         self.settings_currency = QLineEdit(self.INVOICE_CONFIG['currency_symbol'])
         self.settings_currency.setStyleSheet(self.get_input_style())
@@ -145,8 +147,8 @@ class SettingsPage(QWidget):
         
         # Default Tax Rate
         lbl_tax = QLabel("Default Tax Rate (%):")
-        lbl_tax.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold;")
-        lbl_tax.setFixedWidth(150)
+        lbl_tax.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size:20px;")
+        lbl_tax.setFixedWidth(250)
         invoice_layout.addWidget(lbl_tax, 3, 0)
         self.settings_tax = QDoubleSpinBox()
         self.settings_tax.setValue(self.INVOICE_CONFIG['default_tax_rate'])
@@ -259,13 +261,13 @@ class SettingsPage(QWidget):
             QListWidget {{
                 color: {self.COLORS['text_secondary']};
                 background: {self.COLORS['primary_bg']};
-                border: 1px solid #444;
-                border-radius: 5px;
+                border: 4px solid #444;
+                border-radius: 8px;
                 padding: 5px;
             }}
             QListWidget::item {{
                 padding: 5px;
-                border-radius: 3px;
+                border-radius: 8px;
             }}
             QListWidget::item:selected {{
                 background-color: {self.COLORS['accent_primary']};
@@ -275,7 +277,11 @@ class SettingsPage(QWidget):
                 background-color: {self.COLORS['secondary_bg']};
             }}
         """)
-        self.suppliers_list.setMaximumHeight(150)
+        # self.suppliers_list.setMaximumHeight(150)
+        self.suppliers_list.setMinimumHeight(150)
+        self.suppliers_list.setMaximumHeight(300)
+        self.suppliers_list.setFixedHeight(160)
+
         suppliers_layout.addWidget(self.suppliers_list)
         dropdown_layout.addLayout(suppliers_layout)
         
@@ -368,6 +374,7 @@ class SettingsPage(QWidget):
         # Input field with Add button attached
         classes_action_layout = QHBoxLayout()
         classes_action_layout.setSpacing(10)
+
         self.class_input = QLineEdit()
         self.class_input.setPlaceholderText("Enter new class...")
         self.class_input.setStyleSheet(self.get_input_style())
@@ -375,11 +382,11 @@ class SettingsPage(QWidget):
 
         remove_class_btn = QPushButton("➖ Remove")
         remove_class_btn.setStyleSheet(self.get_button_style('remove'))
-        remove_class_btn.setCursor(Qt.PointingHandCursor)
+        # remove_class_btn.setCursor(Qt.PointingHandCursor)
         remove_class_btn.clicked.connect(lambda: self.remove_dropdown_item('class'))
         remove_class_btn.setFixedWidth(120)
         classes_action_layout.addWidget(remove_class_btn)
-        classes_layout.addLayout(classes_action_layout)
+        # classes_layout.addLayout(classes_action_layout)
         remove_class_btn.setStyleSheet("""
             QPushButton {_
                 background-color: #E53935;
@@ -394,7 +401,7 @@ class SettingsPage(QWidget):
         
         edit_class_btn = QPushButton("✏️ Edit")
         edit_class_btn.setStyleSheet(self.get_button_style('edit'))
-        edit_class_btn.setCursor(Qt.PointingHandCursor)
+        # edit_class_btn.setCursor(Qt.PointingHandCursor)
         edit_class_btn.clicked.connect(lambda: self.edit_dropdown_item('class'))
         edit_class_btn.setFixedWidth(120)
         classes_action_layout.addWidget(edit_class_btn)
@@ -403,15 +410,28 @@ class SettingsPage(QWidget):
 
 
 
+        classes_action_layout = QHBoxLayout()
+        classes_action_layout.addStretch()
 
-        
+
+        # 
+
         add_class_btn = QPushButton("➕ Add")
         add_class_btn.setStyleSheet(self.get_button_style('add'))
-        add_class_btn.setCursor(Qt.PointingHandCursor)
+        # add_class_btn.setCursor(Qt.PointingHandCursor)
         add_class_btn.clicked.connect(lambda: self.add_dropdown_item('class'))
         add_class_btn.setFixedWidth(100)
         classes_action_layout.addWidget(add_class_btn)
-        classes_action_layout.addLayout(classes_action_layout)
+
+        # classes_action_layout.addWidget(self.class_input)
+        # classes_action_layout.addWidget(remove_class_btn)
+        # classes_action_layout.addWidget(edit_class_btn)
+        # classes_action_layout.addWidget(add_class_btn)
+
+
+        classes_layout.addLayout(classes_action_layout)
+        
+       
 
         # classes_action_layout = QHBoxLayout()
         self.classes_list = QListWidget()
@@ -419,13 +439,13 @@ class SettingsPage(QWidget):
             QListWidget {{
                 color: {self.COLORS['text_secondary']};
                 background: {self.COLORS['primary_bg']};
-                border: 1px solid #444;
-                border-radius: 5px;
+                border: 4px solid #444;
+                border-radius: 10px;
                 padding: 5px;
             }}
             QListWidget::item {{
                 padding: 5px;
-                border-radius: 3px;
+                border-radius: 8px;
             }}
             QListWidget::item:selected {{
                 background-color: {self.COLORS['accent_primary']};
@@ -435,12 +455,19 @@ class SettingsPage(QWidget):
                 background-color: {self.COLORS['secondary_bg']};
             }}
         """)
-        self.classes_list.setMaximumHeight(150)
-        classes_action_layout.addWidget(self.classes_list)
+        # self.classes_list.setMaximumHeight(220)
+        self.classes_list.setMinimumHeight(150)
+        self.classes_list.setMaximumHeight(300)
+        self.classes_list.setFixedHeight(160)
+
+
+        classes_layout.addWidget(self.classes_list)
+
+
         dropdown_layout.addLayout(classes_layout)
 
-        classes_action_layout = QHBoxLayout()
-        classes_action_layout.addStretch()
+        # classes_action_layout = QHBoxLayout()
+        # classes_action_layout.addStretch()
 
         
         layout.addWidget(dropdown_frame)

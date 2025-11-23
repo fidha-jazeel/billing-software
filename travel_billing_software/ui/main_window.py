@@ -89,7 +89,7 @@ class DashboardImproved(QMainWindow):
 
         # Sidebar with navigation buttons
         sidebar = QFrame()
-        sidebar.setFixedWidth(200)
+        sidebar.setFixedWidth(250)
         sidebar.setStyleSheet("""
             QFrame {
                 background-color: #1a1a1a;
@@ -103,7 +103,7 @@ class DashboardImproved(QMainWindow):
         title = QLabel("<b style='font-size:16px; color:#9b9bff;'>🏢 Menu</b>")
         title.setAlignment(Qt.AlignCenter)
         sidebar_layout.addWidget(title)
-        sidebar_layout.addSpacing(20)
+        sidebar_layout.addSpacing(30)
 
         # Navigation buttons
         for page_id, label, icon in [
@@ -153,7 +153,7 @@ class DashboardImproved(QMainWindow):
                 border-left: 3px solid transparent;
                 text-align: left;
                 padding-left: 15px;
-                font-size: 13px;
+                font-size: 25px;
                 font-weight: 500;
             }
             QPushButton:hover {
@@ -1801,6 +1801,8 @@ class DashboardImproved(QMainWindow):
             QLabel {
                 color: #ffffff;
                 background-color: transparent;
+                width: 12px;
+                margin: 0px;
             }
             QLineEdit {
                 background-color: #2a2a2a;
