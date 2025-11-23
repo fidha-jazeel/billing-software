@@ -56,7 +56,7 @@ class AIFeaturesPage(QWidget):
         # Header
         heading = QLabel("🤖 AI Insights")
         heading.setStyleSheet(
-            f"color: {self.COLORS['accent_secondary']}; font-size: 22px; font-weight: bold;"
+            f"color: {self.COLORS['accent_secondary']}; font-size: 25px; font-weight: bold;"
         )
         layout.addWidget(heading)
 
@@ -67,7 +67,7 @@ class AIFeaturesPage(QWidget):
             "• \"Who are my top customers this month?\""
         )
         sub.setStyleSheet(
-            f"color: {self.COLORS['text_secondary']}; font-size: 12px;"
+            f"color: {self.COLORS['text_secondary']}; font-size: 20px;"
         )
         sub.setWordWrap(True)
         layout.addWidget(sub)
@@ -88,7 +88,7 @@ class AIFeaturesPage(QWidget):
 
         presets_title = QLabel("⭐ Quick AI Insights")
         presets_title.setStyleSheet(
-            f"color: {self.COLORS['accent_primary']}; font-weight: bold;"
+            f"color: {self.COLORS['accent_primary']}; font-weight: bold;font-size:20px;"
         )
         presets_layout.addWidget(presets_title)
 
@@ -169,7 +169,7 @@ class AIFeaturesPage(QWidget):
 
         custom_label = QLabel("✍️ Ask your own question")
         custom_label.setStyleSheet(
-            f"color: {self.COLORS['accent_cyan']}; font-weight: bold;"
+            f"color: {self.COLORS['accent_cyan']}; font-weight: bold;font-size:20px;"
         )
         custom_layout.addWidget(custom_label)
 

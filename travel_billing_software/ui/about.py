@@ -73,7 +73,7 @@ class AboutPage(QWidget):
         app_name.setAlignment(Qt.AlignCenter)
         info_layout.addWidget(app_name)
         
-        tagline = QLabel(f"<p style='color:{self.COLORS['text_secondary']}; font-size:15px; font-style:italic;'>{self.COMPANY_INFO['tagline']}</p>")
+        tagline = QLabel(f"<p style='color:{self.COLORS['text_secondary']}; font-size:25px; font-style:italic;'>{self.COMPANY_INFO['tagline']}</p>")
         tagline.setAlignment(Qt.AlignCenter)
         info_layout.addWidget(tagline)
         
@@ -86,20 +86,20 @@ class AboutPage(QWidget):
         # Version and details
         details = QLabel(f"""
         <p style='line-height: 2.0;'>
-        <b style='color:{self.COLORS['accent_primary']}; font-size:15px;'>Version:</b> <span style='color:{self.COLORS['text_primary']}; font-size:14px;'>{self.APP_CONFIG['version']}</span><br>
-        <b style='color:{self.COLORS['accent_primary']}; font-size:15px;'>Year:</b> <span style='color:{self.COLORS['text_primary']}; font-size:14px;'>{self.APP_CONFIG['year']}</span>
+        <b style='color:{self.COLORS['accent_primary']}; font-size:20px;'>Version:</b> <span style='color:{self.COLORS['text_primary']}; font-size:20px;'>{self.APP_CONFIG['version']}</span><br>
+        <b style='color:{self.COLORS['accent_primary']}; font-size:20px;'>Year:</b> <span style='color:{self.COLORS['text_primary']}; font-size:20px;'>{self.APP_CONFIG['year']}</span>
         </p>
         
         <p style='margin-top: 20px;'>
-        <b style='color:{self.COLORS['accent_primary']}; font-size:15px;'>Contact Information:</b><br>
-        <span style='color:{self.COLORS['text_secondary']}; font-size:14px;'>
+        <b style='color:{self.COLORS['accent_primary']}; font-size:20px;'>Contact Information:</b><br>
+        <span style='color:{self.COLORS['text_secondary']}; font-size:20px;'>
         📧 Email: {self.COMPANY_INFO['email']}<br>
         📞 Phone: {self.COMPANY_INFO['phone']}
         </span>
         </p>
         
         <p style='margin-top: 20px;'>
-        <b style='color:{self.COLORS['accent_primary']}; font-size:16px;'>✨ Key Features:</b>
+        <b style='color:{self.COLORS['accent_primary']}; font-size:20px;'>✨ Key Features:</b>
         </p>
         """)
         details.setStyleSheet(f"color: {self.COLORS['text_primary']};")
@@ -107,7 +107,7 @@ class AboutPage(QWidget):
         
         # Features list
         features_list = QLabel(f"""
-        <ul style='color:{self.COLORS['text_secondary']}; line-height: 2.4; font-size:18px; margin-left: 10px;'>
+        <ul style='color:{self.COLORS['text_secondary']}; line-height: 2.4; font-size:20px; margin-left: 10px;'>
         <li style='margin-bottom: 8px;'>🔐 Secure login system with password authentication</li>
         <li style='margin-bottom: 8px;'>📄 Dynamic invoice creation with passenger details, PNR, sectors</li>
         <li style='margin-bottom: 8px;'>✈️ Travel-specific fields: Class (Economy/Business/First)</li>
@@ -125,7 +125,7 @@ class AboutPage(QWidget):
         info_layout.addWidget(features_list)
         
         # Copyright
-        copyright_label = QLabel(f"<p style='margin-top: 30px; color: {self.COLORS['text_muted']}; text-align: center; font-size:12px;'>© {self.APP_CONFIG['year']} {self.COMPANY_INFO['name']}. All rights reserved.<br>Built with ❤️ using PyQt5 and SQLite</p>")
+        copyright_label = QLabel(f"<p style='margin-top: 30px; color: {self.COLORS['text_muted']}; text-align: center; font-size:20px;'>© {self.APP_CONFIG['year']} {self.COMPANY_INFO['name']}. All rights reserved.<br>Built with ❤️ using PyQt5 and SQLite</p>")
         copyright_label.setAlignment(Qt.AlignCenter)
         info_layout.addWidget(copyright_label)
         

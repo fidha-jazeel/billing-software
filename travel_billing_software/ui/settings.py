@@ -172,13 +172,13 @@ class SettingsPage(QWidget):
         dropdown_layout.setContentsMargins(0, 0, 0, 0)
         dropdown_layout.setSpacing(15)
         
-        dropdown_title = QLabel(f"<b style='color:{self.COLORS['accent_primary']}; font-size:14px;'>📋 Dropdown Items Management</b>")
+        dropdown_title = QLabel(f"<b style='color:{self.COLORS['accent_primary']}; font-size:25px;'>📋 Dropdown Items Management</b>")
         dropdown_layout.addWidget(dropdown_title)
         
         # Suppliers Section
         suppliers_layout = QVBoxLayout()
         suppliers_label = QLabel("Suppliers:")
-        suppliers_label.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold;")
+        suppliers_label.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size:20px;")
         suppliers_layout.addWidget(suppliers_label)
         
         # Input field with Add button attached
@@ -368,7 +368,7 @@ class SettingsPage(QWidget):
         # Classes Section
         classes_layout = QVBoxLayout()
         classes_label = QLabel("Travel Classes:")
-        classes_label.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold;")
+        classes_label.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size:20px;")
         classes_layout.addWidget(classes_label)
         
         # Input field with Add button attached
