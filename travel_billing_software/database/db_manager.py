@@ -856,3 +856,7 @@ def get_db_instance(db_path: Optional[str] = None) -> DatabaseManager:
     if _db_instance is None:
         _db_instance = DatabaseManager(db_path)
     return _db_instance
+
+def get_db_path() -> str:
+    """Return the path to the main billing database file."""
+    return get_db_instance().db_path

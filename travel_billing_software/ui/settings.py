@@ -364,43 +364,33 @@ class SettingsPage(QWidget):
         classes_label = QLabel("Travel Classes:")
         classes_label.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold;")
         classes_layout.addWidget(classes_label)
-
-        # self.classes_list = QListWidget()
-        # classes_layout.addWidget(self.classes_list)
-
-        # classes_layout = QHBoxLayout()
-        # classes_layout.addWidget(remove_class_btn)
-        # classes_layout.addWidget(edit_class_btn)
-        # classes_layout.addLayout(classes_layout)
-
         
         # Input field with Add button attached
-        classes_input_layout = QHBoxLayout()
-        classes_input_layout.setSpacing(0)
+        classes_action_layout = QHBoxLayout()
+        classes_action_layout.setSpacing(10)
         self.class_input = QLineEdit()
         self.class_input.setPlaceholderText("Enter new class...")
         self.class_input.setStyleSheet(self.get_input_style())
-        classes_input_layout.addWidget(self.class_input)
-        
-        
+        classes_action_layout.addWidget(self.class_input)
+
         remove_class_btn = QPushButton("➖ Remove")
         remove_class_btn.setStyleSheet(self.get_button_style('remove'))
         remove_class_btn.setCursor(Qt.PointingHandCursor)
         remove_class_btn.clicked.connect(lambda: self.remove_dropdown_item('class'))
         remove_class_btn.setFixedWidth(120)
         classes_action_layout.addWidget(remove_class_btn)
-        # classes_layout.addLayout(classes_action_layout)
-        # remove_class_btn.setStyleSheet("""
-        #     QPushButton {_
-        #         background-color: #E53935;
-        #         color: white;
-        #         border-radius: 6px;
-        #         padding: 6px;
-        #     }
-        #     QPushButton:hover {
-        #         background-color: #B71C1C;
-        #     }
-        # """)
+        classes_layout.addLayout(classes_action_layout)
+        remove_class_btn.setStyleSheet("""
+            QPushButton {_
+                background-color: #E53935;
+                color: white;
+                border-radius: 6px;
+                padding: 6px;
+            }
+            QPushButton:hover {
+                background-color: #B71C1C;
+            }
+        """)
         
         edit_class_btn = QPushButton("✏️ Edit")
         edit_class_btn.setStyleSheet(self.get_button_style('edit'))
@@ -410,38 +400,20 @@ class SettingsPage(QWidget):
         classes_action_layout.addWidget(edit_class_btn)
         classes_layout.addLayout(classes_action_layout)
 
-        # classes_layout = QHBoxLayout()
-        # classes_layout.addStretch()
 
-       
-        # add_class_btn = QPushButton(" Add")
-        # add_class_btn.setStyleSheet(self.get_button_style('add'))
-        # add_class_btn.clicked.connect(lambda: self.add_dropdown_item('class'))
-        # class_input_row.addWidget(add_class_btn)
 
-        # classes_section_layout.addLayout(class_input_row) 
-        #         # classes_layout.addWidget(self.classes_list)
 
-        # classes_layout = QHBoxLayout()
-        # classes_layout.addWidget(remove_class_btn)
-        # classes_layout.addWidget(edit_class_btn)
-        # classes_layout.addLayout(classes_layout)
-        
-        
-        # # Remove and Edit buttons on separate row
-        classes_action_layout = QHBoxLayout()
-        classes_action_layout.addStretch()
-       
+
         
         add_class_btn = QPushButton("➕ Add")
         add_class_btn.setStyleSheet(self.get_button_style('add'))
         add_class_btn.setCursor(Qt.PointingHandCursor)
         add_class_btn.clicked.connect(lambda: self.add_dropdown_item('class'))
         add_class_btn.setFixedWidth(100)
-        classes_input_layout.addWidget(add_class_btn)
-        classes_input_layout.addLayout(classes_input_layout)
-        
-        # List widget for displaying and selecting items
+        classes_action_layout.addWidget(add_class_btn)
+        classes_action_layout.addLayout(classes_action_layout)
+
+        # classes_action_layout = QHBoxLayout()
         self.classes_list = QListWidget()
         self.classes_list.setStyleSheet(f"""
             QListWidget {{
@@ -466,6 +438,10 @@ class SettingsPage(QWidget):
         self.classes_list.setMaximumHeight(150)
         classes_action_layout.addWidget(self.classes_list)
         dropdown_layout.addLayout(classes_layout)
+
+        classes_action_layout = QHBoxLayout()
+        classes_action_layout.addStretch()
+
         
         layout.addWidget(dropdown_frame)
         
