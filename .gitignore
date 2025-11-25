@@ -28,7 +28,6 @@ MANIFEST
 
 # PyInstaller
 *.manifest
-*.spec
 
 # Installer logs
 pip-log.txt
@@ -232,3 +231,5 @@ output/
 *.db-wal
 .temp/
 invoices/
+.env
+*.env
