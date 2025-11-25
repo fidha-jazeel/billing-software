@@ -227,13 +227,13 @@ class ReportsPage(QWidget):
         
         # Title
         title_label = QLabel(title)
-        title_label.setStyleSheet(f"color: {self.colors['text_secondary']}; font-size: 12px; font-weight: bold;")
+        title_label.setStyleSheet(self.get_label_style(bold=True, size='small', color='text_secondary'))
         card_layout.addWidget(title_label)
         
         # Value
         value_label = QLabel(value)
         value_label.setProperty('metric_value', True)
-        value_label.setStyleSheet(f"color: {self.colors['accent_primary']}; font-size: 24px; font-weight: bold;")
+        value_label.setStyleSheet(self.get_label_style(bold=True, size='title', color='accent_primary'))
         card_layout.addWidget(value_label)
         
         return card

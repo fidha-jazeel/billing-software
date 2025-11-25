@@ -1,8 +1,12 @@
 """
 Utility functions for styling widgets and applying themes
+Dynamic Version: Adapts to Font Size and Theme Color from ConfigManager
 """
-from travel_billing_software.config import COLORS, FONTS, LAYOUT_CONFIG, BUTTON_CONFIG
+from travel_billing_software.config.config import COLORS, LAYOUT_CONFIG, cm
 
+def get_base_font_size():
+    """Fetch the current font size setting from the manager."""
+    return cm.get_app_settings().get("font_size", 12)
 
 def get_frame_style():
     """Get standard frame stylesheet."""
@@ -15,25 +19,36 @@ def get_frame_style():
         }}
     """
 
-
 def get_label_style(bold=False, size='normal', color='text_secondary'):
-    """Get label stylesheet with customizable options."""
-    font_size = FONTS[f'size_{size}']
-    font_weight = FONTS['weight_bold'] if bold else FONTS['weight_normal']
+    """Get label stylesheet with dynamic font size."""
+    base_size = get_base_font_size()
+    
+    # Scale font size based on type
+    size_map = {
+        'title': int(base_size * 2),       # e.g., 24px
+        'heading': int(base_size * 1.4),   # e.g., 16px
+        'subheading': int(base_size * 1.2),# e.g., 14px
+        'normal': base_size,               # e.g., 12px
+        'small': int(base_size * 0.9),     # e.g., 10px
+    }
+    
+    final_size = size_map.get(size, base_size)
+    weight = "bold" if bold else "normal"
     text_color = COLORS.get(color, COLORS['text_secondary'])
     
     return f"""
         QLabel {{
             color: {text_color};
-            font-size: {font_size};
-            font-weight: {font_weight};
-            font-family: '{FONTS['family_primary']}', Arial, sans-serif;
+            font-size: {final_size}px;
+            font-weight: {weight};
+            font-family: 'Segoe UI', Arial, sans-serif;
         }}
     """
 
-
 def get_input_style():
-    """Get standard input field stylesheet."""
+    """Get standard input field stylesheet with dynamic sizing."""
+    base_size = get_base_font_size()
+    
     return f"""
         QLineEdit {{
             background-color: {COLORS['secondary_bg']};
@@ -41,16 +56,16 @@ def get_input_style():
             border: 1px solid {COLORS['border_primary']};
             border-radius: {LAYOUT_CONFIG['input_radius']};
             padding: 5px;
-            font-weight: {FONTS['weight_semibold']};
+            font-size: {base_size}px;
+            min-height: {base_size + 10}px; /* Auto-scale height */
         }}
         QLineEdit:focus {{
             border: 1px solid {COLORS['border_focus']};
         }}
     """
 
-
 def get_dateedit_style():
-    """Get date edit widget stylesheet."""
+    base_size = get_base_font_size()
     return f"""
         QDateEdit {{
             background-color: {COLORS['secondary_bg']};
@@ -58,7 +73,8 @@ def get_dateedit_style():
             border: 1px solid {COLORS['border_primary']};
             border-radius: {LAYOUT_CONFIG['input_radius']};
             padding: 5px;
-            font-weight: {FONTS['weight_semibold']};
+            font-size: {base_size}px;
+            min-height: {base_size + 10}px;
         }}
         QDateEdit:focus {{
             border: 1px solid {COLORS['border_focus']};
@@ -69,9 +85,8 @@ def get_dateedit_style():
         }}
     """
 
-
 def get_combobox_style():
-    """Get combobox (dropdown) stylesheet."""
+    base_size = get_base_font_size()
     return f"""
         QComboBox {{
             background-color: {COLORS['secondary_bg']};
@@ -79,7 +94,8 @@ def get_combobox_style():
             border: 1px solid {COLORS['border_primary']};
             border-radius: {LAYOUT_CONFIG['input_radius']};
             padding: 5px;
-            font-weight: {FONTS['weight_semibold']};
+            font-size: {base_size}px;
+            min-height: {base_size + 10}px;
         }}
         QComboBox:focus {{
             border: 1px solid {COLORS['border_focus']};
@@ -87,13 +103,6 @@ def get_combobox_style():
         QComboBox::drop-down {{
             border: none;
             background-color: {COLORS['accent_primary']};
-        }}
-        QComboBox::down-arrow {{
-            image: none;
-            border-left: 4px solid transparent;
-            border-right: 4px solid transparent;
-            border-top: 5px solid {COLORS['text_secondary']};
-            margin-right: 5px;
         }}
         QComboBox QAbstractItemView {{
             background-color: {COLORS['secondary_bg']};
@@ -103,57 +112,65 @@ def get_combobox_style():
         }}
     """
 
-
 def get_spinbox_style():
-    """Get spinbox stylesheet."""
+    base_size = get_base_font_size()
     return f"""
-        QDoubleSpinBox {{
+        QDoubleSpinBox, QSpinBox {{
             background-color: {COLORS['secondary_bg']};
             color: {COLORS['text_secondary']};
             border: 1px solid {COLORS['border_primary']};
             border-radius: {LAYOUT_CONFIG['input_radius']};
             padding: 5px;
-            font-weight: {FONTS['weight_semibold']};
+            font-size: {base_size}px;
+            min-height: {base_size + 10}px;
         }}
-        QDoubleSpinBox:focus {{
+        QDoubleSpinBox:focus, QSpinBox:focus {{
             border: 1px solid {COLORS['border_focus']};
         }}
-        QDoubleSpinBox::up-button {{
+        QDoubleSpinBox::up-button, QSpinBox::up-button {{
             background-color: {COLORS['accent_primary']};
-            border-radius: 2px;
+            width: 15px;
         }}
-        QDoubleSpinBox::down-button {{
+        QDoubleSpinBox::down-button, QSpinBox::down-button {{
             background-color: {COLORS['accent_primary']};
-            border-radius: 2px;
+            width: 15px;
         }}
     """
 
-
 def get_button_style(button_type='save'):
-    """Get button stylesheet based on type."""
-    config = BUTTON_CONFIG['colors'].get(button_type, BUTTON_CONFIG['colors']['save'])
+    """Get button stylesheet based on type with dynamic sizing."""
+    base_size = get_base_font_size()
+    
+    # Map types to colors
+    btn_colors = {
+        'save': COLORS["success"],
+        'pdf': COLORS["danger"],
+        'print': COLORS["info"],
+        'share': COLORS["teal"],
+        'add': COLORS["accent_primary"],
+        'delete': COLORS["danger"],
+    }
+    
+    bg = btn_colors.get(button_type, COLORS['accent_primary'])
     
     return f"""
         QPushButton {{
-            background-color: {config['bg']};
+            background-color: {bg};
             color: {COLORS['text_primary']};
             border: none;
             border-radius: {LAYOUT_CONFIG['button_radius']};
-            padding: {BUTTON_CONFIG['padding']};
-            font-weight: {BUTTON_CONFIG['font_weight']};
-            font-size: {BUTTON_CONFIG['font_size']};
+            padding: 8px 16px;
+            font-weight: bold;
+            font-size: {base_size}px;
         }}
         QPushButton:hover {{
-            background-color: {config['hover']};
-        }}
-        QPushButton:pressed {{
-            background-color: {config['pressed']};
+            background-color: {COLORS['accent_secondary']};
         }}
     """
 
-
 def get_table_style():
-    """Get table widget stylesheet."""
+    """Get table widget stylesheet with dynamic font."""
+    base_size = get_base_font_size()
     return f"""
         QTableWidget {{
             background-color: {COLORS['primary_bg']};
@@ -161,15 +178,12 @@ def get_table_style():
             gridline-color: {COLORS['grid_lines']};
             color: {COLORS['text_secondary']};
             border: none;
+            font-size: {base_size}px;
         }}
         QTableWidget::item {{
             padding: 5px;
             background-color: {COLORS['secondary_bg']};
             color: {COLORS['text_secondary']};
-        }}
-        QTableWidget::item:selected {{
-            background-color: {COLORS['accent_secondary']};
-            color: {COLORS['text_primary']};
         }}
         QHeaderView::section {{
             background-color: {COLORS['secondary_bg']};
@@ -177,21 +191,12 @@ def get_table_style():
             padding: 8px;
             border: 1px solid {COLORS['border_primary']};
             border-bottom: 2px solid {COLORS['accent_primary']};
-            font-weight: {FONTS['weight_bold']};
-        }}
-        QTableWidget QTableCornerButton::section {{
-            background-color: {COLORS['secondary_bg']};
-            border: 1px solid {COLORS['border_primary']};
-        }}
-        QTableWidget::verticalHeader {{
-            background-color: {COLORS['secondary_bg']};
-            color: {COLORS['text_secondary']};
+            font-weight: bold;
+            font-size: {base_size}px;
         }}
     """
 
-
 def get_scrollarea_style():
-    """Get scroll area stylesheet."""
     return f"""
         QScrollArea {{
             background-color: {COLORS['primary_bg']};
@@ -201,21 +206,15 @@ def get_scrollarea_style():
             border: none;
             background: {COLORS['secondary_bg']};
             width: 12px;
-            margin: 0px;
         }}
         QScrollBar::handle:vertical {{
             background: {COLORS['accent_primary']};
             min-height: 20px;
             border-radius: 6px;
         }}
-        QScrollBar::handle:vertical:hover {{
-            background: {COLORS['accent_secondary']};
-        }}
-        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
-            height: 0px;
-        }}
     """
 
+# ==================== RESTORED HELPER FUNCTIONS ====================
 
 def get_sidebar_style():
     """Get sidebar frame stylesheet."""
@@ -226,9 +225,9 @@ def get_sidebar_style():
         }}
     """
 
-
 def get_sidebar_button_style(is_active=False):
     """Get sidebar button stylesheet."""
+    base_size = get_base_font_size()
     bg_color = COLORS['accent_primary'] if is_active else 'transparent'
     text_color = COLORS['text_primary'] if is_active else COLORS['text_muted']
     
@@ -240,8 +239,8 @@ def get_sidebar_button_style(is_active=False):
             border-radius: {LAYOUT_CONFIG['button_radius']};
             padding: 12px;
             text-align: left;
-            font-size: {FONTS['size_normal']};
-            font-weight: {FONTS['weight_semibold']};
+            font-size: {base_size}px;
+            font-weight: bold;
         }}
         QPushButton:hover {{
             background-color: {COLORS['secondary_bg']};
@@ -249,12 +248,10 @@ def get_sidebar_button_style(is_active=False):
         }}
     """
 
-
 def apply_fixed_width_label(label, width):
     """Apply fixed width to a label."""
     label.setFixedWidth(width)
     label.setStyleSheet(get_label_style(bold=True, size='normal'))
-
 
 def apply_minimum_width_widget(widget, width):
     """Apply minimum width to a widget."""

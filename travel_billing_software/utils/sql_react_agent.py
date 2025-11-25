@@ -37,7 +37,6 @@ if AI_ENABLED:
             api_key=api_key,
             max_tokens=2000,
             timeout=15,
-            cache=True,
         )
         print("Using Gemini 2.5 Pro model for LLM.")
         
