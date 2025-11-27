@@ -13,7 +13,7 @@ import os
 
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from travel_billing_software.auth import AuthManager
+from travel_billing_software.auth.auth_manager import AuthManager
 from travel_billing_software.ui.change_password_dialog import ChangePasswordDialog
 
 

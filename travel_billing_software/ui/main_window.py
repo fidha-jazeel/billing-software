@@ -16,12 +16,12 @@ from datetime import datetime
 
 # Import configuration and utilities
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import (
+from travel_billing_software.config.config import (
     APP_CONFIG, COMPANY_INFO, COLORS, INVOICE_CONFIG, LAYOUT_CONFIG,
     get_supplier_list, get_sector_list, get_company_info_formatted,
     get_currency_symbol, get_invoice_prefix
 )
-from utils.styles import (
+from travel_billing_software.utils.styles import (
     get_frame_style, get_label_style, get_input_style, get_dateedit_style,
     get_combobox_style, get_spinbox_style, get_button_style, get_scrollarea_style,
     get_table_style, apply_fixed_width_label, apply_minimum_width_widget

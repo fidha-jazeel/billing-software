@@ -20,6 +20,7 @@ from reportlab.platypus import (
 )
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+from travel_billing_software.utils.path_loader import resource_path
 import os
 from datetime import datetime
 import math
@@ -29,10 +30,10 @@ import math
 # ---------------------------
 # Register Unicode fonts (Regular + Bold)
 try:
-    base = os.path.join(os.path.dirname(__file__), '..', 'fonts')
+    # base = os.path.join(os.path.dirname(__file__), '..', 'fonts')
 
-    reg_path = os.path.join(base, 'DejaVuSans.ttf')
-    bold_path = os.path.join(base, 'DejaVuSans-Bold.ttf')
+    reg_path = resource_path("travel_billing_software/fonts/DejaVuSans.ttf")
+    bold_path = resource_path("travel_billing_software/fonts/DejaVuSans-Bold.ttf")
 
     if os.path.exists(reg_path):
         pdfmetrics.registerFont(TTFont('DejaVuSans', reg_path))

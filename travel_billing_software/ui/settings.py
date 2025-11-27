@@ -1,36 +1,45 @@
 """
 Settings Page for Travel Agency Billing Software
+Updated for Dynamic Persistence and Global Styling
 """
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QFrame, QScrollArea, QGridLayout, QPushButton, QDoubleSpinBox, QMessageBox,
-    QListWidget, QInputDialog
+    QListWidget, QInputDialog, QSpinBox, QComboBox, QApplication
 )
 from PyQt5.QtCore import Qt
-import os
-import json
-
-from numpy import size
-
+from utils.config_manager import ConfigManager
 
 class SettingsPage(QWidget):
-    """Settings page for configuring company and invoice settings."""
+    """Settings page for configuring company, invoice, and app appearance."""
     
     def __init__(self, colors, company_info, invoice_config, get_input_style, get_spinbox_style, 
-                 get_button_style, get_scrollarea_style, db=None):
+                 get_button_style, get_scrollarea_style, db=None, main_window_ref=None):
         super().__init__()
+        self.config_manager = ConfigManager()
+        
+        # Load live data from ConfigManager instead of static arguments
+        self.COMPANY_INFO = self.config_manager.get_company_info()
+        self.INVOICE_CONFIG = self.config_manager.get_invoice_config()
+        self.APP_SETTINGS = self.config_manager.get_app_settings()
+        
+        # Keep style references (we will regenerate them later)
         self.COLORS = colors
-        self.COMPANY_INFO = company_info
-        self.INVOICE_CONFIG = invoice_config
         self.get_input_style = get_input_style
         self.get_spinbox_style = get_spinbox_style
         self.get_button_style = get_button_style
         self.get_scrollarea_style = get_scrollarea_style
         self.db = db
+        self.main_window = main_window_ref # Reference to Dashboard to trigger refreshes
+
         self.init_ui()
     
     def init_ui(self):
         """Initialize the Settings page UI."""
+        # Clear existing layout if re-initializing
+        if self.layout():
+            QWidget().setLayout(self.layout())
+            
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(20, 20, 20, 20)
         main_layout.setSpacing(15)
@@ -39,670 +48,280 @@ class SettingsPage(QWidget):
         heading = QLabel(f"<h2 style='color:{self.COLORS['accent_secondary']};'>⚙️ Settings</h2>")
         main_layout.addWidget(heading)
         
-        # Scroll area for settings
+        # Scroll area
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setStyleSheet(self.get_scrollarea_style())
         
         settings_widget = QWidget()
-        layout = QVBoxLayout(settings_widget)
-        layout.setSpacing(20)
+        self.content_layout = QVBoxLayout(settings_widget)
+        self.content_layout.setSpacing(20)
 
-        # === COMPANY SETTINGS ===
-        company_frame = QFrame()
-        company_frame.setStyleSheet(f"""
-            QFrame {{
-                background-color: {self.COLORS['secondary_bg']};
-                border-radius: 8px;
-                padding: 20px;
-            }}
-        """)
-        company_layout = QGridLayout(company_frame)
-        company_layout.setContentsMargins(0, 0, 0, 0)
-        company_layout.setSpacing(15)
+        # 1. APPLICATION APPEARANCE (New Feature)
+        self._create_appearance_section()
+
+        # 2. COMPANY SETTINGS
+        self._create_company_section()
+
+        # 3. INVOICE SETTINGS
+        self._create_invoice_section()
+
+        # 4. DROPDOWN MANAGEMENT
+        self._create_dropdown_section()
         
-        company_title = QLabel(f"<b style='color:{self.COLORS['accent_primary']}; font-size:25px;'>🏢 Company Information</b>")
-        company_layout.addWidget(company_title, 0, 0, 1, 2)
-        
-        # Company Name
-        lbl_company = QLabel("Company Name:")
-        lbl_company.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size:20px;")
-        lbl_company.setFixedWidth(250)
-        company_layout.addWidget(lbl_company, 1, 0)
-        self.settings_company_name = QLineEdit(self.COMPANY_INFO['name'])
-        self.settings_company_name.setStyleSheet(self.get_input_style())
-        company_layout.addWidget(self.settings_company_name, 1, 1)
-        
-        # Address
-        lbl_address = QLabel("Address:")
-        lbl_address.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size:20px;")
-        lbl_address.setFixedWidth(250)
-        company_layout.addWidget(lbl_address, 2, 0)
-        self.settings_address = QLineEdit(self.COMPANY_INFO.get('address', ''))
-        self.settings_address.setStyleSheet(self.get_input_style())
-        company_layout.addWidget(self.settings_address, 2, 1)
-        
-        # Email
-        lbl_email = QLabel("Email:")
-        lbl_email.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size:20px;")
-        lbl_email.setFixedWidth(250)
-        company_layout.addWidget(lbl_email, 3, 0)
-        self.settings_email = QLineEdit(self.COMPANY_INFO['email'])
-        self.settings_email.setStyleSheet(self.get_input_style())
-        company_layout.addWidget(self.settings_email, 3, 1)
-        
-        # Phone
-        lbl_phone = QLabel("Phone:")
-        lbl_phone.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size:20px;")
-        lbl_phone.setFixedWidth(250)
-        company_layout.addWidget(lbl_phone, 4, 0)
-        self.settings_phone = QLineEdit(self.COMPANY_INFO['phone'])
-        self.settings_phone.setStyleSheet(self.get_input_style())
-        company_layout.addWidget(self.settings_phone, 4, 1)
-        
-        # GST Number
-        lbl_gst = QLabel("GST Number:")
-        lbl_gst.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold;  font-size:20px;")
-        lbl_gst.setFixedWidth(250)
-        company_layout.addWidget(lbl_gst, 5, 0)
-        self.settings_gst = QLineEdit(self.COMPANY_INFO.get('gst_number', ''))
-        self.settings_gst.setStyleSheet(self.get_input_style())
-        company_layout.addWidget(self.settings_gst, 5, 1)
-        
-        layout.addWidget(company_frame)
-
-        # === INVOICE SETTINGS ===
-        invoice_frame = QFrame()
-        invoice_frame.setStyleSheet(f"""
-            QFrame {{
-                background-color: {self.COLORS['secondary_bg']};
-                border-radius: 8px;
-                padding: 20px;
-            }}
-        """)
-        invoice_layout = QGridLayout(invoice_frame)
-        invoice_layout.setContentsMargins(0, 0, 0, 0)
-        invoice_layout.setSpacing(15)
-        
-        invoice_title = QLabel(f"<b style='color:{self.COLORS['accent_primary']}; font-size:25px;'>📝 Invoice Configuration</b>")
-        invoice_layout.addWidget(invoice_title, 0, 0, 1, 2)
-        
-        # Invoice Prefix
-        lbl_prefix = QLabel("Invoice Prefix:")
-        lbl_prefix.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size:20px;")
-        lbl_prefix.setFixedWidth(250)
-        invoice_layout.addWidget(lbl_prefix, 1, 0)
-        self.settings_prefix = QLineEdit(self.INVOICE_CONFIG['number_prefix'])
-        self.settings_prefix.setStyleSheet(self.get_input_style())
-        invoice_layout.addWidget(self.settings_prefix, 1, 1)
-        
-        # Currency Symbol
-        lbl_currency = QLabel("Currency Symbol:")
-        lbl_currency.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size:20px;")
-        lbl_currency.setFixedWidth(250)
-        invoice_layout.addWidget(lbl_currency, 2, 0)
-        self.settings_currency = QLineEdit(self.INVOICE_CONFIG['currency_symbol'])
-        self.settings_currency.setStyleSheet(self.get_input_style())
-        invoice_layout.addWidget(self.settings_currency, 2, 1)
-        
-        # Default Tax Rate
-        lbl_tax = QLabel("Default Tax Rate (%):")
-        lbl_tax.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size:20px;")
-        lbl_tax.setFixedWidth(250)
-        invoice_layout.addWidget(lbl_tax, 3, 0)
-        self.settings_tax = QDoubleSpinBox()
-        self.settings_tax.setValue(self.INVOICE_CONFIG['default_tax_rate'])
-        self.settings_tax.setMaximum(100)
-        self.settings_tax.setStyleSheet(self.get_spinbox_style())
-        invoice_layout.addWidget(self.settings_tax, 3, 1)
-        
-        layout.addWidget(invoice_frame)
-    
-
-        # === DROPDOWN ITEMS MANAGEMENT ===
-        dropdown_frame = QFrame()
-        dropdown_frame.setStyleSheet(f"""
-            QFrame {{
-                background-color: {self.COLORS['secondary_bg']};
-                border-radius: 8px;
-                padding: 20px;
-            }}
-        """)
-        dropdown_layout = QVBoxLayout(dropdown_frame)
-        dropdown_layout.setContentsMargins(0, 0, 0, 0)
-        dropdown_layout.setSpacing(15)
-        
-        dropdown_title = QLabel(f"<b style='color:{self.COLORS['accent_primary']}; font-size:25px;'>📋 Dropdown Items Management</b>")
-        dropdown_layout.addWidget(dropdown_title)
-        
-        # Suppliers Section
-        suppliers_layout = QVBoxLayout()
-        suppliers_label = QLabel("Suppliers:")
-        suppliers_label.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size:20px;")
-        suppliers_layout.addWidget(suppliers_label)
-        
-        # Input field with Add button attached
-        suppliers_action_layout = QHBoxLayout()
-        suppliers_action_layout.setSpacing(10)
-        self.supplier_input = QLineEdit()
-        self.supplier_input.setPlaceholderText("Enter new supplier name...")
-        self.supplier_input.setStyleSheet(self.get_input_style())
-        suppliers_action_layout.addWidget(self.supplier_input)
-        
-        remove_supplier_btn = QPushButton("➖ Remove")
-        remove_supplier_btn.setStyleSheet(self.get_button_style('remove'))
-        remove_supplier_btn.setCursor(Qt.PointingHandCursor)
-        remove_supplier_btn.clicked.connect(lambda: self.remove_dropdown_item('supplier'))
-        remove_supplier_btn.setFixedWidth(120)
-        suppliers_action_layout.addWidget(remove_supplier_btn)
-        remove_supplier_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #E53935;
-                color: white;
-                border-radius: 6px;
-                padding: 6px;
-            }
-            QPushButton:hover {
-                background-color: #B71C1C;
-            }
-        """)
-
-
-        edit_supplier_btn = QPushButton("✏️ Edit")
-        edit_supplier_btn.setStyleSheet(self.get_button_style('edit'))
-        edit_supplier_btn.setCursor(Qt.PointingHandCursor)
-        edit_supplier_btn.clicked.connect(lambda: self.edit_dropdown_item('supplier'))
-        edit_supplier_btn.setFixedWidth(120)
-        suppliers_action_layout.addWidget(edit_supplier_btn)
-        suppliers_layout.addLayout(suppliers_action_layout)
-        # add_supplier_btn = QPushButton("➕ Add")
-        # add_supplier_btn.setStyleSheet(self.get_button_style('add'))
-        # add_supplier_btn.setCursor(Qt.PointingHandCursor)
-        # add_supplier_btn.clicked.connect(lambda: self.add_dropdown_item('supplier'))
-        # add_supplier_btn.setFixedWidth(100)
-        # suppliers_input_layout.addWidget(add_supplier_btn)
-        # suppliers_layout.addLayout(suppliers_input_layout)
-        
-        # Remove and Edit buttons on separate row
-        suppliers_action_layout = QHBoxLayout()
-        suppliers_action_layout.addStretch()
-    # def add_dropdown_item(self, item_type):
-    #     text = ""
-
-    #     if item_type == "supplier":
-    #         text = self.supplier_input.text().strip()
-
-    #     if text == "":
-    #         QMessageBox.warning(self, "Warning", "Please enter a value before adding!")
-    #         return
-
-    #     # Save to DB
-    #     self.db.insert_dropdown_item(item_type, text)
-
-    #     # Clear textbox
-    #     if item_type == "supplier":
-    #         self.supplier_input.clear()
-
-    #     # Refresh list
-    #     self.load_dropdown_items()
- 
-        add_supplier_btn = QPushButton("➕ Add")
-        add_supplier_btn.setStyleSheet(self.get_button_style('add'))
-        add_supplier_btn.setCursor(Qt.PointingHandCursor)
-        add_supplier_btn.clicked.connect(lambda: self.add_dropdown_item('supplier'))
-        add_supplier_btn.setFixedWidth(100)
-        suppliers_action_layout.addWidget(add_supplier_btn)
-        suppliers_layout.addLayout(suppliers_action_layout)
-        
-
-        # List widget for displaying and selecting items
-        self.suppliers_list = QListWidget()
-        self.suppliers_list.setStyleSheet(f"""
-            QListWidget {{
-                color: {self.COLORS['text_secondary']};
-                background: {self.COLORS['primary_bg']};
-                border: 4px solid #444;
-                border-radius: 8px;
-                padding: 5px;
-            }}
-            QListWidget::item {{
-                padding: 5px;
-                border-radius: 8px;
-            }}
-            QListWidget::item:selected {{
-                background-color: {self.COLORS['accent_primary']};
-                color: white;
-            }}
-            QListWidget::item:hover {{
-                background-color: {self.COLORS['secondary_bg']};
-            }}
-        """)
-        # self.suppliers_list.setMaximumHeight(150)
-        self.suppliers_list.setMinimumHeight(150)
-        self.suppliers_list.setMaximumHeight(300)
-        self.suppliers_list.setFixedHeight(160)
-
-        suppliers_layout.addWidget(self.suppliers_list)
-        dropdown_layout.addLayout(suppliers_layout)
-        
-        # Sectors Section
-        # sectors_layout = QVBoxLayout()
-        # sectors_label = QLabel("Sectors:")
-        # sectors_label.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold;")
-        # sectors_layout.addWidget(sectors_label)
-        
-        # sectors_input_layout = QHBoxLayout()
-        # self.sector_input = QLineEdit()
-        # self.sector_input.setPlaceholderText("Enter new sector...")
-        # self.sector_input.setStyleSheet(self.get_input_style())
-        # sectors_input_layout.addWidget(self.sector_input)
-        
-        # add_sector_btn = QPushButton("➕ Add")
-        # add_sector_btn.setStyleSheet(self.get_button_style('add'))
-        # add_sector_btn.setCursor(Qt.PointingHandCursor)
-        # add_sector_btn.clicked.connect(lambda: self.add_dropdown_item('sector'))
-        # sectors_input_layout.addWidget(add_sector_btn)
-        # sectors_layout.addLayout(sectors_input_layout)
-        
-
-        # remove_sector_btn = QPushButton("➖ Remove")
-        # remove_sector_btn.setStyleSheet(self.get_button_style('remove'))
-        # remove_sector_btn.setCursor(Qt.PointingHandCursor)
-        # remove_sector_btn.clicked.connect(lambda: self.remove_dropdown_item('sector'))
-        # sectors_input_layout.addWidget(remove_sector_btn)
-        # sectors_layout.addLayout(sectors_input_layout)
- 
-
-        # edit_sector_btn = QPushButton(" Edit")
-        # edit_sector_btn.setStyleSheet(self.get_button_style('edit'))
-        # edit_sector_btn.setCursor(Qt.PointingHandCursor)
-        # edit_sector_btn.clicked.connect(lambda: self.edit_dropdown_item('sector'))
-        # sectors_input_layout.addWidget(edit_sector_btn)
-        # sectors_layout.addLayout(sectors_input_layout)
-
-        # self.sectors_list = QLabel()
-        # self.sectors_list.setWordWrap(True)
-        # self.sectors_list.setStyleSheet(f"color: {self.COLORS['text_secondary']}; padding: 10px; background: {self.COLORS['primary_bg']}; border-radius: 5px;")
-        # sectors_layout.addWidget(self.sectors_list)
-        # dropdown_layout.addLayout(sectors_layout)
-        
-        # Types Section
-        # types_layout = QVBoxLayout()
-        # types_label = QLabel("Types:")
-        # types_label.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold;")
-        # types_layout.addWidget(types_label)
-        
-        # types_input_layout = QHBoxLayout()
-        # self.type_input = QLineEdit()
-        # self.type_input.setPlaceholderText("Enter new type...")
-        # self.type_input.setStyleSheet(self.get_input_style())
-        # types_input_layout.addWidget(self.type_input)
-        
-        # add_type_btn = QPushButton("➕ Add")
-        # add_type_btn.setStyleSheet(self.get_button_style('add'))
-        # add_type_btn.setCursor(Qt.PointingHandCursor)
-        # add_type_btn.clicked.connect(lambda: self.add_dropdown_item('type'))
-        # types_input_layout.addWidget(add_type_btn)
-        # types_layout.addLayout(types_input_layout)
-
-        # remove_type_btn = QPushButton("➖ Remove")
-        # remove_type_btn.setStyleSheet(self.get_button_style('remove'))
-        # remove_type_btn.setCursor(Qt.PointingHandCursor)
-        # remove_type_btn.clicked.connect(lambda: self.remove_dropdown_item('type'))
-        # types_input_layout.addWidget(remove_type_btn)
-        # types_layout.addLayout(types_input_layout)
-        
-        # edit_type_btn = QPushButton(" Edit")
-        # edit_type_btn.setStyleSheet(self.get_button_style('edit'))
-        # edit_type_btn.setCursor(Qt.PointingHandCursor)
-        # edit_type_btn.clicked.connect(lambda: self.edit_dropdown_item('type'))
-        # types_input_layout.addWidget(edit_type_btn)
-        # types_layout.addLayout(types_input_layout)
-
-        # self.types_list = QLabel()
-        # self.types_list.setWordWrap(True)
-        # self.types_list.setStyleSheet(f"color: {self.COLORS['text_secondary']}; padding: 10px; background: {self.COLORS['primary_bg']}; border-radius: 5px;")
-        # types_layout.addWidget(self.types_list)
-        # dropdown_layout.addLayout(types_layout)
-        
-        # Classes Section
-        classes_layout = QVBoxLayout()
-        classes_label = QLabel("Travel Classes:")
-        classes_label.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size:20px;")
-        classes_layout.addWidget(classes_label)
-        
-        # Input field with Add button attached
-        classes_action_layout = QHBoxLayout()
-        classes_action_layout.setSpacing(10)
-
-        self.class_input = QLineEdit()
-        self.class_input.setPlaceholderText("Enter new class...")
-        self.class_input.setStyleSheet(self.get_input_style())
-        classes_action_layout.addWidget(self.class_input)
-
-        remove_class_btn = QPushButton("➖ Remove")
-        remove_class_btn.setStyleSheet(self.get_button_style('remove'))
-        # remove_class_btn.setCursor(Qt.PointingHandCursor)
-        remove_class_btn.clicked.connect(lambda: self.remove_dropdown_item('class'))
-        remove_class_btn.setFixedWidth(120)
-        classes_action_layout.addWidget(remove_class_btn)
-        # classes_layout.addLayout(classes_action_layout)
-        remove_class_btn.setStyleSheet("""
-            QPushButton {_
-                background-color: #E53935;
-                color: white;
-                border-radius: 6px;
-                padding: 6px;
-            }
-            QPushButton:hover {
-                background-color: #B71C1C;
-            }
-        """)
-        
-        edit_class_btn = QPushButton("✏️ Edit")
-        edit_class_btn.setStyleSheet(self.get_button_style('edit'))
-        # edit_class_btn.setCursor(Qt.PointingHandCursor)
-        edit_class_btn.clicked.connect(lambda: self.edit_dropdown_item('class'))
-        edit_class_btn.setFixedWidth(120)
-        classes_action_layout.addWidget(edit_class_btn)
-        classes_layout.addLayout(classes_action_layout)
-
-
-
-
-        classes_action_layout = QHBoxLayout()
-        classes_action_layout.addStretch()
-
-
-        # 
-
-        add_class_btn = QPushButton("➕ Add")
-        add_class_btn.setStyleSheet(self.get_button_style('add'))
-        # add_class_btn.setCursor(Qt.PointingHandCursor)
-        add_class_btn.clicked.connect(lambda: self.add_dropdown_item('class'))
-        add_class_btn.setFixedWidth(100)
-        classes_action_layout.addWidget(add_class_btn)
-
-        # classes_action_layout.addWidget(self.class_input)
-        # classes_action_layout.addWidget(remove_class_btn)
-        # classes_action_layout.addWidget(edit_class_btn)
-        # classes_action_layout.addWidget(add_class_btn)
-
-
-        classes_layout.addLayout(classes_action_layout)
-        
-       
-
-        # classes_action_layout = QHBoxLayout()
-        self.classes_list = QListWidget()
-        self.classes_list.setStyleSheet(f"""
-            QListWidget {{
-                color: {self.COLORS['text_secondary']};
-                background: {self.COLORS['primary_bg']};
-                border: 4px solid #444;
-                border-radius: 10px;
-                padding: 5px;
-            }}
-            QListWidget::item {{
-                padding: 5px;
-                border-radius: 8px;
-            }}
-            QListWidget::item:selected {{
-                background-color: {self.COLORS['accent_primary']};
-                color: white;
-            }}
-            QListWidget::item:hover {{
-                background-color: {self.COLORS['secondary_bg']};
-            }}
-        """)
-        # self.classes_list.setMaximumHeight(220)
-        self.classes_list.setMinimumHeight(150)
-        self.classes_list.setMaximumHeight(300)
-        self.classes_list.setFixedHeight(160)
-
-
-        classes_layout.addWidget(self.classes_list)
-
-
-        dropdown_layout.addLayout(classes_layout)
-
-        # classes_action_layout = QHBoxLayout()
-        # classes_action_layout.addStretch()
-
-        
-        layout.addWidget(dropdown_frame)
-        
-        # Load initial dropdown items
-        self.load_dropdown_items()
-        
-        # === SAVE BUTTON ===
+        # Save Button
         save_btn_layout = QHBoxLayout()
         save_btn_layout.addStretch()
         
-        save_settings_btn = QPushButton("💾 Save Settings")
+        save_settings_btn = QPushButton("💾 Save All Settings")
         save_settings_btn.setStyleSheet(self.get_button_style('save'))
         save_settings_btn.setCursor(Qt.PointingHandCursor)
-        save_settings_btn.clicked.connect(self.save_settings)
+        save_settings_btn.clicked.connect(self.save_all_settings)
         save_btn_layout.addWidget(save_settings_btn)
         
-        layout.addLayout(save_btn_layout)
-        layout.addStretch()
+        self.content_layout.addLayout(save_btn_layout)
+        self.content_layout.addStretch()
         
         scroll.setWidget(settings_widget)
         main_layout.addWidget(scroll)
-    
-    def save_settings(self):
-        """Save settings."""
-        try:
-            # In a production app, you would update config files or database here
-            # For now, just show confirmation
-            
-            settings_text = f"""Settings Updated:
 
-Company Information:
-• Name: {self.settings_company_name.text()}
-• Address: {self.settings_address.text()}
-• Email: {self.settings_email.text()}
-• Phone: {self.settings_phone.text()}
-• GST: {self.settings_gst.text()}
+    def _create_frame_style(self):
+        return f"""
+            QFrame {{
+                background-color: {self.COLORS['secondary_bg']};
+                border-radius: 8px;
+                padding: 20px;
+                border: 1px solid #333;
+            }}
+        """
 
-Invoice Configuration:
-• Prefix: {self.settings_prefix.text()}
-• Currency: {self.settings_currency.text()}
-• Default Tax: {self.settings_tax.value()}%
+    def _create_appearance_section(self):
+        frame = QFrame()
+        frame.setStyleSheet(self._create_frame_style())
+        layout = QGridLayout(frame)
+        
+        title = QLabel(f"<b style='color:{self.COLORS['accent_primary']}; font-size:18px;'>🎨 Appearance</b>")
+        layout.addWidget(title, 0, 0, 1, 2)
 
-Note: These settings are displayed but not persisted.
-To persist settings, update config/settings.py file."""
+        # Font Size
+        lbl_font = QLabel("Global Font Size (px):")
+        lbl_font.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold;")
+        
+        self.spin_font_size = QSpinBox()
+        self.spin_font_size.setRange(8, 24)
+        self.spin_font_size.setValue(self.APP_SETTINGS.get('font_size', 12))
+        self.spin_font_size.setStyleSheet(self.get_spinbox_style())
+        
+        layout.addWidget(lbl_font, 1, 0)
+        layout.addWidget(self.spin_font_size, 1, 1)
+
+        # Theme Accent (Simple Dropdown for now)
+        lbl_theme = QLabel("Accent Color:")
+        lbl_theme.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold;")
+        
+        self.combo_theme = QComboBox()
+        self.combo_theme.addItems(["Purple", "Blue", "Green", "Orange", "Red"])
+        # Map current color to index logic here if needed
+        self.combo_theme.setStyleSheet(f"""
+            QComboBox {{ background-color: #333; color: white; padding: 5px; border-radius: 5px; }}
+        """)
+
+        layout.addWidget(lbl_theme, 2, 0)
+        layout.addWidget(self.combo_theme, 2, 1)
+        
+        # Note
+        lbl_note = QLabel("<i>Note: Some appearance changes may require a restart.</i>")
+        lbl_note.setStyleSheet("color: #888;")
+        layout.addWidget(lbl_note, 3, 0, 1, 2)
+
+        self.content_layout.addWidget(frame)
+
+    def _create_company_section(self):
+        frame = QFrame()
+        frame.setStyleSheet(self._create_frame_style())
+        layout = QGridLayout(frame)
+        
+        title = QLabel(f"<b style='color:{self.COLORS['accent_primary']}; font-size:18px;'>🏢 Company Information</b>")
+        layout.addWidget(title, 0, 0, 1, 2)
+        
+        fields = [
+            ("Company Name:", "name"),
+            ("Address:", "address"),
+            ("Email:", "email"),
+            ("Phone:", "phone"),
+            ("GST Number:", "gst_number")
+        ]
+        
+        self.company_inputs = {}
+        
+        for i, (label_text, key) in enumerate(fields, 1):
+            lbl = QLabel(label_text)
+            lbl.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold;")
             
-            QMessageBox.information(self, "Settings Saved", settings_text)
+            inp = QLineEdit(str(self.COMPANY_INFO.get(key, "")))
+            inp.setStyleSheet(self.get_input_style())
             
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to save settings:\n{str(e)}")
-    
-    def load_dropdown_items(self):
-        """Load dropdown items from database (preferred) or JSON file."""
-        try:
-            # Try loading from database first
-            if self.db:
-                self.suppliers = self.db.get_dropdown_items('supplier')
-                self.classes = self.db.get_dropdown_items('class')
-                
-                # Initialize defaults if database is empty
-                if not self.suppliers:
-                    self.db.initialize_default_dropdowns()
-                    self.suppliers = self.db.get_dropdown_items('supplier')
-                    self.classes = self.db.get_dropdown_items('class')
-            else:
-                # Fallback to JSON file
-                if os.path.exists('dropdown_items.json'):
-                    with open('dropdown_items.json', 'r') as f:
-                        data = json.load(f)
-                        self.suppliers = data.get('suppliers', ['Emirates Airlines', 'Qatar Airways', 'Air India'])
-                        self.classes = data.get('classes', ['Economy', 'Premium Economy', 'Business', 'First Class'])
-                else:
-                    self.suppliers = ['Emirates Airlines', 'Qatar Airways', 'Air India']
-                    self.classes = ['Economy', 'Premium Economy', 'Business', 'First Class']
+            layout.addWidget(lbl, i, 0)
+            layout.addWidget(inp, i, 1)
+            self.company_inputs[key] = inp
             
-            self.update_dropdown_displays()
-        except Exception as e:
-            print(f"Error loading dropdown items: {e}")
-    
-    def update_dropdown_displays(self):
-        """Update the display of dropdown items."""
-        self.suppliers_list.clear()
-        self.suppliers_list.addItems(self.suppliers)
-        self.classes_list.clear()
-        self.classes_list.addItems(self.classes)
-    
-    def add_dropdown_item(self, item_type):
-        """Add new item to dropdown list."""
-        try:
-            new_item = None
-            if item_type == 'supplier':
-                new_item = self.supplier_input.text().strip()
-                if new_item and new_item not in self.suppliers:
-                    if self.db:
-                        if self.db.add_dropdown_item('supplier', new_item):
-                            self.suppliers.append(new_item)
-                            self.supplier_input.clear()
-                        else:
-                            QMessageBox.warning(self, "Duplicate", "This supplier already exists.")
-                            return
+        self.content_layout.addWidget(frame)
+
+    def _create_invoice_section(self):
+        frame = QFrame()
+        frame.setStyleSheet(self._create_frame_style())
+        layout = QGridLayout(frame)
+        
+        title = QLabel(f"<b style='color:{self.COLORS['accent_primary']}; font-size:18px;'>📝 Invoice Configuration</b>")
+        layout.addWidget(title, 0, 0, 1, 2)
+        
+        # Prefix
+        layout.addWidget(QLabel("Invoice Prefix:", styleSheet=f"color:{self.COLORS['text_primary']}; font-weight:bold;"), 1, 0)
+        self.inp_prefix = QLineEdit(self.INVOICE_CONFIG.get('prefix', 'INV'))
+        self.inp_prefix.setStyleSheet(self.get_input_style())
+        layout.addWidget(self.inp_prefix, 1, 1)
+
+        # Currency
+        layout.addWidget(QLabel("Currency Symbol:", styleSheet=f"color:{self.COLORS['text_primary']}; font-weight:bold;"), 2, 0)
+        self.inp_currency = QLineEdit(self.INVOICE_CONFIG.get('currency_symbol', '₹'))
+        self.inp_currency.setStyleSheet(self.get_input_style())
+        layout.addWidget(self.inp_currency, 2, 1)
+
+        # Tax
+        layout.addWidget(QLabel("Default Tax Rate (%):", styleSheet=f"color:{self.COLORS['text_primary']}; font-weight:bold;"), 3, 0)
+        self.spin_tax = QDoubleSpinBox()
+        self.spin_tax.setValue(float(self.INVOICE_CONFIG.get('default_tax_rate', 18.0)))
+        self.spin_tax.setMaximum(100)
+        self.spin_tax.setStyleSheet(self.get_spinbox_style())
+        layout.addWidget(self.spin_tax, 3, 1)
+        
+        self.content_layout.addWidget(frame)
+
+    def _create_dropdown_section(self):
+        frame = QFrame()
+        frame.setStyleSheet(self._create_frame_style())
+        layout = QVBoxLayout(frame)
+        
+        layout.addWidget(QLabel(f"<b style='color:{self.COLORS['accent_primary']}; font-size:18px;'>📋 Dropdown Management</b>"))
+
+        # Helper to create list sections
+        def create_list_manager(title, key):
+            lbl = QLabel(title)
+            lbl.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size: 16px;")
+            layout.addWidget(lbl)
+            
+            row = QHBoxLayout()
+            inp = QLineEdit()
+            inp.setPlaceholderText(f"Add new {title.lower().strip(':')}...")
+            inp.setStyleSheet(self.get_input_style())
+            
+            btn_add = QPushButton("➕")
+            btn_add.setFixedWidth(70)
+            btn_add.setStyleSheet(self.get_button_style('add'))
+            
+            row.addWidget(inp)
+            row.addWidget(btn_add)
+            layout.addLayout(row)
+            
+            lst = QListWidget()
+            lst.setFixedHeight(200)
+            lst.setStyleSheet(f"background: {self.COLORS['primary_bg']}; color: #ddd; border: 1px solid #444; border-radius: 4px;")
+            
+            # Load items
+            items = self.config_manager.get_dropdowns(key)
+            lst.addItems(items)
+            
+            layout.addWidget(lst)
+            
+            # Remove Button
+            btn_remove = QPushButton("➖ Remove Selected")
+            btn_remove.setStyleSheet("""
+                QPushButton { background-color: #ef4444; color: white; border-radius: 4px; padding: 5px; }
+                QPushButton:hover { background-color: #dc2626; }
+            """)
+            layout.addWidget(btn_remove)
+            
+            # Logic Connections
+            def add_item():
+                text = inp.text().strip()
+                if text:
+                    if self.config_manager.add_dropdown_item(key, text):
+                        lst.addItem(text)
+                        inp.clear()
                     else:
-                        self.suppliers.append(new_item)
-                        self.supplier_input.clear()
-            elif item_type == 'class':
-                new_item = self.class_input.text().strip()
-                if new_item and new_item not in self.classes:
-                    if self.db:
-                        if self.db.add_dropdown_item('class', new_item):
-                            self.classes.append(new_item)
-                            self.class_input.clear()
-                        else:
-                            QMessageBox.warning(self, "Duplicate", "This class already exists.")
-                            return
-                    else:
-                        self.classes.append(new_item)
-                        self.class_input.clear()
+                        QMessageBox.warning(self, "Exists", "Item already exists.")
             
-            if not new_item:
-                QMessageBox.warning(self, "Empty Field", "Please enter a value.")
-                return
-                
-            self.save_dropdown_items()
-            self.update_dropdown_displays()
-            QMessageBox.information(self, "Success", f"{item_type.capitalize()} added successfully!")
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to add item:\n{str(e)}")
-    
-    def save_dropdown_items(self):
-        """Save dropdown items to JSON file."""
+            def remove_item():
+                row = lst.currentRow()
+                if row >= 0:
+                    item = lst.item(row).text()
+                    if self.config_manager.remove_dropdown_item(key, item):
+                        lst.takeItem(row)
+
+            btn_add.clicked.connect(add_item)
+            btn_remove.clicked.connect(remove_item)
+
+        create_list_manager("Suppliers:", "suppliers")
+        layout.addSpacing(10)
+        create_list_manager("Travel Classes:", "classes")
+        
+        self.content_layout.addWidget(frame)
+
+    def save_all_settings(self):
+        """Persist all settings to config.json and trigger updates."""
         try:
-            data = {
-                'suppliers': self.suppliers,
-                'classes': self.classes
+            # 1. Update Company Info
+            company_data = {k: v.text() for k, v in self.company_inputs.items()}
+            self.config_manager.set_company_info(company_data)
+
+            # 2. Update Invoice Config
+            invoice_data = {
+                "prefix": self.inp_prefix.text(),
+                "currency_symbol": self.inp_currency.text(),
+                "default_tax_rate": self.spin_tax.value(),
+                "terms": self.INVOICE_CONFIG.get("terms", "") # Preserve terms
             }
-            with open('dropdown_items.json', 'w') as f:
-                json.dump(data, f, indent=4)
-            print("✓ Dropdown items saved")
-        except Exception as e:
-            print(f"Error saving dropdown items: {e}")
-    
-    def remove_dropdown_item(self, item_type):
-        """Remove selected item from dropdown list."""
-        try:
-            item_text = None
-            if item_type == 'supplier':
-                current_item = self.suppliers_list.currentItem()
-                if current_item:
-                    item_text = current_item.text()
-                    if self.db:
-                        if self.db.delete_dropdown_item('supplier', item_text):
-                            self.suppliers.remove(item_text)
-                        else:
-                            QMessageBox.warning(self, "Error", "Failed to remove from database.")
-                            return
-                    else:
-                        self.suppliers.remove(item_text)
-                else:
-                    QMessageBox.warning(self, "No Selection", "Please select a supplier to remove.")
-                    return
-            elif item_type == 'class':
-                current_item = self.classes_list.currentItem()
-                if current_item:
-                    item_text = current_item.text()
-                    if self.db:
-                        if self.db.delete_dropdown_item('class', item_text):
-                            self.classes.remove(item_text)
-                        else:
-                            QMessageBox.warning(self, "Error", "Failed to remove from database.")
-                            return
-                    else:
-                        self.classes.remove(item_text)
-                else:
-                    QMessageBox.warning(self, "No Selection", "Please select a class to remove.")
-                    return
+            self.config_manager.set_invoice_config(invoice_data)
+
+            # 3. Update App Settings (Font Size)
+            new_font_size = self.spin_font_size.value()
+            self.config_manager.set_app_setting("font_size", new_font_size)
             
-            self.save_dropdown_items()
-            self.update_dropdown_displays()
-            QMessageBox.information(self, "Success", f"Item removed successfully!")
+            # 4. Apply Changes Globally
+            self.apply_global_styles(new_font_size)
+
+            QMessageBox.information(self, "Saved", "Settings saved successfully!\nUI updated.")
+
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to remove item:\n{str(e)}")
-    
-    def edit_dropdown_item(self, item_type):
-        """Edit selected item in dropdown list."""
-        try:
-            if item_type == 'supplier':
-                current_item = self.suppliers_list.currentItem()
-                if current_item:
-                    old_text = current_item.text()
-                    new_text, ok = QInputDialog.getText(
-                        self, "Edit Supplier", "Enter new supplier name:", 
-                        QLineEdit.Normal, old_text
-                    )
-                    if ok and new_text.strip():
-                        if self.db:
-                            if self.db.update_dropdown_item('supplier', old_text, new_text.strip()):
-                                idx = self.suppliers.index(old_text)
-                                self.suppliers[idx] = new_text.strip()
-                            else:
-                                QMessageBox.warning(self, "Error", "Failed to update in database.")
-                                return
-                        else:
-                            idx = self.suppliers.index(old_text)
-                            self.suppliers[idx] = new_text.strip()
-                    else:
-                        return
-                else:
-                    QMessageBox.warning(self, "No Selection", "Please select a supplier to edit.")
-                    return
-            elif item_type == 'class':
-                current_item = self.classes_list.currentItem()
-                if current_item:
-                    old_text = current_item.text()
-                    new_text, ok = QInputDialog.getText(
-                        self, "Edit Class", "Enter new class name:", 
-                        QLineEdit.Normal, old_text
-                    )
-                    if ok and new_text.strip():
-                        if self.db:
-                            if self.db.update_dropdown_item('class', old_text, new_text.strip()):
-                                idx = self.classes.index(old_text)
-                                self.classes[idx] = new_text.strip()
-                            else:
-                                QMessageBox.warning(self, "Error", "Failed to update in database.")
-                                return
-                        else:
-                            idx = self.classes.index(old_text)
-                            self.classes[idx] = new_text.strip()
-                    else:
-                        return
-                else:
-                    QMessageBox.warning(self, "No Selection", "Please select a class to edit.")
-                    return
+            QMessageBox.critical(self, "Error", f"Failed to save settings: {e}")
+
+    def apply_global_styles(self, font_size):
+        """
+        Dynamically update the application stylesheet.
+        This forces the font size to reflect 'everywhere'.
+        """
+        app = QApplication.instance()
+        if app:
+            # We construct a generic stylesheet that forces font size on common widgets
+            style = f"""
+                QWidget {{ font-size: {font_size}px; font-family: 'Segoe UI', Arial; }}
+                QLabel {{ font-size: {font_size}px; }}
+                QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox {{ 
+                    font-size: {font_size}px; min-height: {font_size + 10}px; 
+                }}
+                QPushButton {{ font-size: {font_size}px; }}
+                QTableWidget {{ font-size: {font_size}px; }}
+                QHeaderView::section {{ font-size: {font_size}px; }}
+            """
+            # Append to existing stylesheet if possible, or replace
+            # For this simple implementation, we assume we can append or set
+            # But usually, it's better to update the main window's style method.
             
-            self.save_dropdown_items()
-            self.update_dropdown_displays()
-            QMessageBox.information(self, "Success", f"Item updated successfully!")
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to edit item:\n{str(e)}")
+            # If main_window reference exists, call its theme applicator
+            if self.main_window and hasattr(self.main_window, 'apply_dark_theme'):
+                # We need to hack the main window to accept a font size, 
+                # OR set a global variable that main window reads.
+                pass 
+            
+            # Direct application (Brute force method to ensure it works)
+            app.setStyleSheet(app.styleSheet() + style)
