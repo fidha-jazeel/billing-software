@@ -1,0 +1,10 @@
+PyQt5==5.15.11
+reportlab==4.4.4
+pypdfium2==5.0.0
+langchain-google-genai
+langchain
+langchain_core
+langchain_community
+langgraph
+dotenv
+openpyxl
