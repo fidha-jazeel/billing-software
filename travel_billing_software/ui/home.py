@@ -232,7 +232,7 @@ class HomePage(QWidget):
         table_layout.addLayout(table_header_layout)
         
         self.table = QTableWidget(0, 11)
-        self.table.setHorizontalHeaderLabels(["Passenger Name", "PNR", "Sector", "Supplier", "Type", "Class", "Price (₹)", "Qty", "Tax (%)", "Amount (₹)", "Actions"])
+        self.table.setHorizontalHeaderLabels(["Passenger Name", "PNR", "Sector", "Supplier", "Type", "Price (₹)", "Qty", "Supplier Amount (₹)", "Customer Amount (₹)"," Actions"])
         self.table.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.table.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
