@@ -6,17 +6,180 @@ Optimized for high-speed data entry.
 import os
 import json
 from datetime import datetime
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel,
+from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel,
                              QFrame, QScrollArea, QTableWidget, QPushButton, QLineEdit,
                              QComboBox, QDoubleSpinBox, QDateEdit, QHeaderView, 
-                             QShortcut, QApplication)
-from PyQt5.QtCore import Qt, QDate, QEvent
-from PyQt5.QtGui import QKeySequence
+                              QApplication, QMessageBox, QInputDialog)
+from PyQt6.QtGui import QShortcut
+from PyQt6.QtGui import QCursor
+from PyQt6.QtCore import Qt, QDate, QEvent
+from PyQt6.QtGui import QKeySequence
 
-from PyQt5.QtWidgets import QMessageBox, QInputDialog
 from utils.invoice_generator import generate_invoice_pdf
-from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
+from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
 from travel_billing_software.utils.styles import get_label_style
+
+class PassportDetailsDialog(QWidget):
+    """Dialog for entering passenger passport details."""
+    
+    def __init__(self, passenger_name="", parent=None):
+        super().__init__(parent)
+        self.passenger_name = passenger_name
+        self.passport_data = {}
+        self.setWindowTitle(f"Passport Details - {passenger_name}")
+        self.setMinimumWidth(500)
+        self.setMinimumHeight(600)
+        self._init_ui()
+    
+    def _init_ui(self):
+        layout = QVBoxLayout(self)
+        layout.setSpacing(15)
+        layout.setContentsMargins(20, 20, 20, 20)
+        
+        # Title
+        title = QLabel(f"<h2>Passport Information</h2>")
+        title.setStyleSheet("color: #7C3AED; font-weight: bold;")
+        layout.addWidget(title)
+        
+        # Passenger name display
+        name_label = QLabel(f"<b>Passenger:</b> {self.passenger_name}")
+        name_label.setStyleSheet("color: #ddd; font-size: 14px; padding: 10px; background: #2a2a2a; border-radius: 5px;")
+        layout.addWidget(name_label)
+        
+        # Form fields
+        form_layout = QGridLayout()
+        form_layout.setSpacing(10)
+        
+        field_style = "QLineEdit { background-color: #2a2a2a; color: #ddd; border: 1px solid #444; border-radius: 3px; padding: 8px; font-size: 13px; } QLineEdit:focus { border: 1px solid #7C3AED; }"
+        date_style = "QDateEdit { background-color: #2a2a2a; color: #ddd; border: 1px solid #444; border-radius: 3px; padding: 8px; } QDateEdit:focus { border: 1px solid #7C3AED; }"
+        
+        # Passport Number *
+        form_layout.addWidget(QLabel("<b>Passport Number: *</b>"), 0, 0)
+        self.passport_number = QLineEdit()
+        self.passport_number.setPlaceholderText("Enter passport number")
+        self.passport_number.setStyleSheet(field_style)
+        form_layout.addWidget(self.passport_number, 0, 1)
+        
+        # Full Name *
+        form_layout.addWidget(QLabel("<b>Full Name (as in passport): *</b>"), 1, 0)
+        self.full_name = QLineEdit()
+        self.full_name.setText(self.passenger_name)
+        self.full_name.setStyleSheet(field_style)
+        form_layout.addWidget(self.full_name, 1, 1)
+        
+        # Date of Birth *
+        form_layout.addWidget(QLabel("<b>Date of Birth: *</b>"), 2, 0)
+        self.dob = QDateEdit()
+        self.dob.setCalendarPopup(True)
+        self.dob.setDate(QDate.currentDate().addYears(-30))
+        self.dob.setStyleSheet(date_style)
+        form_layout.addWidget(self.dob, 2, 1)
+        
+        # Nationality *
+        form_layout.addWidget(QLabel("<b>Nationality: *</b>"), 3, 0)
+        self.nationality = QLineEdit()
+        self.nationality.setPlaceholderText("e.g., Indian")
+        self.nationality.setStyleSheet(field_style)
+        form_layout.addWidget(self.nationality, 3, 1)
+        
+        # Gender *
+        form_layout.addWidget(QLabel("<b>Gender: *</b>"), 4, 0)
+        self.gender = QComboBox()
+        self.gender.addItems(["Select", "Male", "Female", "Other"])
+        self.gender.setStyleSheet("QComboBox { background-color: #2a2a2a; color: #ddd; border: 1px solid #444; padding: 8px; } QComboBox:focus { border: 1px solid #7C3AED; }")
+        form_layout.addWidget(self.gender, 4, 1)
+        
+        # Place of Birth
+        form_layout.addWidget(QLabel("<b>Place of Birth:</b>"), 5, 0)
+        self.place_of_birth = QLineEdit()
+        self.place_of_birth.setPlaceholderText("City, Country")
+        self.place_of_birth.setStyleSheet(field_style)
+        form_layout.addWidget(self.place_of_birth, 5, 1)
+        
+        # Issue Date *
+        form_layout.addWidget(QLabel("<b>Issue Date: *</b>"), 6, 0)
+        self.issue_date = QDateEdit()
+        self.issue_date.setCalendarPopup(True)
+        self.issue_date.setDate(QDate.currentDate().addYears(-2))
+        self.issue_date.setStyleSheet(date_style)
+        form_layout.addWidget(self.issue_date, 6, 1)
+        
+        # Expiry Date *
+        form_layout.addWidget(QLabel("<b>Expiry Date: *</b>"), 7, 0)
+        self.expiry_date = QDateEdit()
+        self.expiry_date.setCalendarPopup(True)
+        self.expiry_date.setDate(QDate.currentDate().addYears(8))
+        self.expiry_date.setStyleSheet(date_style)
+        form_layout.addWidget(self.expiry_date, 7, 1)
+        
+        # Issuing Authority *
+        form_layout.addWidget(QLabel("<b>Issuing Authority: *</b>"), 8, 0)
+        self.issuing_authority = QLineEdit()
+        self.issuing_authority.setPlaceholderText("e.g., Govt. of India")
+        self.issuing_authority.setStyleSheet(field_style)
+        form_layout.addWidget(self.issuing_authority, 8, 1)
+        
+        layout.addLayout(form_layout)
+        
+        # Note about mandatory fields
+        note = QLabel("<i>* Mandatory fields</i>")
+        note.setStyleSheet("color: #FFD700; font-size: 12px;")
+        layout.addWidget(note)
+        
+        layout.addStretch()
+        
+        # Buttons
+        btn_layout = QHBoxLayout()
+        btn_layout.addStretch()
+        
+        save_btn = QPushButton("💾 Save Passport Details")
+        save_btn.setStyleSheet("QPushButton { background-color: #10B981; color: white; border: none; border-radius: 5px; padding: 10px 20px; font-weight: bold; } QPushButton:hover { background-color: #059669; }")
+        save_btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        save_btn.clicked.connect(self.save_details)
+        btn_layout.addWidget(save_btn)
+        
+        cancel_btn = QPushButton("Cancel")
+        cancel_btn.setStyleSheet("QPushButton { background-color: #6B7280; color: white; border: none; border-radius: 5px; padding: 10px 20px; font-weight: bold; } QPushButton:hover { background-color: #4B5563; }")
+        cancel_btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        cancel_btn.clicked.connect(self.close)
+        btn_layout.addWidget(cancel_btn)
+        
+        layout.addLayout(btn_layout)
+    
+    def save_details(self):
+        """Validate and save passport details."""
+        # Validate mandatory fields
+        if not self.passport_number.text().strip():
+            QMessageBox.warning(self, "Missing Information", "Passport Number is required.")
+            return
+        if not self.full_name.text().strip():
+            QMessageBox.warning(self, "Missing Information", "Full Name is required.")
+            return
+        if not self.nationality.text().strip():
+            QMessageBox.warning(self, "Missing Information", "Nationality is required.")
+            return
+        if self.gender.currentText() == "Select":
+            QMessageBox.warning(self, "Missing Information", "Please select Gender.")
+            return
+        if not self.issuing_authority.text().strip():
+            QMessageBox.warning(self, "Missing Information", "Issuing Authority is required.")
+            return
+        
+        # Save data
+        self.passport_data = {
+            'passport_number': self.passport_number.text().strip(),
+            'full_name': self.full_name.text().strip(),
+            'date_of_birth': self.dob.date().toString("yyyy-MM-dd"),
+            'nationality': self.nationality.text().strip(),
+            'gender': self.gender.currentText(),
+            'place_of_birth': self.place_of_birth.text().strip(),
+            'issue_date': self.issue_date.date().toString("yyyy-MM-dd"),
+            'expiry_date': self.expiry_date.date().toString("yyyy-MM-dd"),
+            'issuing_authority': self.issuing_authority.text().strip()
+        }
+        
+        QMessageBox.information(self, "Success", f"Passport details saved for {self.full_name.text()}!")
+        self.close()
 
 class HomePage(QWidget):
     """Home page with invoice creation and management."""
@@ -49,8 +212,10 @@ class HomePage(QWidget):
         # Create scroll area for entire page
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+
+        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+
         scroll.setStyleSheet("""
             QScrollArea {
                 border: none;
@@ -92,7 +257,8 @@ class HomePage(QWidget):
                 margin-bottom: 10px;
             }}
         """)
-        welcome_heading.setAlignment(Qt.AlignCenter)
+        welcome_heading.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
         layout.addWidget(welcome_heading)
         
         # Invoice Details Section
@@ -142,7 +308,10 @@ class HomePage(QWidget):
         # Row 1: Customer Name & Contact
         lbl_cust_name = QLabel("Customer Name:")
         lbl_cust_name.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 14px;")
-        lbl_cust_name.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        lbl_cust_name.setAlignment(
+    Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+)
+
         invoice_layout.addWidget(lbl_cust_name, 1, 0)
         
         self.customer_name = QLineEdit()
@@ -153,7 +322,10 @@ class HomePage(QWidget):
         
         lbl_contact = QLabel("Contact Number:")
         lbl_contact.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 14px;")
-        lbl_contact.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        lbl_contact.setAlignment(
+    Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+)
+
         invoice_layout.addWidget(lbl_contact, 1, 2)
         
         self.contact_number = QLineEdit()
@@ -165,7 +337,9 @@ class HomePage(QWidget):
         # Row 2: Address
         lbl_address = QLabel("Address:")
         lbl_address.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 14px;")
-        lbl_address.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        lbl_address.setAlignment(
+    Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+) 
         invoice_layout.addWidget(lbl_address, 2, 0)
         
         self.customer_address = QLineEdit()
@@ -177,7 +351,9 @@ class HomePage(QWidget):
         # Row 3: Invoice Info (Auto-filled usually, so placed last in tab order visual)
         lbl_inv_num = QLabel("Invoice Number:")
         lbl_inv_num.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 14px;")
-        lbl_inv_num.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        lbl_inv_num.setAlignment(
+    Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+)
         invoice_layout.addWidget(lbl_inv_num, 3, 0)
         
         self.invoice_number = QLineEdit()
@@ -189,7 +365,9 @@ class HomePage(QWidget):
         
         lbl_inv_date = QLabel("Invoice Date:")
         lbl_inv_date.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 14px;")
-        lbl_inv_date.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        lbl_inv_date.setAlignment(
+    Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+)
         invoice_layout.addWidget(lbl_inv_date, 3, 2)
         
         self.invoice_date = QDateEdit()
@@ -226,16 +404,20 @@ class HomePage(QWidget):
         self.btn_add_item = QPushButton("➕ Add Item")
         self.btn_add_item.setStyleSheet(f"QPushButton {{ background-color: {self.colors['accent_primary']}; color: white; border: none; border-radius: 5px; padding: 8px 16px; font-weight: bold; font-size: 12px; }} QPushButton:hover {{ background-color: {self.colors['accent_secondary']}; }}")
         self.btn_add_item.clicked.connect(self.add_item_row)
-        self.btn_add_item.setCursor(Qt.PointingHandCursor)
-        self.btn_add_item.setFocusPolicy(Qt.StrongFocus) # Make sure it catches tab
+        self.btn_add_item.setCursor(Qt.CursorShape.PointingHandCursor)
+
+        self.btn_add_item.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+ # Make sure it catches tab
         table_header_layout.addWidget(self.btn_add_item)
         table_layout.addLayout(table_header_layout)
         
-        self.table = QTableWidget(0, 11)
-        self.table.setHorizontalHeaderLabels(["Passenger Name", "PNR", "Sector", "Supplier", "Type", "Price (₹)", "Qty", "Supplier Amount (₹)", "Customer Amount (₹)"," Actions"])
-        self.table.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        self.table.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.table = QTableWidget(0, 9)
+        self.table.setHorizontalHeaderLabels(["Passenger Name", "PNR", "Sector", "Supplier", "Type", "Qty", "Supp. Amt (₹)", "Cust. Amt (₹)", "Actions"])
+        self.table.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+
+        self.table.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+
         self.table.setMinimumHeight(200)
         table_layout.addWidget(self.table)
         
@@ -362,8 +544,12 @@ class HomePage(QWidget):
         Intercepts key presses to make Enter act like Tab.
         Also handles smart table navigation.
         """
-        if event.type() == QEvent.KeyPress:
-            if event.key() in (Qt.Key_Return, Qt.Key_Enter):
+        from PyQt6.QtCore import QEvent
+
+        if event.type() == QEvent.Type.KeyPress:
+
+            if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+
                 
                 # --- CASE 1: Standard Input Fields (Move to Next) ---
                 if isinstance(source, (QLineEdit, QDateEdit, QPushButton)) and source is not self.btn_add_item:
@@ -459,26 +645,40 @@ class HomePage(QWidget):
         
         type_field = QLineEdit(); type_field.setPlaceholderText("Type"); type_field.setStyleSheet(lineedit_style)
         
-        travel_class = QComboBox(); travel_class.addItems(["Economy", "Premium Economy", "Business", "First Class"]); travel_class.setStyleSheet(combobox_style)
-        
-        price = QDoubleSpinBox(); price.setMaximum(10_000_000); price.setPrefix("₹ "); price.setDecimals(0); price.setStyleSheet(spinbox_style)
-        price.valueChanged.connect(lambda _: self.calculate_row_total(row))
         
         qty = QDoubleSpinBox(); qty.setMinimum(1); qty.setMaximum(9999); qty.setValue(1); qty.setDecimals(0); qty.setStyleSheet(spinbox_style)
         qty.valueChanged.connect(lambda _: self.calculate_row_total(row))
         
-        tax = QDoubleSpinBox(); tax.setSuffix('%'); tax.setMaximum(100); tax.setDecimals(0); tax.setStyleSheet(spinbox_style)
-        tax.valueChanged.connect(lambda _: self.calculate_row_total(row))
+        supplier_amount = QDoubleSpinBox(); supplier_amount.setMinimum(0); supplier_amount.setMaximum(999999); supplier_amount.setValue(0); supplier_amount.setDecimals(2); supplier_amount.setStyleSheet(spinbox_style)
+        supplier_amount.setPrefix("₹ "); supplier_amount.valueChanged.connect(lambda _: self.update_invoice_totals())
         
-        amount = QLineEdit("₹ 0.00"); amount.setReadOnly(True); amount.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        amount.setStyleSheet("QLineEdit { background-color: #2a2a2a; color: #FFD700; border: 1px solid #444; padding: 5px; font-weight: bold; }")
+        customer_amount = QDoubleSpinBox(); customer_amount.setMinimum(0); customer_amount.setMaximum(999999); customer_amount.setValue(0); customer_amount.setDecimals(2); customer_amount.setStyleSheet(spinbox_style)
+        customer_amount.setPrefix("₹ "); customer_amount.valueChanged.connect(lambda _: self.update_invoice_totals())
+       
+        # Actions column with Add and Delete buttons
+        actions_widget = QWidget()
+        actions_layout = QHBoxLayout(actions_widget)
+        actions_layout.setContentsMargins(0, 0, 0, 0)
+        actions_layout.setSpacing(5)
         
-        delete_btn = QPushButton("🗑️"); delete_btn.setFixedWidth(60); delete_btn.setCursor(Qt.PointingHandCursor)
+        add_passport_btn = QPushButton("➕")
+        add_passport_btn.setFixedWidth(40)
+        add_passport_btn.setToolTip("Add Passport Details")
+        add_passport_btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        add_passport_btn.setStyleSheet(f"QPushButton {{ background-color: {self.colors['accent_primary']}; color: white; border: none; border-radius: 3px; font-weight: bold; font-size: 14px; }} QPushButton:hover {{ background-color: #9333EA; }}")
+        add_passport_btn.clicked.connect(lambda: self.open_passport_dialog(row))
+        actions_layout.addWidget(add_passport_btn)
+        
+        delete_btn = QPushButton("🗑️")
+        delete_btn.setFixedWidth(40)
+        delete_btn.setToolTip("Delete Row")
+        delete_btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         delete_btn.setStyleSheet(f"QPushButton {{ background-color: {self.colors['danger']}; color: white; border: none; border-radius: 3px; font-weight: bold; }} QPushButton:hover {{ background-color: {self.colors['accent_gold']}; }}")
         delete_btn.clicked.connect(lambda: self.delete_row(row))
-
+        actions_layout.addWidget(delete_btn)
+        
         # --- Set Widgets in Cells ---
-        widgets = [passenger_name, pnr, sector, supplier, type_field, travel_class, price, qty, tax, amount, delete_btn]
+        widgets = [passenger_name, pnr, sector, supplier, type_field, qty, supplier_amount, customer_amount, actions_widget]
         for col, w in enumerate(widgets):
             table.setCellWidget(row, col, w)
             # Install Event Filter for Enter Key Navigation on this new widget
@@ -487,6 +687,19 @@ class HomePage(QWidget):
 
         # Focus the first item of the new row (Passenger Name)
         passenger_name.setFocus()
+
+    def open_passport_dialog(self, row: int):
+        """Open passport details dialog for the specified row."""
+        try:
+            # Get passenger name from the row
+            passenger_name_widget = self.table.cellWidget(row, 0)
+            passenger_name = passenger_name_widget.text() if passenger_name_widget else "Passenger"
+            
+            # Create and show passport dialog
+            dialog = PassportDetailsDialog(passenger_name, self)
+            dialog.show()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to open passport dialog:\n{str(e)}")
 
     # ==========================================
     # LOGIC FUNCTIONS (Calculations, Saving, etc.)
@@ -502,52 +715,20 @@ class HomePage(QWidget):
         self.update_invoice_totals()
 
     def calculate_row_total(self, row: int):
-        table = self.table
-        try:
-            # Re-fetch widgets because row index might change if rows are deleted above
-            price_w = table.cellWidget(row, 6)
-            qty_w = table.cellWidget(row, 7)
-            tax_w = table.cellWidget(row, 8)
-            amount_w = table.cellWidget(row, 9)
-            
-            if not price_w: return # Row might be deleting
-
-            price = float(price_w.value())
-            qty = float(qty_w.value())
-            tax_pct = float(tax_w.value())
-            
-            subtotal = price * qty
-            tax_amount = subtotal * (tax_pct / 100)
-            total = subtotal + tax_amount
-            
-            if amount_w:
-                amount_w.setText(f"₹ {total:.2f}")
-        except Exception as e:
-            print(f"Error calc row: {e}")
-        finally:
-            self.update_invoice_totals()
+        # With removed price column, this method just triggers totals update
+        self.update_invoice_totals()
 
     def update_invoice_totals(self):
         subtotal = 0.0
-        total_tax = 0.0
         table = self.table
         
         for r in range(table.rowCount()):
             try:
-                price_w = table.cellWidget(r, 6)
-                qty_w = table.cellWidget(r, 7)
-                tax_w = table.cellWidget(r, 8)
+                customer_amount_w = table.cellWidget(r, 7)  # Customer Amount column
                 
-                if price_w and qty_w and tax_w:
-                    price = float(price_w.value())
-                    qty = float(qty_w.value())
-                    tax_pct = float(tax_w.value())
-                    
-                    row_subtotal = price * qty
-                    row_tax = row_subtotal * (tax_pct / 100)
-                    
-                    subtotal += row_subtotal
-                    total_tax += row_tax
+                if customer_amount_w:
+                    customer_amount = float(customer_amount_w.value())
+                    subtotal += customer_amount
             except Exception: pass
         
         try:
@@ -556,7 +737,9 @@ class HomePage(QWidget):
         except:
             discount = 0.0
         
-        total = subtotal - discount + total_tax
+        # Tax is now 0 since we're not calculating it from price
+        total_tax = 0.0
+        total = subtotal - discount
         
         self.lbl_subtotal.setText(f"₹{subtotal:.2f}")
         self.lbl_tax.setText(f"₹{total_tax:.2f}")
@@ -591,10 +774,12 @@ class HomePage(QWidget):
         reply = QMessageBox.question(
             self, 'Reset Invoice', 
             'Reset all fields? (Ctrl+N)',
-            QMessageBox.Yes | QMessageBox.No, QMessageBox.No
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+
         )
         
-        if reply == QMessageBox.Yes:
+        if reply == QMessageBox.StandardButton.Yes:
+
             self.invoice_number.setText(self.generate_invoice_number())
             self.invoice_date.setDate(QDate.currentDate())
             self.customer_name.clear()
@@ -638,16 +823,14 @@ class HomePage(QWidget):
                 sector = self.table.cellWidget(r, 2).text()
                 supplier = self.table.cellWidget(r, 3).currentText()
                 type_v = self.table.cellWidget(r, 4).text()
-                class_v = self.table.cellWidget(r, 5).currentText()
-                price = self.table.cellWidget(r, 6).value()
-                qty = self.table.cellWidget(r, 7).value()
-                tax = self.table.cellWidget(r, 8).value()
-                amount = self.table.cellWidget(r, 9).text()
+                qty = self.table.cellWidget(r, 5).value()
+                supplier_amount = self.table.cellWidget(r, 6).value()
+                customer_amount = self.table.cellWidget(r, 7).value()
+
 
                 item = {
                     "passenger_name": passenger, "pnr": pnr, "sector": sector,
-                    "supplier": supplier, "type": type_v, "class": class_v,
-                    "price": price, "qty": qty, "tax": tax, "amount": amount
+                    "supplier": supplier, "type": type_v, "qty": qty, "supplier_amount": supplier_amount, "amount": customer_amount
                 }
                 invoice_data["items"].append(item)
             
@@ -689,9 +872,8 @@ class HomePage(QWidget):
                 db_item = {
                     'item': item['passenger_name'], 'ticket': item['pnr'],
                     'sector': item['sector'], 'supplier': item['supplier'],
-                    'class': item['class'], 'price': float(item['price']),
-                    'qty': float(item['qty']), 'tax': float(item['tax']),
-                    'amount': float(amt or 0)
+                    'qty': float(item['qty']),'supplier_amount': float(item['supplier_amount']),
+                    'customer_amount': float(item['customer_amount'])
                 }
                 db_data['items'].append(db_item)
             
@@ -708,16 +890,24 @@ class HomePage(QWidget):
 
             items = []
             for r in range(self.table.rowCount()):
+                passenger = self.table.cellWidget(r, 0).text()
+                pnr = self.table.cellWidget(r, 1).text()
+                sector = self.table.cellWidget(r, 2).text()
+                type_v = self.table.cellWidget(r, 4).text()
+                qty = self.table.cellWidget(r, 5).value()
+                customer_amount = self.table.cellWidget(r, 7).value()
+                
+                # Calculate per-unit price from customer amount and quantity
+                unit_price = customer_amount / qty if qty > 0 else customer_amount
+                
                 items.append({
-                    "passenger_name": self.table.cellWidget(r, 0).text(),
-                    "pnr": self.table.cellWidget(r, 1).text(),
-                    "sector": self.table.cellWidget(r, 2).text(),
-                    "supplier": self.table.cellWidget(r, 3).currentText(),
-                    "type": self.table.cellWidget(r, 4).text(),
-                    "class": self.table.cellWidget(r, 5).currentText(),
-                    "qty": self.table.cellWidget(r, 7).value(),
-                    "unit_price": self.table.cellWidget(r, 6).value(),
-                    "tax_pct": self.table.cellWidget(r, 8).value()
+                    "passenger_name": passenger,
+                    "pnr": pnr,
+                    "sector": sector,
+                    "type": type_v,
+                    "qty": qty,
+                    "unit_price": unit_price,
+                
                 })
 
             invoice_data = {
@@ -733,8 +923,8 @@ class HomePage(QWidget):
 
             if self.show_dialog_window:
                 msg = QMessageBox(self); msg.setWindowTitle("PDF Saved"); msg.setText(f"PDF saved!\n{filename}")
-                open_btn = msg.addButton("Open", QMessageBox.ActionRole); msg.addButton("Close", QMessageBox.RejectRole)
-                msg.exec_()
+                open_btn = msg.addButton("Open", QMessageBox.ButtonRole.ActionRole); msg.addButton("Close", QMessageBox.ButtonRole.RejectRole)
+                msg.exec()
                 if msg.clickedButton() == open_btn: os.startfile(filename)
         except Exception as e:
             QMessageBox.critical(self, "Error", f"PDF Error:\n{str(e)}")
@@ -744,8 +934,8 @@ class HomePage(QWidget):
     def print_invoice(self):
         # ... [Keep previous print_invoice logic] ...
         import os
-        from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
-        from PyQt5.QtGui import QPainter, QImage
+        from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
+        from PyQt6.QtGui import QPainter, QImage
         import pypdfium2 as pdfium
 
         pdf_path = os.path.join(os.getcwd(), "output", "invoice", f"invoice_{self.invoice_number.text()}.pdf")
@@ -757,17 +947,17 @@ class HomePage(QWidget):
 
         try:
             pdf = pdfium.PdfDocument(pdf_path)
-            printer = QPrinter(QPrinter.HighResolution)
+            printer = QPrinter(QPrinter.PrinterMode.HighResolution)
             dialog = QPrintDialog(printer, self)
-            if dialog.exec_() != QPrintDialog.Accepted: return
+            if dialog.exec() != QPrintDialog.DialogCode.Accepted: return
             
             painter = QPainter(printer)
             for idx, page in enumerate(pdf):
                 bitmap = page.render(scale=2.0)
-                img = QImage(bitmap.to_pil().convert("RGBA").tobytes("raw", "RGBA"), bitmap.width, bitmap.height, QImage.Format_RGBA8888)
+                img = QImage(bitmap.to_pil().convert("RGBA").tobytes("raw", "RGBA"), bitmap.width, bitmap.height, QImage.Format.Format_RGBA8888)
                 
-                rect = printer.pageRect(); size = img.size(); size.scale(rect.size(), Qt.KeepAspectRatio)
-                painter.drawImage(rect.x() + (rect.width() - size.width())//2, rect.y(), img.scaled(size, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+                rect = printer.pageRect(); size = img.size(); size.scale(rect.size(), Qt.AspectRatioMode.KeepAspectRatio)
+                painter.drawImage(rect.x() + (rect.width() - size.width())//2, rect.y(), img.scaled(size, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
                 if idx < len(pdf) - 1: printer.newPage()
             painter.end()
             QMessageBox.information(self, "Print", "Sent to printer!")

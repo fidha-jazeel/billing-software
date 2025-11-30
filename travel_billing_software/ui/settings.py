@@ -2,12 +2,12 @@
 Settings Page for Travel Agency Billing Software
 Updated for Dynamic Persistence and Global Styling
 """
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QFrame, QScrollArea, QGridLayout, QPushButton, QDoubleSpinBox, QMessageBox,
     QListWidget, QInputDialog, QSpinBox, QComboBox, QApplication
 )
-from PyQt5.QtCore import Qt
+from PyQt6.QtCore import Qt
 from utils.config_manager import ConfigManager
 
 class SettingsPage(QWidget):
@@ -75,7 +75,8 @@ class SettingsPage(QWidget):
         
         save_settings_btn = QPushButton("💾 Save All Settings")
         save_settings_btn.setStyleSheet(self.get_button_style('save'))
-        save_settings_btn.setCursor(Qt.PointingHandCursor)
+        save_settings_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+
         save_settings_btn.clicked.connect(self.save_all_settings)
         save_btn_layout.addWidget(save_settings_btn)
         

@@ -1,8 +1,8 @@
 """
 About Page for Travel Agency Billing Software
 """
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QFrame, QScrollArea
-from PyQt5.QtCore import Qt
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QFrame, QScrollArea
+from PyQt6.QtCore import Qt
 
 
 class AboutPage(QWidget):
@@ -24,8 +24,10 @@ class AboutPage(QWidget):
         # Scroll area to fit all content
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+
+        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+
         scroll.setStyleSheet(f"""
             QScrollArea {{
                 border: none;
@@ -70,16 +72,20 @@ class AboutPage(QWidget):
         
         # App name and tagline
         app_name = QLabel(f"<h1 style='color:{self.COLORS['accent_primary']};'>🎫 Al Chishtiya Travels Billing Software</h1>")
-        app_name.setAlignment(Qt.AlignCenter)
+        app_name.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
         info_layout.addWidget(app_name)
         
         tagline = QLabel(f"<p style='color:{self.COLORS['text_secondary']}; font-size:25px; font-style:italic;'>{self.COMPANY_INFO['tagline']}</p>")
-        tagline.setAlignment(Qt.AlignCenter)
+        app_name.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        tagline.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
         info_layout.addWidget(tagline)
         
         # Separator
         line = QFrame()
-        line.setFrameShape(QFrame.HLine)
+        line.setFrameShape(QFrame.Shape.HLine)
+
         line.setStyleSheet(f"background-color: {self.COLORS['accent_primary']}; height: 2px;")
         info_layout.addWidget(line)
         
@@ -126,7 +132,8 @@ class AboutPage(QWidget):
         
         # Copyright
         copyright_label = QLabel(f"<p style='margin-top: 30px; color: {self.COLORS['text_muted']}; text-align: center; font-size:20px;'>© {self.APP_CONFIG['year']} {self.COMPANY_INFO['name']}. All rights reserved.<br>Built with ❤️ using PyQt5 and SQLite</p>")
-        copyright_label.setAlignment(Qt.AlignCenter)
+        copyright_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
         info_layout.addWidget(copyright_label)
         
         scroll_layout.addWidget(info_frame)

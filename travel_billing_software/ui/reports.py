@@ -4,12 +4,12 @@ Contains invoice history, analytics dashboard, and invoice management functions.
 """
 import os
 import json
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
+from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                              QFrame, QScrollArea, QTableWidget, QPushButton,
                              QLineEdit, QTableWidgetItem, QMessageBox, 
                              QFileDialog, QHeaderView)
-from PyQt5.QtCore import Qt, QDate
-from PyQt5.QtGui import QColor
+from PyQt6.QtCore import Qt, QDate
+from PyQt6.QtGui import QColor
 
 
 class ReportsPage(QWidget):
@@ -47,7 +47,8 @@ class ReportsPage(QWidget):
         # Main scroll area
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+
         scroll.setStyleSheet(f"""
             QScrollArea {{
                 border: none;
@@ -87,7 +88,8 @@ class ReportsPage(QWidget):
         
         refresh_btn = QPushButton("🔄 Refresh")
         refresh_btn.setStyleSheet(self.get_button_style('add'))
-        refresh_btn.setCursor(Qt.PointingHandCursor)
+        refresh_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+
         refresh_btn.clicked.connect(self.refresh_reports)
         search_layout.addWidget(refresh_btn)
         
@@ -101,12 +103,13 @@ class ReportsPage(QWidget):
         
         # Set column widths
         header = self.invoice_table.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(2, QHeaderView.Stretch)
-        header.setSectionResizeMode(3, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(5, QHeaderView.Fixed)
+        header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+
+        header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
         header.resizeSection(5, 280)
         
         self.invoice_table.setStyleSheet(self.get_table_style())

@@ -1,10 +1,10 @@
 # travel_billing_software/ui/ai_features_page.py
 
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QLineEdit, QScrollArea, QFrame, QTextEdit, QMessageBox
 )
-from PyQt5.QtCore import Qt
+from PyQt6.QtCore import Qt
 
 try:
     # Backend agent that talks to the billing.db
@@ -97,7 +97,8 @@ class AIFeaturesPage(QWidget):
 
         btn_this_month = QPushButton("📅 This Month Overview")
         btn_this_month.setStyleSheet(self.get_button_style("add"))
-        btn_this_month.setCursor(Qt.PointingHandCursor)
+        btn_this_month.setCursor(Qt.CursorShape.PointingHandCursor)
+
         btn_this_month.clicked.connect(
             lambda: self.ask_ai(
                 "Give a very simple summary for this month for my travel agency. "
@@ -109,7 +110,8 @@ class AIFeaturesPage(QWidget):
 
         btn_last_vs_this = QPushButton("📈 This vs Last Month")
         btn_last_vs_this.setStyleSheet(self.get_button_style("add"))
-        btn_last_vs_this.setCursor(Qt.PointingHandCursor)
+        btn_last_vs_this.setCursor(Qt.CursorShape.PointingHandCursor)
+
         btn_last_vs_this.clicked.connect(
             lambda: self.ask_ai(
                 "Compare this month and last month for my billing data. "
@@ -126,7 +128,8 @@ class AIFeaturesPage(QWidget):
 
         btn_top_customers = QPushButton("👥 Top Customers")
         btn_top_customers.setStyleSheet(self.get_button_style("add"))
-        btn_top_customers.setCursor(Qt.PointingHandCursor)
+        btn_top_customers.setCursor(Qt.CursorShape.PointingHandCursor)
+
         btn_top_customers.clicked.connect(
             lambda: self.ask_ai(
                 "Show my top 5 customers by total billing amount. "
@@ -138,7 +141,8 @@ class AIFeaturesPage(QWidget):
 
         btn_pending = QPushButton("⏳ Pending Payments")
         btn_pending.setStyleSheet(self.get_button_style("add"))
-        btn_pending.setCursor(Qt.PointingHandCursor)
+        btn_pending.setCursor(Qt.CursorShape.PointingHandCursor)
+
         btn_pending.clicked.connect(
             lambda: self.ask_ai(
                 "Summarise my pending invoices. "
@@ -184,7 +188,8 @@ class AIFeaturesPage(QWidget):
         ask_row.addStretch()
         self.ask_button = QPushButton("Ask AI")
         self.ask_button.setStyleSheet(self.get_button_style("save"))
-        self.ask_button.setCursor(Qt.PointingHandCursor)
+        self.ask_button.setCursor(Qt.CursorShape.PointingHandCursor)
+
         self.ask_button.clicked.connect(self.on_custom_ask)
         ask_row.addWidget(self.ask_button)
         custom_layout.addLayout(ask_row)

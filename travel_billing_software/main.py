@@ -2,8 +2,8 @@
 Travel Agency Billing Software
 Main entry point with login authentication
 """
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtGui import QIcon
+from PyQt6.QtWidgets import QApplication
+from PyQt6.QtGui import QIcon
 import sys
 import os
 
@@ -33,4 +33,4 @@ if __name__ == "__main__":
     login_page.login_successful.connect(on_login_success)
     login_page.showMaximized()
     
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

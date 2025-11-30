@@ -1,12 +1,12 @@
 """
 Change Password Dialog for Billing Software
 """
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, 
     QPushButton, QMessageBox
 )
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont, QIcon
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont, QIcon
 import sys
 import os
 
