@@ -393,7 +393,7 @@ class DashboardImproved(QMainWindow):
             }}
         """)
         self.btn_add_item.clicked.connect(self.add_item_row)
-        self.btn_add_item.setCursor(Qt.PointingHandCursor)
+        self.btn_add_item.setCursor(Qt.CursorShape.PointingHandCursor)
         table_header_layout.addWidget(self.btn_add_item)
         
         table_layout.addLayout(table_header_layout)
@@ -600,7 +600,7 @@ class DashboardImproved(QMainWindow):
             }}
         """)
         self.btn_save_invoice.clicked.connect(self.save_invoice)
-        self.btn_save_invoice.setCursor(Qt.PointingHandCursor)
+        self.btn_save_invoice.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_layout_bottom.addWidget(self.btn_save_invoice)
         
         self.btn_save_pdf = QPushButton("📄 Save as PDF")
@@ -622,7 +622,7 @@ class DashboardImproved(QMainWindow):
             }}
         """)
         self.btn_save_pdf.clicked.connect(self.save_pdf)
-        self.btn_save_pdf.setCursor(Qt.PointingHandCursor)
+        self.btn_save_pdf.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_layout_bottom.addWidget(self.btn_save_pdf)
         
         self.btn_print = QPushButton("🖨️ Print Invoice")
@@ -644,7 +644,7 @@ class DashboardImproved(QMainWindow):
             }
         """)
         self.btn_print.clicked.connect(self.print_invoice)
-        self.btn_print.setCursor(Qt.PointingHandCursor)
+        self.btn_print.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_layout_bottom.addWidget(self.btn_print)
         
         self.btn_share = QPushButton("📤 Share Invoice")
@@ -666,7 +666,7 @@ class DashboardImproved(QMainWindow):
             }
         """)
         self.btn_share.clicked.connect(self.share_invoice)
-        self.btn_share.setCursor(Qt.PointingHandCursor)
+        self.btn_share.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_layout_bottom.addWidget(self.btn_share)
         
         layout.addLayout(btn_layout_bottom)
@@ -979,7 +979,7 @@ class DashboardImproved(QMainWindow):
         # Column 10: Actions (Delete button))
         delete_btn = QPushButton("🗑️")
         delete_btn.setToolTip("Delete this row")
-        delete_btn.setCursor(Qt.PointingHandCursor)
+        delete_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         delete_btn.setStyleSheet(f"""
             QPushButton {{
                 background-color: {COLORS['danger']};

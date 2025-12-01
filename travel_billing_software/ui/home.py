@@ -68,11 +68,11 @@ class PassportDetailsDialog(QDialog):
         form_layout.setColumnMinimumWidth(0, 220)  # Label column
         form_layout.setColumnMinimumWidth(1, 380)  # Input column
         
-        field_style = "QLineEdit { background-color: white; color: #1f2937; border: 1px solid #d1d5db; border-radius: 3px; padding: 10px; font-size: 20px; } QLineEdit:focus { border: 2px solid #7C3AED; background-color: #faf5ff; }"
-        date_style = "QDateEdit { background-color: white; color: #1f2937; border: 1px solid #d1d5db; border-radius: 3px; padding: 10px; font-size: 20px; } QDateEdit:focus { border: 2px solid #7C3AED; background-color: #faf5ff; }"
+        field_style = "QLineEdit { background-color: #ffffff; color: #111827; border: 1px solid #d1d5db; border-radius: 6px; padding: 10px; font-size: 16px; selection-background-color: #dbeafe; selection-color: #111827; } QLineEdit:focus { border: 2px solid #7C3AED; background-color: #ffffff; }"
+        date_style = "QDateEdit { background-color: #ffffff; color: #111827; border: 1px solid #d1d5db; border-radius: 6px; padding: 10px; font-size: 16px; selection-background-color: #dbeafe; selection-color: #111827; } QDateEdit:focus { border: 2px solid #7C3AED; background-color: #ffffff; }"
         
         # Set label style for all form labels
-        label_style = "color: #374151; font-size: 20px; font-weight: 500;"
+        label_style = "color: #374151; font-size: 18px; font-weight: 600;"
         
         # Passport Number *
         passport_num_label = QLabel("<b>Passport Number: *</b>")
@@ -159,6 +159,18 @@ class PassportDetailsDialog(QDialog):
         form_layout.addWidget(self.issuing_authority, 8, 1)
         
         card_layout.addLayout(form_layout)
+
+        self.passport_number.setMinimumHeight(40)
+        self.full_name.setMinimumHeight(40)
+        self.nationality.setMinimumHeight(40)
+        self.gender.setMinimumHeight(40)
+        self.place_of_birth.setMinimumHeight(40)
+        self.issuing_authority.setMinimumHeight(40)
+
+        self.dob.setMinimumHeight(40)
+        self.issue_date.setMinimumHeight(40)
+        self.expiry_date.setMinimumHeight(40)
+
         
         # Note about mandatory fields
         note = QLabel("<i>* Mandatory fields</i>")
@@ -244,7 +256,10 @@ class HomePage(QWidget):
         self.get_supplier_list = get_supplier_list
         self.get_company_info_formatted = get_company_info_formatted
         self.dashboard = dashboard_ref
-        self.show_dialog_window = False 
+        self.show_dialog_window = False
+        
+        # Dictionary to store passport data for each row (key: passenger_name)
+        self.passport_data_store = {}
         
         self._init_ui()
         self._setup_speed_features() # Initialize speed features
@@ -744,10 +759,35 @@ class HomePage(QWidget):
             # Create and show passport dialog as modal
             dialog = PassportDetailsDialog(passenger_name, self)
             dialog.setWindowModality(Qt.WindowModality.ApplicationModal)
-            dialog.exec()
+            result = dialog.exec()
+            
+            # If dialog was accepted (Save button clicked), store the data
+            if result == QDialog.DialogCode.Accepted:
+                self.passport_data_store[passenger_name] = dialog.passport_data
+                print(f"✓ Passport data saved for {passenger_name}:")
+                print(f"  Passport Number: {dialog.passport_data.get('passport_number')}")
+                print(f"  Nationality: {dialog.passport_data.get('nationality')}")
+                print(f"  Total records: {len(self.passport_data_store)}")
+                
+                # Show confirmation with passport number
+                QMessageBox.information(
+                    self, 
+                    "Passport Saved", 
+                    f"Passport details saved for {passenger_name}!\n\n"
+                    f"Passport Number: {dialog.passport_data.get('passport_number')}\n"
+                    f"This data will be included when you save the invoice."
+                )
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to open passport dialog:\n{str(e)}")
-
+    
+    def get_passport_data(self, passenger_name: str):
+        """Retrieve passport data for a given passenger name."""
+        return self.passport_data_store.get(passenger_name, None)
+    
+    def has_passport_data(self, passenger_name: str):
+        """Check if passport data exists for a given passenger."""
+        return passenger_name in self.passport_data_store
+        
     # ==========================================
     # LOGIC FUNCTIONS (Calculations, Saving, etc.)
     # ==========================================
@@ -840,6 +880,9 @@ class HomePage(QWidget):
             self.txt_received.clear()
             self.lbl_balance.setText(f"{self.get_currency_symbol()}0.00")
             
+            # Clear passport data store
+            self.passport_data_store.clear()
+            
             # Reset focus
             self.customer_name.setFocus()
 
@@ -879,6 +922,11 @@ class HomePage(QWidget):
                     "passenger_name": passenger, "pnr": pnr, "sector": sector,
                     "supplier": supplier, "type": type_v, "qty": qty, "supplier_amount": supplier_amount, "amount": customer_amount
                 }
+                
+                # Add passport data if available for this passenger
+                if passenger in self.passport_data_store:
+                    item["passport_details"] = self.passport_data_store[passenger]
+                
                 invoice_data["items"].append(item)
             
             filename = f"invoices/invoice_{invoice_data['invoice_number']}.json"

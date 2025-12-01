@@ -446,7 +446,7 @@ class ReportsPage(QWidget):
                             background-color: #5b21b6;
                         }
                     """)
-                    edit_btn.setCursor(Qt.PointingHandCursor)
+                    edit_btn.setCursor(Qt.CursorShape.PointingHandCursor)
                     edit_btn.clicked.connect(lambda checked, fp=filepath: self.edit_invoice(fp))
                     actions_layout.addWidget(edit_btn)
                     
@@ -470,7 +470,7 @@ class ReportsPage(QWidget):
                             background-color: #991b1b;
                         }
                     """)
-                    delete_btn.setCursor(Qt.PointingHandCursor)
+                    delete_btn.setCursor(Qt.CursorShape.PointingHandCursor)
                     delete_btn.clicked.connect(lambda checked, fp=filepath, r=row: self.delete_invoice(fp, r))
                     actions_layout.addWidget(delete_btn)
                     
@@ -495,7 +495,7 @@ class ReportsPage(QWidget):
                             background-color: {self.colors['accent_primary']};
                         }}
                     """)
-                    download_btn.setCursor(Qt.PointingHandCursor)
+                    download_btn.setCursor(Qt.CursorShape.PointingHandCursor)
                     download_btn.clicked.connect(lambda checked, fp=filepath: self.download_invoice(fp))
                     actions_layout.addWidget(download_btn)
                     

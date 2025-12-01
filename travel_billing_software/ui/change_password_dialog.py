@@ -159,7 +159,7 @@ class ChangePasswordDialog(QDialog):
         
         cancel_btn = QPushButton("Cancel")
         cancel_btn.setFont(QFont("Segoe UI", 11, QFont.Bold))
-        cancel_btn.setCursor(Qt.PointingHandCursor)
+        cancel_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         cancel_btn.setFixedHeight(45)
         cancel_btn.setMinimumWidth(140)
         cancel_btn.setStyleSheet("""
@@ -180,7 +180,7 @@ class ChangePasswordDialog(QDialog):
         
         save_btn = QPushButton("✓ Change Password")
         save_btn.setFont(QFont("Segoe UI", 11, QFont.Bold))
-        save_btn.setCursor(Qt.PointingHandCursor)
+        save_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         save_btn.setFixedHeight(45)
         save_btn.setMinimumWidth(140)
         save_btn.setStyleSheet("""
