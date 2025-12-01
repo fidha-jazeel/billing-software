@@ -9,7 +9,7 @@ from datetime import datetime
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel,
                              QFrame, QScrollArea, QTableWidget, QPushButton, QLineEdit,
                              QComboBox, QDoubleSpinBox, QDateEdit, QHeaderView, 
-                              QApplication, QMessageBox, QInputDialog)
+                              QApplication, QMessageBox, QInputDialog, QDialog)
 from PyQt6.QtGui import QShortcut
 from PyQt6.QtGui import QCursor
 from PyQt6.QtCore import Qt, QDate, QEvent
@@ -19,7 +19,7 @@ from utils.invoice_generator import generate_invoice_pdf
 from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
 from travel_billing_software.utils.styles import get_label_style
 
-class PassportDetailsDialog(QWidget):
+class PassportDetailsDialog(QDialog):
     """Dialog for entering passenger passport details."""
     
     def __init__(self, passenger_name="", parent=None):
@@ -27,48 +27,75 @@ class PassportDetailsDialog(QWidget):
         self.passenger_name = passenger_name
         self.passport_data = {}
         self.setWindowTitle(f"Passport Details - {passenger_name}")
-        self.setMinimumWidth(500)
-        self.setMinimumHeight(600)
+        self.setMinimumWidth(700)
+        self.setMinimumHeight(650)
         self._init_ui()
     
     def _init_ui(self):
-        layout = QVBoxLayout(self)
-        layout.setSpacing(15)
-        layout.setContentsMargins(20, 20, 20, 20)
+        # Main layout
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(20, 20, 20, 20)
+        
+        # Set window background to white
+        self.setStyleSheet("QWidget { background-color: #f5f5f5; }")
+        
+        # Create card frame to contain all content
+        card = QFrame()
+        card.setStyleSheet("""
+            QFrame {
+                background-color: white;
+                border-radius: 10px;
+                border: 1px solid #e5e7eb;
+            }
+        """)
+        card_layout = QVBoxLayout(card)
+        card_layout.setSpacing(15)
+        card_layout.setContentsMargins(25, 25, 25, 25)
         
         # Title
         title = QLabel(f"<h2>Passport Information</h2>")
         title.setStyleSheet("color: #7C3AED; font-weight: bold;")
-        layout.addWidget(title)
+        card_layout.addWidget(title)
         
         # Passenger name display
         name_label = QLabel(f"<b>Passenger:</b> {self.passenger_name}")
-        name_label.setStyleSheet("color: #ddd; font-size: 14px; padding: 10px; background: #2a2a2a; border-radius: 5px;")
-        layout.addWidget(name_label)
+        name_label.setStyleSheet("color: #333; font-size: 14px; padding: 10px; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 5px;")
+        card_layout.addWidget(name_label)
         
         # Form fields
         form_layout = QGridLayout()
-        form_layout.setSpacing(10)
+        form_layout.setSpacing(15)
+        form_layout.setColumnMinimumWidth(0, 220)  # Label column
+        form_layout.setColumnMinimumWidth(1, 380)  # Input column
         
-        field_style = "QLineEdit { background-color: #2a2a2a; color: #ddd; border: 1px solid #444; border-radius: 3px; padding: 8px; font-size: 13px; } QLineEdit:focus { border: 1px solid #7C3AED; }"
-        date_style = "QDateEdit { background-color: #2a2a2a; color: #ddd; border: 1px solid #444; border-radius: 3px; padding: 8px; } QDateEdit:focus { border: 1px solid #7C3AED; }"
+        field_style = "QLineEdit { background-color: white; color: #1f2937; border: 1px solid #d1d5db; border-radius: 3px; padding: 10px; font-size: 20px; } QLineEdit:focus { border: 2px solid #7C3AED; background-color: #faf5ff; }"
+        date_style = "QDateEdit { background-color: white; color: #1f2937; border: 1px solid #d1d5db; border-radius: 3px; padding: 10px; font-size: 20px; } QDateEdit:focus { border: 2px solid #7C3AED; background-color: #faf5ff; }"
+        
+        # Set label style for all form labels
+        label_style = "color: #374151; font-size: 20px; font-weight: 500;"
         
         # Passport Number *
-        form_layout.addWidget(QLabel("<b>Passport Number: *</b>"), 0, 0)
+        passport_num_label = QLabel("<b>Passport Number: *</b>")
+        passport_num_label.setStyleSheet(label_style)
+        form_layout.addWidget(passport_num_label, 0, 0)
         self.passport_number = QLineEdit()
         self.passport_number.setPlaceholderText("Enter passport number")
         self.passport_number.setStyleSheet(field_style)
         form_layout.addWidget(self.passport_number, 0, 1)
         
         # Full Name *
-        form_layout.addWidget(QLabel("<b>Full Name (as in passport): *</b>"), 1, 0)
+        full_name_label = QLabel("<b>Full Name (as in passport): *</b>")
+        full_name_label.setStyleSheet(label_style)
+        form_layout.addWidget(full_name_label, 1, 0)
         self.full_name = QLineEdit()
         self.full_name.setText(self.passenger_name)
         self.full_name.setStyleSheet(field_style)
         form_layout.addWidget(self.full_name, 1, 1)
         
         # Date of Birth *
-        form_layout.addWidget(QLabel("<b>Date of Birth: *</b>"), 2, 0)
+        dob_label = QLabel("<b>Date of Birth: *</b>")
+        dob_label.setStyleSheet(label_style)
+        form_layout.addWidget(dob_label, 2, 0)
         self.dob = QDateEdit()
         self.dob.setCalendarPopup(True)
         self.dob.setDate(QDate.currentDate().addYears(-30))
@@ -76,28 +103,36 @@ class PassportDetailsDialog(QWidget):
         form_layout.addWidget(self.dob, 2, 1)
         
         # Nationality *
-        form_layout.addWidget(QLabel("<b>Nationality: *</b>"), 3, 0)
+        nationality_label = QLabel("<b>Nationality: *</b>")
+        nationality_label.setStyleSheet(label_style)
+        form_layout.addWidget(nationality_label, 3, 0)
         self.nationality = QLineEdit()
         self.nationality.setPlaceholderText("e.g., Indian")
         self.nationality.setStyleSheet(field_style)
         form_layout.addWidget(self.nationality, 3, 1)
         
         # Gender *
-        form_layout.addWidget(QLabel("<b>Gender: *</b>"), 4, 0)
+        gender_label = QLabel("<b>Gender: *</b>")
+        gender_label.setStyleSheet(label_style)
+        form_layout.addWidget(gender_label, 4, 0)
         self.gender = QComboBox()
         self.gender.addItems(["Select", "Male", "Female", "Other"])
-        self.gender.setStyleSheet("QComboBox { background-color: #2a2a2a; color: #ddd; border: 1px solid #444; padding: 8px; } QComboBox:focus { border: 1px solid #7C3AED; }")
+        self.gender.setStyleSheet("QComboBox { background-color: white; color: #1f2937; border: 1px solid #d1d5db; padding: 10px; border-radius: 3px; font-size: 14px; } QComboBox:focus { border: 2px solid #7C3AED; background-color: #faf5ff; } QComboBox::drop-down { border: none; } QComboBox QAbstractItemView { background-color: white; color: #1f2937; selection-background-color: #e9d5ff; font-size: 14px; }")
         form_layout.addWidget(self.gender, 4, 1)
         
         # Place of Birth
-        form_layout.addWidget(QLabel("<b>Place of Birth:</b>"), 5, 0)
+        pob_label = QLabel("<b>Place of Birth:</b>")
+        pob_label.setStyleSheet(label_style)
+        form_layout.addWidget(pob_label, 5, 0)
         self.place_of_birth = QLineEdit()
         self.place_of_birth.setPlaceholderText("City, Country")
         self.place_of_birth.setStyleSheet(field_style)
         form_layout.addWidget(self.place_of_birth, 5, 1)
         
         # Issue Date *
-        form_layout.addWidget(QLabel("<b>Issue Date: *</b>"), 6, 0)
+        issue_date_label = QLabel("<b>Issue Date: *</b>")
+        issue_date_label.setStyleSheet(label_style)
+        form_layout.addWidget(issue_date_label, 6, 0)
         self.issue_date = QDateEdit()
         self.issue_date.setCalendarPopup(True)
         self.issue_date.setDate(QDate.currentDate().addYears(-2))
@@ -105,7 +140,9 @@ class PassportDetailsDialog(QWidget):
         form_layout.addWidget(self.issue_date, 6, 1)
         
         # Expiry Date *
-        form_layout.addWidget(QLabel("<b>Expiry Date: *</b>"), 7, 0)
+        expiry_date_label = QLabel("<b>Expiry Date: *</b>")
+        expiry_date_label.setStyleSheet(label_style)
+        form_layout.addWidget(expiry_date_label, 7, 0)
         self.expiry_date = QDateEdit()
         self.expiry_date.setCalendarPopup(True)
         self.expiry_date.setDate(QDate.currentDate().addYears(8))
@@ -113,20 +150,22 @@ class PassportDetailsDialog(QWidget):
         form_layout.addWidget(self.expiry_date, 7, 1)
         
         # Issuing Authority *
-        form_layout.addWidget(QLabel("<b>Issuing Authority: *</b>"), 8, 0)
+        issuing_auth_label = QLabel("<b>Issuing Authority: *</b>")
+        issuing_auth_label.setStyleSheet(label_style)
+        form_layout.addWidget(issuing_auth_label, 8, 0)
         self.issuing_authority = QLineEdit()
         self.issuing_authority.setPlaceholderText("e.g., Govt. of India")
         self.issuing_authority.setStyleSheet(field_style)
         form_layout.addWidget(self.issuing_authority, 8, 1)
         
-        layout.addLayout(form_layout)
+        card_layout.addLayout(form_layout)
         
         # Note about mandatory fields
         note = QLabel("<i>* Mandatory fields</i>")
-        note.setStyleSheet("color: #FFD700; font-size: 12px;")
-        layout.addWidget(note)
+        note.setStyleSheet("color: #dc2626; font-size: 12px;")
+        card_layout.addWidget(note)
         
-        layout.addStretch()
+        card_layout.addStretch()
         
         # Buttons
         btn_layout = QHBoxLayout()
@@ -144,7 +183,10 @@ class PassportDetailsDialog(QWidget):
         cancel_btn.clicked.connect(self.close)
         btn_layout.addWidget(cancel_btn)
         
-        layout.addLayout(btn_layout)
+        card_layout.addLayout(btn_layout)
+        
+        # Add card to main layout
+        main_layout.addWidget(card)
     
     def save_details(self):
         """Validate and save passport details."""
@@ -179,7 +221,7 @@ class PassportDetailsDialog(QWidget):
         }
         
         QMessageBox.information(self, "Success", f"Passport details saved for {self.full_name.text()}!")
-        self.close()
+        self.accept()  # Close dialog with accepted status
 
 class HomePage(QWidget):
     """Home page with invoice creation and management."""
@@ -397,7 +439,7 @@ class HomePage(QWidget):
         table_layout.setContentsMargins(10, 10, 10, 10)
         
         table_header_layout = QHBoxLayout()
-        table_title = QLabel("<b style='color:#a78bfa; font-size:14px;'>🧾 Billed Items (F2 to Add)</b>")
+        table_title = QLabel("<b style='color:#a78bfa; font-size:14px;'>🧾 Billed Items </b>")
         table_header_layout.addWidget(table_title)
         table_header_layout.addStretch()
         
@@ -620,19 +662,23 @@ class HomePage(QWidget):
         row = table.rowCount()
         table.insertRow(row)
         
-        self.table.setMinimumHeight(min(200 + (row * 7), 600))
+        # Set row height for better visibility
+        table.setRowHeight(row, 50)
+        
+        # Adjust table minimum height with increased row height
+        self.table.setMinimumHeight(min(250 + (row * 55), 700))
 
-        # Styles
+        # Styles with increased font size
         spinbox_style = """
-            QDoubleSpinBox { background-color: #2a2a2a; color: #ddd; border: 1px solid #444; border-radius: 3px; padding: 5px; }
+            QDoubleSpinBox { background-color: #2a2a2a; color: #ddd; border: 1px solid #444; border-radius: 3px; padding: 5px; font-size: 14px; }
             QDoubleSpinBox:focus { border: 1px solid #9b9bff; background-color: #333; }
         """
         lineedit_style = """
-            QLineEdit { background-color: #2a2a2a; color: #ddd; border: 1px solid #444; border-radius: 3px; padding: 5px; }
+            QLineEdit { background-color: #2a2a2a; color: #ddd; border: 1px solid #444; border-radius: 3px; padding: 5px; font-size: 14px; }
             QLineEdit:focus { border: 1px solid #9b9bff; background-color: #333; }
         """
         combobox_style = """
-            QComboBox { background-color: #2a2a2a; color: #ddd; border: 1px solid #444; padding: 5px; }
+            QComboBox { background-color: #2a2a2a; color: #ddd; border: 1px solid #444; padding: 5px; font-size: 14px; }
             QComboBox:focus { border: 1px solid #9b9bff; }
         """
 
@@ -695,9 +741,10 @@ class HomePage(QWidget):
             passenger_name_widget = self.table.cellWidget(row, 0)
             passenger_name = passenger_name_widget.text() if passenger_name_widget else "Passenger"
             
-            # Create and show passport dialog
+            # Create and show passport dialog as modal
             dialog = PassportDetailsDialog(passenger_name, self)
-            dialog.show()
+            dialog.setWindowModality(Qt.WindowModality.ApplicationModal)
+            dialog.exec()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to open passport dialog:\n{str(e)}")
 
@@ -711,7 +758,7 @@ class HomePage(QWidget):
 
     def delete_row(self, row: int):
         self.table.removeRow(row)
-        self.table.setMinimumHeight(min(300 + (self.table.rowCount() * 45), 600))
+        self.table.setMinimumHeight(min(250 + (self.table.rowCount() * 55), 700))
         self.update_invoice_totals()
 
     def calculate_row_total(self, row: int):
