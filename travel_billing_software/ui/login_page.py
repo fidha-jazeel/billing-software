@@ -2,12 +2,14 @@
 Login Page for Billing Software
 Professional login interface with password authentication
 """
-from PyQt5.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, 
-    QPushButton, QFrame, QMessageBox, QApplication
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
+    QPushButton, QFrame, QMessageBox
 )
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QFont, QIcon
+from PyQt6.QtGui import QFont, QCursor
+from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QFont, QIcon
 import sys
 import os
 
@@ -46,7 +48,8 @@ class LoginPage(QWidget):
         """)
         
         container_layout = QVBoxLayout(container)
-        container_layout.setAlignment(Qt.AlignCenter)
+        container_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
         
         # Login card with dark theme
         login_card = QFrame()
@@ -64,7 +67,7 @@ class LoginPage(QWidget):
         
         # Logo/Icon section with purple accent
         icon_container = QLabel()
-        icon_container.setAlignment(Qt.AlignCenter)
+        icon_container.setAlignment(Qt.AlignmentFlag.AlignCenter)
         icon_container.setFixedHeight(100)
         icon_container.setStyleSheet("""
             background-color: #7c3aed;
@@ -76,8 +79,9 @@ class LoginPage(QWidget):
         
         # Title with purple accent
         title_label = QLabel("Welcome Back")
-        title_label.setAlignment(Qt.AlignCenter)
-        title_label.setFont(QFont("Segoe UI", 28, QFont.Bold))
+        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        title_label.setFont(QFont("Segoe UI", 28, QFont.Weight.Bold))
+
         title_label.setFixedHeight(50)
         title_label.setStyleSheet("""
             color: #7c3aed;
@@ -87,7 +91,8 @@ class LoginPage(QWidget):
         
         # Subtitle
         subtitle_label = QLabel("Please enter your password to continue")
-        subtitle_label.setAlignment(Qt.AlignCenter)
+        subtitle_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
         subtitle_label.setFont(QFont("Segoe UI", 11))
         subtitle_label.setFixedHeight(30)
         subtitle_label.setStyleSheet("color: #94a3b8; background: transparent; margin-bottom: 10px;")
@@ -95,13 +100,15 @@ class LoginPage(QWidget):
         
         # Password field
         password_label = QLabel("Password")
-        password_label.setFont(QFont("Segoe UI", 11, QFont.Bold))
+        password_label.setFont(QFont("Segoe UI", 11, QFont.Weight.Bold))
+
         password_label.setFixedHeight(25)
         password_label.setStyleSheet("color: #e2e8f0; background: transparent; margin-top: 10px;")
         card_layout.addWidget(password_label)
         
         self.password_input = QLineEdit()
-        self.password_input.setEchoMode(QLineEdit.Password)
+        self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
+
         self.password_input.setPlaceholderText("Enter your password")
         self.password_input.setFont(QFont("Segoe UI", 12))
         self.password_input.setFixedHeight(50)
@@ -124,7 +131,8 @@ class LoginPage(QWidget):
         
         # Default password hint
         hint_label = QLabel(f"💡 Default password: {self.auth_manager.get_default_password()}")
-        hint_label.setAlignment(Qt.AlignCenter)
+        hint_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
         hint_label.setFont(QFont("Segoe UI", 10))
         hint_label.setFixedHeight(30)
         hint_label.setStyleSheet("color: #64748b; background: transparent;")
@@ -135,8 +143,11 @@ class LoginPage(QWidget):
         
         # Login button with purple-teal gradient (centered)
         self.login_btn = QPushButton("Login")
-        self.login_btn.setFont(QFont("Segoe UI", 12, QFont.Bold))
-        self.login_btn.setCursor(Qt.PointingHandCursor)
+        self.login_btn.setFont(QFont("Segoe UI", 12, QFont.Weight.Bold))
+
+        self.login_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+
+
         self.login_btn.setFixedHeight(50)
         self.login_btn.setFixedWidth(300)
         self.login_btn.setStyleSheet("""
@@ -159,12 +170,13 @@ class LoginPage(QWidget):
             }
         """)
         self.login_btn.clicked.connect(self.handle_login)
-        card_layout.addWidget(self.login_btn, alignment=Qt.AlignCenter)
+        card_layout.addWidget(self.login_btn, alignment=Qt.AlignmentFlag.AlignCenter)
         
         # Change Password Link
         change_password_btn = QPushButton("Change Password")
         change_password_btn.setFont(QFont("Segoe UI", 10))
-        change_password_btn.setCursor(Qt.PointingHandCursor)
+        change_password_btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+
         change_password_btn.setFixedHeight(30)
         change_password_btn.setStyleSheet("""
             QPushButton {
@@ -178,12 +190,13 @@ class LoginPage(QWidget):
             }
         """)
         change_password_btn.clicked.connect(self.open_change_password)
-        card_layout.addWidget(change_password_btn, alignment=Qt.AlignCenter)
+        card_layout.addWidget(change_password_btn, alignment=Qt.AlignmentFlag.AlignCenter)
         
         # Footer info
         card_layout.addSpacing(5)
         footer_label = QLabel("Travel Agency Billing Software v2.0")
-        footer_label.setAlignment(Qt.AlignCenter)
+        footer_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
         footer_label.setFont(QFont("Segoe UI", 9))
         footer_label.setFixedHeight(25)
         footer_label.setStyleSheet("color: #64748b; background: transparent;")

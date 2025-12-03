@@ -160,7 +160,7 @@ def _build_items_table(items, currency_symbol):
       passenger_name, pnr, sector, supplier, type, class, qty, unit_price, tax_pct
     """
     header = [
-        'S.No', 'Passenger', 'PNR', 'Sector', 'Supplier', 'Class', 'Qty', 'Unit Price', 'Tax %', 'Amount'
+        'S.No', 'Passenger', 'PNR', 'Sector', 'Type', 'Qty', 'Unit Price', 'Amount'
     ]
     data = [header]
     subtotal = 0.0
@@ -171,6 +171,7 @@ def _build_items_table(items, currency_symbol):
         passenger = it.get('passenger_name') or it.get('passenger') or ''
         pnr = it.get('pnr','')
         sector = it.get('sector','')
+        type_v = it.get('type', '')
         supplier = it.get('supplier','')
         cls = it.get('class') or it.get('travel_class') or ''
         qty = float(it.get('qty', 0) or 0)
@@ -188,17 +189,16 @@ def _build_items_table(items, currency_symbol):
         passenger_para = Paragraph(str(passenger), styles['TableCell'])
         supplier_para = Paragraph(str(supplier), styles['TableCell'])
         sector_para = Paragraph(str(sector), styles['TableCell'])
+        type_para = Paragraph(str(type_v), styles['TableCell'])
 
         row = [
             str(i),
             passenger_para,
             Paragraph(str(pnr), styles['TableCell']),
             sector_para,
-            supplier_para,
-            Paragraph(str(cls), styles['TableCell']),
+            type_para,
             str(int(qty) if qty.is_integer() else f"{qty:g}"),
             Paragraph(_format_currency(unit, currency_symbol), styles['TableCell']),
-            Paragraph(f"{tax_pct:.2f}", styles['TableCell']),
             Paragraph(_format_currency(line_total, currency_symbol), styles['TableCell'])
         ]
 
@@ -310,16 +310,14 @@ def generate_invoice_pdf(invoice_data: dict, output_path: str):
 
     # Table styling: subtle grid, repeating header, alternating rows
     col_widths = [
-        8*mm,    # S.No
-        34*mm,   # Passenger
-        16*mm,   # PNR
-        20*mm,   # Sector
-        24*mm,   # Supplier
-        12*mm,   # Class
-        10*mm,   # Qty
-        18*mm,   # Unit Price
-        12*mm,   # Tax %
-        22*mm    # Amount
+        10*mm,   # S.No
+        45*mm,   # Passenger
+        20*mm,   # PNR
+        28*mm,   # Sector
+        20*mm,   # Type
+        12*mm,   # Qty
+        22*mm,   # Unit Price
+        23*mm    # Amount
     ]
 
     tbl = Table(table_data, colWidths=col_widths, repeatRows=1, hAlign='LEFT')
@@ -327,18 +325,13 @@ def generate_invoice_pdf(invoice_data: dict, output_path: str):
         ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#f5f7fa')),
         ('TEXTCOLOR', (0,0), (-1,0), colors.HexColor('#333333')),
         ('ALIGN', (0,0), (0,-1), 'CENTER'),   # S.No
-        ('ALIGN', (6,1), (6,-1), 'CENTER'),   # Qty
-        # Qty centered
-        ('ALIGN', (6,1), (6,-1), 'CENTER'),
+        ('ALIGN', (5,1), (5,-1), 'CENTER'),   # Qty
 
         # Unit Price right aligned
-        ('ALIGN', (7,1), (7,-1), 'RIGHT'),
-
-        # Tax % centered
-        ('ALIGN', (8,1), (8,-1), 'CENTER'),
+        ('ALIGN', (6,1), (6,-1), 'RIGHT'),
 
         # Amount right aligned
-        ('ALIGN', (9,1), (9,-1), 'RIGHT'),
+        ('ALIGN', (7,1), (7,-1), 'RIGHT'),
 
         ('FONTNAME', (0,0), (-1,0), DEFAULT_FONT),
         ('FONTSIZE', (0,0), (-1,-1), 9),

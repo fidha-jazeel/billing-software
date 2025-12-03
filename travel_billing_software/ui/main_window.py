@@ -1,13 +1,12 @@
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import Qt, QDate
+from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QPushButton, QLineEdit, QFrame, QTableWidget, QTableWidgetItem,
     QHeaderView, QDoubleSpinBox, QStackedWidget, QComboBox, QDateEdit,
-    QScrollArea, QGridLayout, QFileDialog
+    QScrollArea, QGridLayout, QFileDialog, QMessageBox
 )
-from PyQt5.QtGui import QColor, QIcon
-from PyQt5.QtCore import QDate
-from PyQt5.QtWidgets import QFileDialog, QMessageBox
+from PyQt6.QtGui import QShortcut
+from PyQt6.QtGui import QColor, QIcon
 from utils.invoice_generator import generate_invoice_pdf
 import sys
 import json
@@ -101,7 +100,8 @@ class DashboardImproved(QMainWindow):
 
         # Sidebar title
         title = QLabel("<b style='font-size:16px; color:#9b9bff;'>🏢 Menu</b>")
-        title.setAlignment(Qt.AlignCenter)
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
         sidebar_layout.addWidget(title)
         sidebar_layout.addSpacing(30)
 
@@ -144,7 +144,8 @@ class DashboardImproved(QMainWindow):
         """Create a styled sidebar button."""
         btn = QPushButton(label)
         btn.setMinimumHeight(45)
-        btn.setCursor(Qt.PointingHandCursor)
+        btn.setCursor(Qt.CursorShape.PointingHandCursor)
+
         btn.setStyleSheet("""
             QPushButton {
                 background-color: transparent;
@@ -392,7 +393,7 @@ class DashboardImproved(QMainWindow):
             }}
         """)
         self.btn_add_item.clicked.connect(self.add_item_row)
-        self.btn_add_item.setCursor(Qt.PointingHandCursor)
+        self.btn_add_item.setCursor(Qt.CursorShape.PointingHandCursor)
         table_header_layout.addWidget(self.btn_add_item)
         
         table_layout.addLayout(table_header_layout)
@@ -599,7 +600,7 @@ class DashboardImproved(QMainWindow):
             }}
         """)
         self.btn_save_invoice.clicked.connect(self.save_invoice)
-        self.btn_save_invoice.setCursor(Qt.PointingHandCursor)
+        self.btn_save_invoice.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_layout_bottom.addWidget(self.btn_save_invoice)
         
         self.btn_save_pdf = QPushButton("📄 Save as PDF")
@@ -621,7 +622,7 @@ class DashboardImproved(QMainWindow):
             }}
         """)
         self.btn_save_pdf.clicked.connect(self.save_pdf)
-        self.btn_save_pdf.setCursor(Qt.PointingHandCursor)
+        self.btn_save_pdf.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_layout_bottom.addWidget(self.btn_save_pdf)
         
         self.btn_print = QPushButton("🖨️ Print Invoice")
@@ -643,7 +644,7 @@ class DashboardImproved(QMainWindow):
             }
         """)
         self.btn_print.clicked.connect(self.print_invoice)
-        self.btn_print.setCursor(Qt.PointingHandCursor)
+        self.btn_print.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_layout_bottom.addWidget(self.btn_print)
         
         self.btn_share = QPushButton("📤 Share Invoice")
@@ -665,7 +666,7 @@ class DashboardImproved(QMainWindow):
             }
         """)
         self.btn_share.clicked.connect(self.share_invoice)
-        self.btn_share.setCursor(Qt.PointingHandCursor)
+        self.btn_share.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_layout_bottom.addWidget(self.btn_share)
         
         layout.addLayout(btn_layout_bottom)
@@ -978,7 +979,7 @@ class DashboardImproved(QMainWindow):
         # Column 10: Actions (Delete button))
         delete_btn = QPushButton("🗑️")
         delete_btn.setToolTip("Delete this row")
-        delete_btn.setCursor(Qt.PointingHandCursor)
+        delete_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         delete_btn.setStyleSheet(f"""
             QPushButton {{
                 background-color: {COLORS['danger']};
@@ -1216,7 +1217,7 @@ class DashboardImproved(QMainWindow):
                     traceback.print_exc()
             
             # Show confirmation
-            from PyQt5.QtWidgets import QMessageBox
+            from PyQt6.QtWidgets import QMessageBox
             msg = f"Invoice saved successfully!\n\n"
             msg += f"📁 JSON File: {filename}\n"
             if self.db:
@@ -1225,7 +1226,7 @@ class DashboardImproved(QMainWindow):
             
         except Exception as e:
             print(f"✗ Error saving invoice: {e}")
-            from PyQt5.QtWidgets import QMessageBox
+            from PyQt6.QtWidgets import QMessageBox
             QMessageBox.critical(self, "Error", f"Failed to save invoice:\n{str(e)}")
 
 
@@ -1314,7 +1315,7 @@ class DashboardImproved(QMainWindow):
         """Print the generated PDF using the OS default PDF viewer (PyQt5 only)."""
         import os
         import platform
-        from PyQt5.QtWidgets import QMessageBox
+        from PyQt6.QtWidgets import QMessageBox
 
         # Build PDF path
         pdf_path = os.path.join(
@@ -1367,8 +1368,8 @@ class DashboardImproved(QMainWindow):
                     QMessageBox.information(self, "Print", "Invoice sent to printer via lpr.")
                 except Exception:
                     # Fallback: open in viewer
-                    from PyQt5.QtCore import QUrl
-                    from PyQt5.QtGui import QDesktopServices
+                    from PyQt6.QtCore import QUrl
+                    from PyQt6.QtGui import QDesktopServices
                     QDesktopServices.openUrl(QUrl.fromLocalFile(pdf_path))
                     QMessageBox.information(
                         self,
@@ -1383,7 +1384,7 @@ class DashboardImproved(QMainWindow):
     def share_invoice(self):
         """Share invoice via email or other methods."""
         try:
-            from PyQt5.QtWidgets import QMessageBox, QInputDialog
+            from PyQt6.QtWidgets import QMessageBox, QInputDialog
             import os
             
             # Get invoice number
@@ -1432,7 +1433,7 @@ class DashboardImproved(QMainWindow):
                 QMessageBox.warning(self, "Warning", "Please enter a valid email address.")
                 
         except Exception as e:
-            from PyQt5.QtWidgets import QMessageBox
+            from PyQt6.QtWidgets import QMessageBox
             import traceback
             traceback.print_exc()
             QMessageBox.critical(self, "Error", f"Failed to share invoice:\\n{str(e)}")
@@ -1925,4 +1926,4 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     w = DashboardImproved()
     w.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
