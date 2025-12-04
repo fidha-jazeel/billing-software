@@ -1,6 +1,7 @@
 """
 Supplier Billing Page Module
 Manage supplier bills with items, payments, and automatic calculations.
+Complete Dark Theme UI.
 """
 import os
 import json
@@ -15,10 +16,28 @@ from PyQt6.QtGui import QColor, QFont, QIcon
 
 
 class SupplierBillingPage(QWidget):
-    """Supplier Billing Page with Purchase window style layout."""
+    """Supplier Billing Page with Complete Dark Theme UI."""
     
     def __init__(self, colors, get_input_style, get_button_style, get_combobox_style, parent=None):
         super().__init__()
+        # Dark theme color palette
+        self.dark_theme = {
+            'bg_primary': '#121212',
+            'bg_secondary': '#1E1E1E',
+            'bg_tertiary': '#161616',
+            'bg_hover': '#3A3A3A',
+            'border': '#333333',
+            'text_primary': '#FFFFFF',
+            'text_secondary': '#EEEEEE',
+            'text_muted': '#AAAAAA',
+            'accent_blue': '#4A9EFF',
+            'accent_blue_hover': '#3A8EEF',
+            'accent_green': '#10B981',
+            'accent_red': '#FF4444',
+            'accent_purple': '#A78BFA',
+            'button_bg': '#2D2D2D',
+            'button_hover': '#3A3A3A'
+        }
         self.colors = colors
         self.get_input_style = get_input_style
         self.get_button_style = get_button_style
@@ -40,24 +59,49 @@ class SupplierBillingPage(QWidget):
         self._init_ui()
     
     def _init_ui(self):
-        """Initialize the UI."""
+        """Initialize the UI with complete dark theme."""
         # Main layout
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
         
-        # Scroll area
+        # Set dark background for entire widget
+        self.setStyleSheet(f"QWidget {{ background-color: {self.dark_theme['bg_primary']}; }}")
+        
+        # Scroll area with dark theme
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setStyleSheet(f"QScrollArea {{ border: none; background-color: {self.colors['primary_bg']}; }}")
+        scroll.setStyleSheet(f"""
+            QScrollArea {{ 
+                border: none; 
+                background-color: {self.dark_theme['bg_primary']}; 
+            }}
+            QScrollBar:vertical {{
+                background-color: {self.dark_theme['bg_secondary']};
+                width: 12px;
+                border: none;
+            }}
+            QScrollBar::handle:vertical {{
+                background-color: {self.dark_theme['button_bg']};
+                border-radius: 6px;
+                min-height: 30px;
+            }}
+            QScrollBar::handle:vertical:hover {{
+                background-color: {self.dark_theme['button_hover']};
+            }}
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+                height: 0px;
+            }}
+        """)
         
         content = QWidget()
         layout = QVBoxLayout(content)
         layout.setContentsMargins(30, 30, 30, 30)
-        layout.setSpacing(20)
+        layout.setSpacing(25)
         
         # Header Section
         header_frame = QFrame()
+        header_frame.setStyleSheet(f"QFrame {{ background-color: transparent; border: none; }}")
         header_layout = QVBoxLayout(header_frame)
         header_layout.setContentsMargins(0, 0, 0, 0)
         header_layout.setSpacing(10)
@@ -65,10 +109,11 @@ class SupplierBillingPage(QWidget):
         title = QLabel("📋 Supplier Billing")
         title.setStyleSheet(f"""
             QLabel {{
-                color: {self.colors['accent_primary']};
+                color: {self.dark_theme['text_primary']};
                 font-size: 28px;
                 font-weight: bold;
                 letter-spacing: 0.5px;
+                background-color: transparent;
             }}
         """)
         header_layout.addWidget(title)
@@ -76,43 +121,91 @@ class SupplierBillingPage(QWidget):
         subtitle = QLabel("Create and manage supplier bills")
         subtitle.setStyleSheet(f"""
             QLabel {{
-                color: {self.colors['text_secondary']};
+                color: {self.dark_theme['text_muted']};
                 font-size: 14px;
+                background-color: transparent;
             }}
         """)
         header_layout.addWidget(subtitle)
         
         layout.addWidget(header_frame)
         
-        # Main Content Frame
+        # Main Content Frame with dark theme
         content_frame = QFrame()
         content_frame.setStyleSheet(f"""
             QFrame {{
-                background-color: {self.colors['secondary_bg']};
+                background-color: {self.dark_theme['bg_secondary']};
                 border-radius: 10px;
+                border: 1px solid {self.dark_theme['border']};
                 padding: 25px;
             }}
         """)
         content_layout = QVBoxLayout(content_frame)
         content_layout.setSpacing(20)
         
-        # TOP ROW - Supplier Details
+        # TOP ROW - Supplier Details (Dark Theme)
         top_row = QHBoxLayout()
         top_row.setSpacing(15)
+        
+        # Dark theme input style
+        dark_input_style = f"""
+            QLineEdit, QDateEdit, QComboBox {{
+                background-color: {self.dark_theme['bg_secondary']};
+                color: {self.dark_theme['text_primary']};
+                border: 1px solid {self.dark_theme['border']};
+                border-radius: 6px;
+                padding: 10px;
+                font-size: 14px;
+            }}
+            QLineEdit:focus, QDateEdit:focus, QComboBox:focus {{
+                border: 1px solid {self.dark_theme['accent_blue']};
+                background-color: {self.dark_theme['bg_tertiary']};
+            }}
+            QLineEdit:read-only {{
+                background-color: {self.dark_theme['bg_tertiary']};
+                color: {self.dark_theme['text_muted']};
+            }}
+            QComboBox::drop-down {{
+                border: none;
+                background-color: transparent;
+                width: 30px;
+            }}
+            QComboBox::down-arrow {{
+                image: none;
+                border: none;
+                width: 0px;
+            }}
+            QDateEdit::drop-down {{
+                border: none;
+                background-color: transparent;
+                width: 30px;
+            }}
+        """
         
         # Supplier ComboBox
         supplier_container = QVBoxLayout()
         supplier_label = QLabel("Supplier *")
-        supplier_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 13px;")
+        supplier_label.setStyleSheet(f"""
+            QLabel {{
+                color: {self.dark_theme['text_primary']}; 
+                font-weight: bold; 
+                font-size: 13px;
+                background-color: transparent;
+            }}
+        """)
         self.supplier_combo = QComboBox()
         self.supplier_combo.setEditable(True)
         self.supplier_combo.addItems(self._get_supplier_list())
-        self.supplier_combo.setStyleSheet(self.get_combobox_style() + """
-            QComboBox {
-                padding: 10px;
-                font-size: 14px;
+        self.supplier_combo.setStyleSheet(dark_input_style + f"""
+            QComboBox {{
                 min-width: 250px;
-            }
+            }}
+            QComboBox QAbstractItemView {{
+                background-color: {self.dark_theme['bg_secondary']};
+                color: {self.dark_theme['text_primary']};
+                selection-background-color: {self.dark_theme['accent_blue']};
+                border: 1px solid {self.dark_theme['border']};
+            }}
         """)
         self.supplier_combo.currentTextChanged.connect(self._on_supplier_changed)
         supplier_container.addWidget(supplier_label)
@@ -122,16 +215,20 @@ class SupplierBillingPage(QWidget):
         # Phone Number
         phone_container = QVBoxLayout()
         phone_label = QLabel("Phone No.")
-        phone_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 13px;")
+        phone_label.setStyleSheet(f"""
+            QLabel {{
+                color: {self.dark_theme['text_primary']}; 
+                font-weight: bold; 
+                font-size: 13px;
+                background-color: transparent;
+            }}
+        """)
         self.phone_input = QLineEdit()
         self.phone_input.setPlaceholderText("Phone number")
         self.phone_input.setReadOnly(True)
-        self.phone_input.setStyleSheet(self.get_input_style() + """
+        self.phone_input.setStyleSheet(dark_input_style + """
             QLineEdit {
-                padding: 10px;
-                font-size: 14px;
                 min-width: 180px;
-                background-color: #f5f5f5;
             }
         """)
         phone_container.addWidget(phone_label)
@@ -141,14 +238,19 @@ class SupplierBillingPage(QWidget):
         # Bill Number
         bill_num_container = QVBoxLayout()
         bill_num_label = QLabel("Bill Number")
-        bill_num_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 13px;")
+        bill_num_label.setStyleSheet(f"""
+            QLabel {{
+                color: {self.dark_theme['text_primary']}; 
+                font-weight: bold; 
+                font-size: 13px;
+                background-color: transparent;
+            }}
+        """)
         self.bill_number_input = QLineEdit()
         self.bill_number_input.setPlaceholderText("Auto-generated")
         self.bill_number_input.setText(self._generate_bill_number())
-        self.bill_number_input.setStyleSheet(self.get_input_style() + """
+        self.bill_number_input.setStyleSheet(dark_input_style + """
             QLineEdit {
-                padding: 10px;
-                font-size: 14px;
                 min-width: 180px;
             }
         """)
@@ -159,17 +261,49 @@ class SupplierBillingPage(QWidget):
         # Bill Date
         date_container = QVBoxLayout()
         date_label = QLabel("Bill Date")
-        date_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 13px;")
+        date_label.setStyleSheet(f"""
+            QLabel {{
+                color: {self.dark_theme['text_primary']}; 
+                font-weight: bold; 
+                font-size: 13px;
+                background-color: transparent;
+            }}
+        """)
         self.bill_date = QDateEdit()
         self.bill_date.setCalendarPopup(True)
         self.bill_date.setDate(QDate.currentDate())
         self.bill_date.setDisplayFormat("dd/MM/yyyy")
-        self.bill_date.setStyleSheet(self.get_input_style() + """
-            QDateEdit {
-                padding: 10px;
-                font-size: 14px;
+        self.bill_date.setStyleSheet(dark_input_style + f"""
+            QDateEdit {{
                 min-width: 160px;
-            }
+            }}
+            QCalendarWidget {{
+                background-color: {self.dark_theme['bg_secondary']};
+                color: {self.dark_theme['text_primary']};
+            }}
+            QCalendarWidget QToolButton {{
+                background-color: {self.dark_theme['button_bg']};
+                color: {self.dark_theme['text_primary']};
+                border: 1px solid {self.dark_theme['border']};
+                border-radius: 4px;
+            }}
+            QCalendarWidget QToolButton:hover {{
+                background-color: {self.dark_theme['button_hover']};
+            }}
+            QCalendarWidget QMenu {{
+                background-color: {self.dark_theme['bg_secondary']};
+                color: {self.dark_theme['text_primary']};
+            }}
+            QCalendarWidget QSpinBox {{
+                background-color: {self.dark_theme['bg_secondary']};
+                color: {self.dark_theme['text_primary']};
+                border: 1px solid {self.dark_theme['border']};
+            }}
+            QCalendarWidget QAbstractItemView {{
+                background-color: {self.dark_theme['bg_secondary']};
+                color: {self.dark_theme['text_primary']};
+                selection-background-color: {self.dark_theme['accent_blue']};
+            }}
         """)
         date_container.addWidget(date_label)
         date_container.addWidget(self.bill_date)
@@ -178,36 +312,50 @@ class SupplierBillingPage(QWidget):
         top_row.addStretch()
         content_layout.addLayout(top_row)
         
-        # ITEM TABLE AREA
+        # ITEM TABLE AREA (Dark Theme)
         table_section = QVBoxLayout()
         table_section.setSpacing(10)
         
         table_label = QLabel("Items")
-        table_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 14px;")
+        table_label.setStyleSheet(f"""
+            QLabel {{
+                color: {self.dark_theme['text_primary']}; 
+                font-weight: bold; 
+                font-size: 14px;
+                background-color: transparent;
+            }}
+        """)
         table_section.addWidget(table_label)
         
-        # Items Table
+        # Items Table with Dark Theme
         self.items_table = QTableWidget(0, 4)
         self.items_table.setHorizontalHeaderLabels(["#", "ITEM", "AMOUNT", "DELETE"])
         self.items_table.setStyleSheet(f"""
             QTableWidget {{
-                background-color: white;
-                border: 1px solid #ddd;
+                background-color: {self.dark_theme['bg_secondary']};
+                color: {self.dark_theme['text_primary']};
+                border: 1px solid {self.dark_theme['border']};
                 border-radius: 5px;
-                gridline-color: #e0e0e0;
+                gridline-color: {self.dark_theme['border']};
                 font-size: 13px;
             }}
             QHeaderView::section {{
-                background-color: {self.colors['accent_primary']};
-                color: white;
+                background-color: {self.dark_theme['bg_tertiary']};
+                color: {self.dark_theme['text_primary']};
                 padding: 10px;
                 border: none;
+                border-right: 1px solid {self.dark_theme['border']};
+                border-bottom: 1px solid {self.dark_theme['border']};
                 font-weight: bold;
                 font-size: 13px;
             }}
             QTableWidget::item {{
                 padding: 8px;
                 border: none;
+                color: {self.dark_theme['text_primary']};
+            }}
+            QTableWidget::item:selected {{
+                background-color: {self.dark_theme['bg_hover']};
             }}
         """)
         
@@ -228,20 +376,23 @@ class SupplierBillingPage(QWidget):
         
         table_section.addWidget(self.items_table)
         
-        # Add Row Button
+        # Add Row Button (Dark Theme)
         add_row_btn = QPushButton("➕ ADD ROW")
         add_row_btn.setStyleSheet(f"""
             QPushButton {{
-                background-color: {self.colors['accent_primary']};
-                color: white;
+                background-color: {self.dark_theme['button_bg']};
+                color: {self.dark_theme['text_primary']};
                 border: none;
-                border-radius: 5px;
+                border-radius: 6px;
                 padding: 10px 20px;
                 font-weight: bold;
                 font-size: 13px;
             }}
             QPushButton:hover {{
-                background-color: {self.colors['accent_secondary']};
+                background-color: {self.dark_theme['button_hover']};
+            }}
+            QPushButton:pressed {{
+                background-color: {self.dark_theme['bg_tertiary']};
             }}
         """)
         add_row_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -250,16 +401,23 @@ class SupplierBillingPage(QWidget):
         
         content_layout.addLayout(table_section)
         
-        # BOTTOM SECTION - Payments and Summary
+        # BOTTOM SECTION - Payments and Summary (Dark Theme)
         bottom_section = QHBoxLayout()
         bottom_section.setSpacing(30)
         
-        # LEFT SIDE - Payment Section
+        # LEFT SIDE - Payment Section (Dark Theme)
         payment_section = QVBoxLayout()
         payment_section.setSpacing(10)
         
         payment_label = QLabel("Payments")
-        payment_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 14px;")
+        payment_label.setStyleSheet(f"""
+            QLabel {{
+                color: {self.dark_theme['text_primary']}; 
+                font-weight: bold; 
+                font-size: 14px;
+                background-color: transparent;
+            }}
+        """)
         payment_section.addWidget(payment_label)
         
         # Payment rows container
@@ -271,20 +429,23 @@ class SupplierBillingPage(QWidget):
         self._add_payment_row()
         self._add_payment_row()
         
-        # Add Payment Row Button
+        # Add Payment Row Button (Dark Theme)
         add_payment_btn = QPushButton("➕ Add Payment")
         add_payment_btn.setStyleSheet(f"""
             QPushButton {{
-                background-color: {self.colors['success']};
-                color: white;
+                background-color: {self.dark_theme['accent_green']};
+                color: {self.dark_theme['text_primary']};
                 border: none;
-                border-radius: 5px;
+                border-radius: 6px;
                 padding: 8px 15px;
                 font-weight: bold;
                 font-size: 12px;
             }}
             QPushButton:hover {{
-                background-color: #059669;
+                background-color: #0EA472;
+            }}
+            QPushButton:pressed {{
+                background-color: #0C8A5F;
             }}
         """)
         add_payment_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -294,15 +455,15 @@ class SupplierBillingPage(QWidget):
         payment_section.addStretch()
         bottom_section.addLayout(payment_section, 1)
         
-        # RIGHT SIDE - Summary Panel
+        # RIGHT SIDE - Summary Panel (Dark Theme)
         summary_section = QVBoxLayout()
         summary_section.setSpacing(15)
         
         summary_frame = QFrame()
         summary_frame.setStyleSheet(f"""
             QFrame {{
-                background-color: {self.colors['primary_bg']};
-                border: 2px solid {self.colors['accent_primary']};
+                background-color: {self.dark_theme['bg_secondary']};
+                border: 2px solid {self.dark_theme['accent_blue']};
                 border-radius: 8px;
                 padding: 20px;
             }}
@@ -311,17 +472,40 @@ class SupplierBillingPage(QWidget):
         summary_layout.setSpacing(12)
         
         summary_title = QLabel("Summary")
-        summary_title.setStyleSheet(f"color: {self.colors['accent_primary']}; font-weight: bold; font-size: 15px;")
+        summary_title.setStyleSheet(f"""
+            QLabel {{
+                color: {self.dark_theme['accent_blue']}; 
+                font-weight: bold; 
+                font-size: 15px;
+                background-color: transparent;
+            }}
+        """)
         summary_layout.addWidget(summary_title)
         
-        # Round Off Checkbox and Input
+        # Round Off Checkbox and Input (Dark Theme)
         roundoff_layout = QHBoxLayout()
         self.roundoff_checkbox = QCheckBox("Round Off")
         self.roundoff_checkbox.setStyleSheet(f"""
             QCheckBox {{
-                color: {self.colors['text_primary']};
+                color: {self.dark_theme['text_primary']};
                 font-size: 13px;
                 font-weight: bold;
+                background-color: transparent;
+                spacing: 8px;
+            }}
+            QCheckBox::indicator {{
+                width: 18px;
+                height: 18px;
+                border: 1px solid {self.dark_theme['border']};
+                border-radius: 4px;
+                background-color: {self.dark_theme['bg_tertiary']};
+            }}
+            QCheckBox::indicator:checked {{
+                background-color: {self.dark_theme['accent_blue']};
+                border: 1px solid {self.dark_theme['accent_blue']};
+            }}
+            QCheckBox::indicator:hover {{
+                border: 1px solid {self.dark_theme['accent_blue']};
             }}
         """)
         self.roundoff_checkbox.stateChanged.connect(self._calculate_totals)
@@ -329,76 +513,103 @@ class SupplierBillingPage(QWidget):
         
         self.roundoff_input = QLineEdit("0.00")
         self.roundoff_input.setReadOnly(True)
-        self.roundoff_input.setStyleSheet(self.get_input_style() + """
-            QLineEdit {
+        self.roundoff_input.setStyleSheet(f"""
+            QLineEdit {{
+                background-color: {self.dark_theme['bg_tertiary']};
+                color: {self.dark_theme['text_muted']};
+                border: 1px solid {self.dark_theme['border']};
+                border-radius: 5px;
                 padding: 8px;
                 font-size: 13px;
                 max-width: 100px;
-                background-color: #f5f5f5;
-            }
+            }}
         """)
         roundoff_layout.addWidget(self.roundoff_input)
         roundoff_layout.addStretch()
         summary_layout.addLayout(roundoff_layout)
         
-        # Total
+        # Total (Dark Theme)
         total_layout = QHBoxLayout()
         total_label = QLabel("Total:")
-        total_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 14px;")
+        total_label.setStyleSheet(f"""
+            QLabel {{
+                color: {self.dark_theme['text_primary']}; 
+                font-weight: bold; 
+                font-size: 14px;
+                background-color: transparent;
+            }}
+        """)
         total_layout.addWidget(total_label)
         
         self.total_input = QLineEdit("₹0.00")
         self.total_input.setReadOnly(True)
-        self.total_input.setStyleSheet(self.get_input_style() + f"""
+        self.total_input.setStyleSheet(f"""
             QLineEdit {{
+                background-color: {self.dark_theme['bg_tertiary']};
+                color: {self.dark_theme['accent_blue']};
+                border: 2px solid {self.dark_theme['accent_blue']};
+                border-radius: 6px;
                 padding: 10px;
                 font-size: 16px;
                 font-weight: bold;
-                color: {self.colors['accent_primary']};
-                background-color: #f0f0ff;
-                border: 2px solid {self.colors['accent_primary']};
             }}
         """)
         total_layout.addWidget(self.total_input)
         summary_layout.addLayout(total_layout)
         
-        # Paid
+        # Paid (Dark Theme)
         paid_layout = QHBoxLayout()
         paid_label = QLabel("Paid:")
-        paid_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 14px;")
+        paid_label.setStyleSheet(f"""
+            QLabel {{
+                color: {self.dark_theme['text_primary']}; 
+                font-weight: bold; 
+                font-size: 14px;
+                background-color: transparent;
+            }}
+        """)
         paid_layout.addWidget(paid_label)
         
         self.paid_input = QLineEdit("₹0.00")
         self.paid_input.setReadOnly(True)
-        self.paid_input.setStyleSheet(self.get_input_style() + f"""
+        self.paid_input.setStyleSheet(f"""
             QLineEdit {{
+                background-color: {self.dark_theme['bg_tertiary']};
+                color: {self.dark_theme['accent_green']};
+                border: 2px solid {self.dark_theme['accent_green']};
+                border-radius: 6px;
                 padding: 10px;
                 font-size: 16px;
                 font-weight: bold;
-                color: {self.colors['success']};
-                background-color: #f0fff0;
-                border: 2px solid {self.colors['success']};
             }}
         """)
         paid_layout.addWidget(self.paid_input)
         summary_layout.addLayout(paid_layout)
         
-        # Balance
+        # Balance (Dark Theme)
         balance_layout = QHBoxLayout()
         balance_label = QLabel("Balance:")
-        balance_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 14px;")
+        balance_label.setStyleSheet(f"""
+            QLabel {{
+                color: {self.dark_theme['text_primary']}; 
+                font-weight: bold; 
+                font-size: 14px;
+                background-color: transparent;
+            }}
+        """)
         balance_layout.addWidget(balance_label)
         
         self.balance_input = QLineEdit("₹0.00")
         self.balance_input.setReadOnly(True)
-        self.balance_input.setStyleSheet(self.get_input_style() + f"""
+        self.balance_input.setStyleSheet(f"""
             QLineEdit {{
+                background-color: {self.dark_theme['bg_tertiary']};
+                color: {self.dark_theme['accent_red']};
+                border: 2px solid {self.dark_theme['accent_red']};
+                border-radius: 6px;
                 padding: 10px;
                 font-size: 16px;
                 font-weight: bold;
-                color: {self.colors['danger']};
-                background-color: #fff0f0;
-                border: 2px solid {self.colors['danger']};
             }}
         """)
         balance_layout.addWidget(self.balance_input)
@@ -411,45 +622,51 @@ class SupplierBillingPage(QWidget):
         
         content_layout.addLayout(bottom_section)
         
-        # BOTTOM BUTTONS
+        # BOTTOM BUTTONS (Dark Theme)
         button_layout = QHBoxLayout()
         button_layout.setSpacing(15)
         button_layout.addStretch()
         
-        # Share Button
+        # Share Button (Dark Theme - Purple Accent)
         share_btn = QPushButton("📤 Share")
         share_btn.setStyleSheet(f"""
             QPushButton {{
-                background-color: {self.colors['accent_secondary']};
-                color: white;
+                background-color: {self.dark_theme['accent_purple']};
+                color: {self.dark_theme['text_primary']};
                 border: none;
-                border-radius: 5px;
+                border-radius: 6px;
                 padding: 12px 30px;
                 font-weight: bold;
                 font-size: 14px;
             }}
             QPushButton:hover {{
-                background-color: #9333EA;
+                background-color: #9370DB;
+            }}
+            QPushButton:pressed {{
+                background-color: #7B68BC;
             }}
         """)
         share_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         share_btn.clicked.connect(self._share_bill)
         button_layout.addWidget(share_btn)
         
-        # Save Button (Primary Blue)
+        # Save Button (Dark Theme - Blue Primary)
         save_btn = QPushButton("💾 Save")
         save_btn.setStyleSheet(f"""
             QPushButton {{
-                background-color: #4a9eff;
-                color: white;
+                background-color: {self.dark_theme['accent_blue']};
+                color: {self.dark_theme['text_primary']};
                 border: none;
-                border-radius: 5px;
+                border-radius: 6px;
                 padding: 12px 40px;
                 font-weight: bold;
                 font-size: 14px;
             }}
             QPushButton:hover {{
-                background-color: #3a8eef;
+                background-color: #3A8EEF;
+            }}
+            QPushButton:pressed {{
+                background-color: #2A7ECF;
             }}
         """)
         save_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -513,57 +730,69 @@ class SupplierBillingPage(QWidget):
         serial_item.setFlags(Qt.ItemFlag.ItemIsEnabled)
         self.items_table.setItem(row, 0, serial_item)
         
-        # Column 1: ITEM (LineEdit)
+        # Column 1: ITEM (LineEdit - Dark Theme)
         item_input = QLineEdit()
         item_input.setPlaceholderText("Enter item description")
-        item_input.setStyleSheet("""
-            QLineEdit {
+        item_input.setStyleSheet(f"""
+            QLineEdit {{
                 border: none;
                 padding: 8px;
                 font-size: 13px;
                 background-color: transparent;
-            }
-            QLineEdit:focus {
-                background-color: #f0f0ff;
-            }
+                color: {self.dark_theme['text_primary']};
+            }}
+            QLineEdit:focus {{
+                background-color: {self.dark_theme['bg_tertiary']};
+            }}
         """)
         self.items_table.setCellWidget(row, 1, item_input)
         
-        # Column 2: AMOUNT (DoubleSpinBox)
+        # Column 2: AMOUNT (DoubleSpinBox - Dark Theme)
         amount_input = QDoubleSpinBox()
         amount_input.setRange(0, 9999999)
         amount_input.setDecimals(2)
         amount_input.setPrefix("₹ ")
         amount_input.setValue(0.0)
-        amount_input.setStyleSheet("""
-            QDoubleSpinBox {
+        amount_input.setStyleSheet(f"""
+            QDoubleSpinBox {{
                 border: none;
                 padding: 8px;
                 font-size: 13px;
                 background-color: transparent;
-            }
-            QDoubleSpinBox:focus {
-                background-color: #f0f0ff;
-            }
+                color: {self.dark_theme['text_primary']};
+            }}
+            QDoubleSpinBox:focus {{
+                background-color: {self.dark_theme['bg_tertiary']};
+            }}
+            QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {{
+                background-color: {self.dark_theme['button_bg']};
+                border: none;
+            }}
+            QDoubleSpinBox::up-button:hover, QDoubleSpinBox::down-button:hover {{
+                background-color: {self.dark_theme['button_hover']};
+            }}
         """)
         amount_input.valueChanged.connect(self._calculate_totals)
         self.items_table.setCellWidget(row, 2, amount_input)
         
-        # Column 3: DELETE (Button)
+        # Column 3: DELETE (Button - Dark Theme)
         delete_btn = QPushButton("🗑️")
         delete_btn.setToolTip("Delete Row")
-        delete_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #ff4444;
-                color: white;
+        delete_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {self.dark_theme['accent_red']};
+                color: {self.dark_theme['text_primary']};
                 border: none;
                 border-radius: 3px;
                 padding: 5px;
                 font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #ee3333;
-            }
+            }}
+            QPushButton:hover {{
+                background-color: #DD3333;
+            }}
+            QPushButton:pressed {{
+                background-color: #CC2222;
+            }}
         """)
         delete_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         delete_btn.clicked.connect(lambda: self._delete_item_row(row))
@@ -586,49 +815,91 @@ class SupplierBillingPage(QWidget):
         payment_row_layout = QHBoxLayout()
         payment_row_layout.setSpacing(10)
         
-        # Payment Type ComboBox
+        # Payment Type ComboBox (Dark Theme)
         payment_type = QComboBox()
         payment_type.addItems(["Cash", "Bank Transfer", "Credit Card", "Debit Card", "UPI", "Cheque"])
-        payment_type.setStyleSheet(self.get_combobox_style() + """
-            QComboBox {
+        payment_type.setStyleSheet(f"""
+            QComboBox {{
+                background-color: {self.dark_theme['bg_tertiary']};
+                color: {self.dark_theme['text_primary']};
+                border: 1px solid {self.dark_theme['border']};
+                border-radius: 5px;
                 padding: 8px;
                 font-size: 13px;
                 min-width: 150px;
-            }
+            }}
+            QComboBox:focus {{
+                border: 1px solid {self.dark_theme['accent_blue']};
+            }}
+            QComboBox::drop-down {{
+                border: none;
+                background-color: transparent;
+            }}
+            QComboBox::down-arrow {{
+                image: none;
+                border-left: 5px solid transparent;
+                border-right: 5px solid transparent;
+                border-top: 5px solid {self.dark_theme['text_primary']};
+                margin-right: 8px;
+            }}
+            QComboBox QAbstractItemView {{
+                background-color: {self.dark_theme['bg_secondary']};
+                color: {self.dark_theme['text_primary']};
+                selection-background-color: {self.dark_theme['accent_blue']};
+                border: 1px solid {self.dark_theme['border']};
+            }}
         """)
         payment_row_layout.addWidget(payment_type)
         
-        # Amount Input
+        # Amount Input (Dark Theme)
         amount_input = QDoubleSpinBox()
         amount_input.setRange(0, 9999999)
         amount_input.setDecimals(2)
         amount_input.setPrefix("₹ ")
         amount_input.setValue(0.0)
-        amount_input.setStyleSheet(self.get_input_style() + """
-            QDoubleSpinBox {
+        amount_input.setStyleSheet(f"""
+            QDoubleSpinBox {{
+                background-color: {self.dark_theme['bg_tertiary']};
+                color: {self.dark_theme['text_primary']};
+                border: 1px solid {self.dark_theme['border']};
+                border-radius: 5px;
                 padding: 8px;
                 font-size: 13px;
                 min-width: 150px;
-            }
+            }}
+            QDoubleSpinBox:focus {{
+                border: 1px solid {self.dark_theme['accent_blue']};
+            }}
+            QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {{
+                background-color: {self.dark_theme['button_bg']};
+                border: none;
+                width: 16px;
+            }}
+            QDoubleSpinBox::up-button:hover, QDoubleSpinBox::down-button:hover {{
+                background-color: {self.dark_theme['button_hover']};
+            }}
         """)
         amount_input.valueChanged.connect(self._calculate_totals)
         payment_row_layout.addWidget(amount_input)
         
-        # Delete Button
+        # Delete Button (Dark Theme)
         delete_btn = QPushButton("🗑️")
         delete_btn.setToolTip("Remove Payment")
         delete_btn.setFixedSize(35, 35)
-        delete_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #ff4444;
-                color: white;
+        delete_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {self.dark_theme['accent_red']};
+                color: {self.dark_theme['text_primary']};
                 border: none;
                 border-radius: 4px;
                 font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #ee3333;
-            }
+            }}
+            QPushButton:hover {{
+                background-color: #DD3333;
+            }}
+            QPushButton:pressed {{
+                background-color: #CC2222;
+            }}
         """)
         delete_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         delete_btn.clicked.connect(lambda: self._delete_payment_row(payment_row_layout))
