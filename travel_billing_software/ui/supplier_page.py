@@ -1,21 +1,232 @@
 """
-Comprehensive Supplier Management Page
-With Basic Info, Financial Details, Bank Details, and Payment Tracking
+Supplier Management Page Module
+Comprehensive supplier management with CRUD operations, search, and export functionality.
 """
 import os
 import json
 from datetime import datetime
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
-                             QFrame, QScrollArea, QPushButton,
-                             QLineEdit, QMessageBox, QComboBox, QDoubleSpinBox,
-                             QGridLayout, QGroupBox, QTextEdit, QTableWidget,
-                             QTableWidgetItem, QHeaderView)
-from PyQt6.QtCore import Qt
+                             QFrame, QScrollArea, QTableWidget, QPushButton,
+                             QLineEdit, QTableWidgetItem, QMessageBox, 
+                             QFileDialog, QHeaderView, QDialog, QTextEdit,
+                             QFormLayout, QDialogButtonBox, QComboBox, QDoubleSpinBox,
+                             QGroupBox, QSpinBox)
+from PyQt6.QtCore import Qt, QDate
 from PyQt6.QtGui import QColor, QFont
 
 
+class SupplierDialog(QDialog):
+    """Dialog for adding/editing supplier details."""
+    
+    def __init__(self, colors, get_input_style, get_button_style, supplier_data=None, parent=None):
+        super().__init__(parent)
+        self.colors = colors
+        self.get_input_style = get_input_style
+        self.get_button_style = get_button_style
+        self.supplier_data = supplier_data
+        
+        self.setWindowTitle("Add Supplier" if not supplier_data else "Edit Supplier")
+        self.setModal(True)
+        self.setMinimumWidth(500)
+        
+        self._init_ui()
+        
+        if supplier_data:
+            self._populate_fields()
+    
+    def _init_ui(self):
+        """Initialize dialog UI."""
+        layout = QVBoxLayout(self)
+        layout.setSpacing(15)
+        layout.setContentsMargins(25, 25, 25, 25)
+        
+        # Title
+        title = QLabel("Supplier Details")
+        title.setStyleSheet(f"""
+            QLabel {{
+                color: {self.colors['accent_primary']};
+                font-size: 20px;
+                font-weight: bold;
+                margin-bottom: 10px;
+            }}
+        """)
+        layout.addWidget(title)
+        
+        # Form layout
+        form_layout = QFormLayout()
+        form_layout.setSpacing(12)
+        form_layout.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
+        
+        # Supplier Name
+        self.name_input = QLineEdit()
+        self.name_input.setPlaceholderText("Enter supplier name")
+        self.name_input.setStyleSheet(self.get_input_style())
+        form_layout.addRow("Supplier Name: *", self.name_input)
+        
+        # Contact Person
+        self.contact_person_input = QLineEdit()
+        self.contact_person_input.setPlaceholderText("Enter contact person name")
+        self.contact_person_input.setStyleSheet(self.get_input_style())
+        form_layout.addRow("Contact Person:", self.contact_person_input)
+        
+        # Phone Number
+        self.phone_input = QLineEdit()
+        self.phone_input.setPlaceholderText("Enter phone number")
+        self.phone_input.setStyleSheet(self.get_input_style())
+        form_layout.addRow("Phone Number: *", self.phone_input)
+        
+        # Email
+        self.email_input = QLineEdit()
+        self.email_input.setPlaceholderText("Enter email address")
+        self.email_input.setStyleSheet(self.get_input_style())
+        form_layout.addRow("Email:", self.email_input)
+        
+        # Company Name
+        self.company_input = QLineEdit()
+        self.company_input.setPlaceholderText("Enter company name")
+        self.company_input.setStyleSheet(self.get_input_style())
+        form_layout.addRow("Company Name:", self.company_input)
+        
+        # Address
+        self.address_input = QTextEdit()
+        self.address_input.setPlaceholderText("Enter full address")
+        self.address_input.setMaximumHeight(80)
+        self.address_input.setStyleSheet(self.get_input_style())
+        form_layout.addRow("Address:", self.address_input)
+        
+        # GST Number
+        self.gst_input = QLineEdit()
+        self.gst_input.setPlaceholderText("Enter GST number")
+        self.gst_input.setStyleSheet(self.get_input_style())
+        form_layout.addRow("GST Number:", self.gst_input)
+        
+        # PAN Number
+        self.pan_input = QLineEdit()
+        self.pan_input.setPlaceholderText("Enter PAN number")
+        self.pan_input.setStyleSheet(self.get_input_style())
+        form_layout.addRow("PAN Number:", self.pan_input)
+        
+        # Payment Terms
+        self.payment_terms = QComboBox()
+        self.payment_terms.addItems(["Cash", "Credit - 7 Days", "Credit - 15 Days", 
+                                     "Credit - 30 Days", "Credit - 45 Days", "Credit - 60 Days"])
+        self.payment_terms.setStyleSheet(self.get_input_style())
+        form_layout.addRow("Payment Terms:", self.payment_terms)
+        
+        # Bank Details
+        self.bank_name_input = QLineEdit()
+        self.bank_name_input.setPlaceholderText("Enter bank name")
+        self.bank_name_input.setStyleSheet(self.get_input_style())
+        form_layout.addRow("Bank Name:", self.bank_name_input)
+        
+        self.account_number_input = QLineEdit()
+        self.account_number_input.setPlaceholderText("Enter account number")
+        self.account_number_input.setStyleSheet(self.get_input_style())
+        form_layout.addRow("Account Number:", self.account_number_input)
+        
+        self.ifsc_input = QLineEdit()
+        self.ifsc_input.setPlaceholderText("Enter IFSC code")
+        self.ifsc_input.setStyleSheet(self.get_input_style())
+        form_layout.addRow("IFSC Code:", self.ifsc_input)
+        
+        # Notes
+        self.notes_input = QTextEdit()
+        self.notes_input.setPlaceholderText("Additional notes or comments")
+        self.notes_input.setMaximumHeight(60)
+        self.notes_input.setStyleSheet(self.get_input_style())
+        form_layout.addRow("Notes:", self.notes_input)
+        
+        layout.addLayout(form_layout)
+        
+        # Required fields note
+        required_note = QLabel("* Required fields")
+        required_note.setStyleSheet(f"color: {self.colors['danger']}; font-size: 11px; font-style: italic;")
+        layout.addWidget(required_note)
+        
+        # Buttons
+        button_box = QDialogButtonBox()
+        save_btn = QPushButton("💾 Save Supplier")
+        save_btn.setStyleSheet(self.get_button_style('add'))
+        save_btn.clicked.connect(self.accept)
+        
+        cancel_btn = QPushButton("✖ Cancel")
+        cancel_btn.setStyleSheet(self.get_button_style('cancel'))
+        cancel_btn.clicked.connect(self.reject)
+        
+        button_box.addButton(save_btn, QDialogButtonBox.ButtonRole.AcceptRole)
+        button_box.addButton(cancel_btn, QDialogButtonBox.ButtonRole.RejectRole)
+        
+        layout.addWidget(button_box)
+    
+    def _populate_fields(self):
+        """Populate fields with existing supplier data."""
+        self.name_input.setText(self.supplier_data.get('name', ''))
+        self.contact_person_input.setText(self.supplier_data.get('contact_person', ''))
+        self.phone_input.setText(self.supplier_data.get('phone', ''))
+        self.email_input.setText(self.supplier_data.get('email', ''))
+        self.company_input.setText(self.supplier_data.get('company', ''))
+        self.address_input.setPlainText(self.supplier_data.get('address', ''))
+        self.gst_input.setText(self.supplier_data.get('gst', ''))
+        self.pan_input.setText(self.supplier_data.get('pan', ''))
+        
+        payment_terms = self.supplier_data.get('payment_terms', 'Cash')
+        index = self.payment_terms.findText(payment_terms)
+        if index >= 0:
+            self.payment_terms.setCurrentIndex(index)
+        
+        self.bank_name_input.setText(self.supplier_data.get('bank_name', ''))
+        self.account_number_input.setText(self.supplier_data.get('account_number', ''))
+        self.ifsc_input.setText(self.supplier_data.get('ifsc', ''))
+        self.notes_input.setPlainText(self.supplier_data.get('notes', ''))
+    
+    def get_supplier_data(self):
+        """Get supplier data from form fields."""
+        name = self.name_input.text().strip()
+        phone = self.phone_input.text().strip()
+        
+        if not name:
+            QMessageBox.warning(self, "Validation Error", "Supplier name is required!")
+            return None
+        
+        if not phone:
+            QMessageBox.warning(self, "Validation Error", "Phone number is required!")
+            return None
+        
+        return {
+            'id': self.supplier_data.get('id') if self.supplier_data else str(datetime.now().timestamp()),
+            'name': name,
+            'contact_person': self.contact_person_input.text().strip(),
+            'phone': phone,
+            'email': self.email_input.text().strip(),
+            'company': self.company_input.text().strip(),
+            'address': self.address_input.toPlainText().strip(),
+            'gst': self.gst_input.text().strip(),
+            'pan': self.pan_input.text().strip(),
+            'payment_terms': self.payment_terms.currentText(),
+            'bank_name': self.bank_name_input.text().strip(),
+            'account_number': self.account_number_input.text().strip(),
+            'ifsc': self.ifsc_input.text().strip(),
+            'notes': self.notes_input.toPlainText().strip(),
+            'created_date': self.supplier_data.get('created_date') if self.supplier_data else datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'modified_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'financial': self.supplier_data.get('financial', {
+                'total_payable': 0.0,
+                'amount_paid': 0.0,
+                'amount_pending': 0.0,
+                'amount_received': 0.0,
+                'transactions': []
+            }) if self.supplier_data else {
+                'total_payable': 0.0,
+                'amount_paid': 0.0,
+                'amount_pending': 0.0,
+                'amount_received': 0.0,
+                'transactions': []
+            }
+        }
+
+
 class SupplierPage(QWidget):
-    """Comprehensive Supplier Management with Payment Tracking."""
+    """Comprehensive Supplier Management Page."""
     
     def __init__(self, colors, get_table_style, get_button_style, get_input_style, parent=None):
         super().__init__()
@@ -25,24 +236,27 @@ class SupplierPage(QWidget):
         self.get_input_style = get_input_style
         self.parent_window = parent
         
-        # Data paths
+        # Data file path
         self.data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'suppliers')
         os.makedirs(self.data_dir, exist_ok=True)
-        self.suppliers_file = os.path.join(self.data_dir, 'suppliers_data.json')
-        self.payments_file = os.path.join(self.data_dir, 'supplier_payments.json')
+        self.data_file = os.path.join(self.data_dir, 'suppliers.json')
+        
+        # Invoices directory for financial calculations
         self.invoices_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'invoices')
         
         self.suppliers = []
-        self.payments = []
-        self.current_supplier_id = None
+        self._load_suppliers()
+        self._calculate_all_supplier_financials()
         
-        self._load_data()
         self._init_ui()
+        self._populate_table()
     
     def _init_ui(self):
-        """Initialize the comprehensive UI."""
+        """Initialize the UI."""
+        # Main layout
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
         
         # Scroll area
         scroll = QScrollArea()
@@ -52,874 +266,1018 @@ class SupplierPage(QWidget):
         content = QWidget()
         layout = QVBoxLayout(content)
         layout.setContentsMargins(30, 30, 30, 30)
-        layout.setSpacing(25)
+        layout.setSpacing(20)
         
-        # Header
-        header = QLabel("👥 Supplier Management System")
-        header.setStyleSheet(f"""
+        # Header Section
+        header_frame = QFrame()
+        header_layout = QVBoxLayout(header_frame)
+        header_layout.setContentsMargins(0, 0, 0, 0)
+        header_layout.setSpacing(10)
+        
+        title = QLabel("👥 Supplier Management")
+        title.setStyleSheet(f"""
             QLabel {{
                 color: {self.colors['accent_primary']};
-                font-size: 32px;
+                font-size: 28px;
                 font-weight: bold;
                 letter-spacing: 0.5px;
             }}
         """)
-        layout.addWidget(header)
+        header_layout.addWidget(title)
         
-        subtitle = QLabel("Complete supplier information, financial tracking, and payment management")
-        subtitle.setStyleSheet(f"QLabel {{ color: {self.colors['text_secondary']}; font-size: 15px; }}")
-        layout.addWidget(subtitle)
-        
-        # Main Content in Grid
-        grid = QGridLayout()
-        grid.setSpacing(20)
-        
-        # SECTION 1: Basic Information
-        basic_info = self._create_basic_info_section()
-        grid.addWidget(basic_info, 0, 0)
-        
-        # SECTION 2: Financial Details
-        financial_details = self._create_financial_details_section()
-        grid.addWidget(financial_details, 0, 1)
-        
-        # SECTION 3: Bank Details
-        # bank_details = self._create_bank_details_section()
-        # grid.addWidget(bank_details, 1, 0)
-        
-        # SECTION 4: Payment Tracking
-        payment_tracking = self._create_payment_tracking_section()
-        grid.addWidget(payment_tracking, 1, 1)
-        
-        layout.addLayout(grid)
-        
-        # Action Buttons
-        button_bar = self._create_action_buttons()
-        layout.addWidget(button_bar)
-        
-        # Supplier List Table
-        supplier_list = self._create_supplier_list_section()
-        layout.addWidget(supplier_list)
-        
-        scroll.setWidget(content)
-        main_layout.addWidget(scroll)
-        
-        self._populate_supplier_table()
-    
-    def _create_basic_info_section(self):
-        """Create Basic Information section."""
-        group = QGroupBox("📋 Basic Information")
-        group.setStyleSheet(f"""
-            QGroupBox {{
-                font-size: 16px;
-                font-weight: bold;
-                color: {self.colors['accent_primary']};
-                border: 2px solid {self.colors['accent_primary']};
-                border-radius: 10px;
-                margin-top: 15px;
-                padding-top: 20px;
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                left: 15px;
-                padding: 0 10px;
-            }}
-        """)
-        
-        layout = QGridLayout(group)
-        layout.setSpacing(12)
-        layout.setContentsMargins(20, 25, 20, 20)
-        
-        # Supplier Name
-        layout.addWidget(QLabel("Supplier Name: *"), 0, 0)
-        self.supplier_name = QLineEdit()
-        self.supplier_name.setPlaceholderText("Enter supplier name")
-        self.supplier_name.setStyleSheet(self.get_input_style())
-        layout.addWidget(self.supplier_name, 0, 1)
-        
-        # Supplier Type
-        layout.addWidget(QLabel("Supplier Type:"), 1, 0)
-        self.supplier_type = QComboBox()
-        self.supplier_type.addItems(["Regular", "Premium", "Wholesale", "Retail", "Manufacturer", "Distributor"])
-        self.supplier_type.setStyleSheet(self.get_input_style())
-        layout.addWidget(self.supplier_type, 1, 1)
-        
-        # Contact Number
-        layout.addWidget(QLabel("Contact Number: *"), 2, 0)
-        self.contact_number = QLineEdit()
-        self.contact_number.setPlaceholderText("Enter contact number")
-        self.contact_number.setStyleSheet(self.get_input_style())
-        layout.addWidget(self.contact_number, 2, 1)
-        
-        # Alternate Number
-        layout.addWidget(QLabel("Alternate Number:"), 3, 0)
-        self.alternate_number = QLineEdit()
-        self.alternate_number.setPlaceholderText("Enter alternate number")
-        self.alternate_number.setStyleSheet(self.get_input_style())
-        layout.addWidget(self.alternate_number, 3, 1)
-        
-        # Email
-        layout.addWidget(QLabel("Email:"), 4, 0)
-        self.email = QLineEdit()
-        self.email.setPlaceholderText("Enter email address")
-        self.email.setStyleSheet(self.get_input_style())
-        layout.addWidget(self.email, 4, 1)
-        
-        # Country
-        layout.addWidget(QLabel("Country:"), 5, 0)
-        self.country = QComboBox()
-        self.country.addItems(["India", "USA", "UK", "UAE", "Singapore", "Malaysia", "Other"])
-        self.country.setStyleSheet(self.get_input_style())
-        layout.addWidget(self.country, 5, 1)
-        
-        # City
-        layout.addWidget(QLabel("City:"), 6, 0)
-        self.city = QLineEdit()
-        self.city.setPlaceholderText("Enter city")
-        self.city.setStyleSheet(self.get_input_style())
-        layout.addWidget(self.city, 6, 1)
-        
-        # Address
-        layout.addWidget(QLabel("Address:"), 7, 0)
-        self.address = QTextEdit()
-        self.address.setPlaceholderText("Enter complete address")
-        self.address.setMaximumHeight(80)
-        self.address.setStyleSheet(self.get_input_style())
-        layout.addWidget(self.address, 7, 1)
-        
-        return group
-    
-    def _create_financial_details_section(self):
-        """Create Financial Details section."""
-        group = QGroupBox("💰 Financial Details")
-        group.setStyleSheet(f"""
-            QGroupBox {{
-                font-size: 16px;
-                font-weight: bold;
-                color: {self.colors['success']};
-                border: 2px solid {self.colors['success']};
-                border-radius: 10px;
-                margin-top: 15px;
-                padding-top: 20px;
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                left: 15px;
-                padding: 0 10px;
-            }}
-        """)
-        
-        layout = QGridLayout(group)
-        layout.setSpacing(12)
-        layout.setContentsMargins(20, 25, 20, 20)
-        
-        # Opening Balance
-        layout.addWidget(QLabel("Opening Balance:"), 0, 0)
-        self.opening_balance = QDoubleSpinBox()
-        self.opening_balance.setRange(0, 99999999.99)
-        self.opening_balance.setPrefix("₹ ")
-        self.opening_balance.setDecimals(2)
-        self.opening_balance.setStyleSheet(self.get_input_style())
-        self.opening_balance.valueChanged.connect(self._calculate_current_balance)
-        layout.addWidget(self.opening_balance, 0, 1)
-        
-        # Balance Type
-        layout.addWidget(QLabel("Balance Type:"), 1, 0)
-        self.balance_type = QComboBox()
-        self.balance_type.addItems(["Payable", "Receivable"])
-        self.balance_type.setStyleSheet(self.get_input_style())
-        layout.addWidget(self.balance_type, 1, 1)
-        
-        # Credit Limit
-        layout.addWidget(QLabel("Credit Limit:"), 2, 0)
-        self.credit_limit = QDoubleSpinBox()
-        self.credit_limit.setRange(0, 99999999.99)
-        self.credit_limit.setPrefix("₹ ")
-        self.credit_limit.setDecimals(2)
-        self.credit_limit.setStyleSheet(self.get_input_style())
-        layout.addWidget(self.credit_limit, 2, 1)
-        
-        # Payment Terms
-        layout.addWidget(QLabel("Payment Terms:"), 3, 0)
-        self.payment_terms = QComboBox()
-        self.payment_terms.addItems(["Cash", "Credit - 7 Days", "Credit - 15 Days", 
-                                     "Credit - 30 Days", "Credit - 45 Days", "Credit - 60 Days"])
-        self.payment_terms.setStyleSheet(self.get_input_style())
-        layout.addWidget(self.payment_terms, 3, 1)
-        
-        # GST Number
-        layout.addWidget(QLabel("GST Number:"), 4, 0)
-        self.gst_number = QLineEdit()
-        self.gst_number.setPlaceholderText("Enter GST number")
-        self.gst_number.setStyleSheet(self.get_input_style())
-        layout.addWidget(self.gst_number, 4, 1)
-        
-        # PAN Number
-        layout.addWidget(QLabel("PAN Number:"), 5, 0)
-        self.pan_number = QLineEdit()
-        self.pan_number.setPlaceholderText("Enter PAN number")
-        self.pan_number.setStyleSheet(self.get_input_style())
-        layout.addWidget(self.pan_number, 5, 1)
-        
-        # Current Balance (Auto-calculated, Read-only)
-        layout.addWidget(QLabel("Current Balance:"), 6, 0)
-        self.current_balance_label = QLabel("₹ 0.00")
-        self.current_balance_label.setStyleSheet(f"""
+        subtitle = QLabel("Manage all your supplier information in one place")
+        subtitle.setStyleSheet(f"""
             QLabel {{
+                color: {self.colors['text_secondary']};
+                font-size: 14px;
+            }}
+        """)
+        header_layout.addWidget(subtitle)
+        
+        layout.addWidget(header_frame)
+        
+        # Action Bar
+        action_bar = QFrame()
+        action_bar.setStyleSheet(f"""
+            QFrame {{
                 background-color: {self.colors['secondary_bg']};
-                color: {self.colors['accent_gold']};
-                padding: 10px;
-                border-radius: 5px;
-                font-size: 18px;
-                font-weight: bold;
-                border: 2px solid {self.colors['accent_gold']};
-            }}
-        """)
-        layout.addWidget(self.current_balance_label, 6, 1)
-        
-        return group
-    
-    # def _create_bank_details_section(self):
-    #     """Create Bank Details section."""
-    #     group = QGroupBox("🏦 Supplier Bank Details")
-    #     group.setStyleSheet(f"""
-    #         QGroupBox {{
-    #             font-size: 16px;
-    #             font-weight: bold;
-    #             color: {self.colors['accent_gold']};
-    #             border: 2px solid {self.colors['accent_gold']};
-    #             border-radius: 10px;
-    #             margin-top: 15px;
-    #             padding-top: 20px;
-    #         }}
-    #         QGroupBox::title {{
-    #             subcontrol-origin: margin;
-    #             left: 15px;
-    #             padding: 0 10px;
-    #         }}
-    #     """)
-        
-    #     layout = QGridLayout(group)
-    #     layout.setSpacing(12)
-    #     layout.setContentsMargins(20, 25, 20, 20)
-        
-    #     # Bank Name
-    #     layout.addWidget(QLabel("Bank Name:"), 0, 0)
-    #     self.bank_name = QLineEdit()
-    #     self.bank_name.setPlaceholderText("Enter bank name")
-    #     self.bank_name.setStyleSheet(self.get_input_style())
-    #     layout.addWidget(self.bank_name, 0, 1)
-        
-    #     # Account Number
-    #     layout.addWidget(QLabel("Account Number:"), 1, 0)
-    #     self.account_number = QLineEdit()
-    #     self.account_number.setPlaceholderText("Enter account number")
-    #     self.account_number.setStyleSheet(self.get_input_style())
-    #     layout.addWidget(self.account_number, 1, 1)
-        
-    #     # IBAN
-    #     layout.addWidget(QLabel("IBAN:"), 2, 0)
-    #     self.iban = QLineEdit()
-    #     self.iban.setPlaceholderText("Enter IBAN")
-    #     self.iban.setStyleSheet(self.get_input_style())
-    #     layout.addWidget(self.iban, 2, 1)
-        
-    #     # SWIFT Code
-    #     layout.addWidget(QLabel("SWIFT Code:"), 3, 0)
-    #     self.swift_code = QLineEdit()
-    #     self.swift_code.setPlaceholderText("Enter SWIFT code")
-    #     self.swift_code.setStyleSheet(self.get_input_style())
-    #     layout.addWidget(self.swift_code, 3, 1)
-        
-    #     # Branch Name
-    #     layout.addWidget(QLabel("Branch Name:"), 4, 0)
-    #     self.branch_name = QLineEdit()
-    #     self.branch_name.setPlaceholderText("Enter branch name")
-    #     self.branch_name.setStyleSheet(self.get_input_style())
-    #     layout.addWidget(self.branch_name, 4, 1)
-        
-    #     # IFSC Code
-    #     layout.addWidget(QLabel("IFSC Code:"), 5, 0)
-    #     self.ifsc_code = QLineEdit()
-    #     self.ifsc_code.setPlaceholderText("Enter IFSC code")
-    #     self.ifsc_code.setStyleSheet(self.get_input_style())
-    #     layout.addWidget(self.ifsc_code, 5, 1)
-        
-    #     return group
-    
-    def _create_payment_tracking_section(self):
-        """Create Payment Tracking section."""
-        group = QGroupBox("💳 Payment Tracking & Ledger")
-        group.setStyleSheet(f"""
-            QGroupBox {{
-                font-size: 16px;
-                font-weight: bold;
-                color: {self.colors['danger']};
-                border: 2px solid {self.colors['danger']};
                 border-radius: 10px;
-                margin-top: 15px;
-                padding-top: 20px;
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                left: 15px;
-                padding: 0 10px;
-            }}
-        """)
-        
-        layout = QGridLayout(group)
-        layout.setSpacing(15)
-        layout.setContentsMargins(20, 25, 20, 20)
-        
-        # Amount Payable to Supplier
-        payable_label = QLabel("Amount Payable to Supplier:")
-        payable_label.setStyleSheet("font-weight: bold; font-size: 14px;")
-        layout.addWidget(payable_label, 0, 0)
-        
-        self.amount_payable_label = QLabel("₹ 0.00")
-        self.amount_payable_label.setStyleSheet(f"""
-            QLabel {{
-                background-color: {self.colors['danger']};
-                color: white;
                 padding: 15px;
-                border-radius: 8px;
-                font-size: 20px;
-                font-weight: bold;
             }}
         """)
-        layout.addWidget(self.amount_payable_label, 0, 1)
+        action_layout = QHBoxLayout(action_bar)
+        action_layout.setSpacing(15)
         
-        # Amount Paid to Supplier
-        paid_label = QLabel("Amount Paid to Supplier:")
-        paid_label.setStyleSheet("font-weight: bold; font-size: 14px;")
-        layout.addWidget(paid_label, 1, 0)
-        
-        self.amount_paid_label = QLabel("₹ 0.00")
-        self.amount_paid_label.setStyleSheet(f"""
-            QLabel {{
-                background-color: {self.colors['success']};
-                color: white;
-                padding: 15px;
-                border-radius: 8px;
-                font-size: 20px;
-                font-weight: bold;
-            }}
-        """)
-        layout.addWidget(self.amount_paid_label, 1, 1)
-        
-        # Remaining Balance
-        balance_label = QLabel("Remaining Balance:")
-        balance_label.setStyleSheet("font-weight: bold; font-size: 14px;")
-        layout.addWidget(balance_label, 2, 0)
-        
-        self.remaining_balance_label = QLabel("₹ 0.00")
-        self.remaining_balance_label.setStyleSheet(f"""
-            QLabel {{
-                background-color: {self.colors['accent_gold']};
-                color: white;
-                padding: 15px;
-                border-radius: 8px;
-                font-size: 20px;
-                font-weight: bold;
-            }}
-        """)
-        layout.addWidget(self.remaining_balance_label, 2, 1)
-        
-        # Record Payment Button
-        record_payment_btn = QPushButton("💵 Record Payment")
-        record_payment_btn.setStyleSheet(self.get_button_style('add') + """
-            QPushButton {
-                padding: 12px;
+        # Search box
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText("🔍 Search suppliers by name, phone, email, or company...")
+        self.search_input.setStyleSheet(self.get_input_style() + """
+            QLineEdit {
+                padding: 12px 15px;
                 font-size: 14px;
-                font-weight: bold;
+                min-width: 400px;
             }
         """)
-        record_payment_btn.clicked.connect(self._record_payment)
-        layout.addWidget(record_payment_btn, 3, 0, 1, 2)
+        self.search_input.textChanged.connect(self._filter_suppliers)
+        action_layout.addWidget(self.search_input)
         
-        # View Ledger Button
-        view_ledger_btn = QPushButton("📊 View Supplier Ledger")
-        view_ledger_btn.setStyleSheet(self.get_button_style('primary') + """
+        action_layout.addStretch()
+        
+        # Add Supplier Button
+        add_btn = QPushButton("➕ Add New Supplier")
+        add_btn.setStyleSheet(self.get_button_style('add') + """
             QPushButton {
-                padding: 12px;
+                padding: 12px 25px;
+                font-size: 14px;
+                font-weight: 600;
+            }
+        """)
+        add_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        add_btn.clicked.connect(self._add_supplier)
+        action_layout.addWidget(add_btn)
+        
+        # Export Button
+        export_btn = QPushButton("📊 Export to CSV")
+        export_btn.setStyleSheet(self.get_button_style('primary') + """
+            QPushButton {
+                padding: 12px 25px;
                 font-size: 14px;
             }
         """)
-        view_ledger_btn.clicked.connect(self._view_ledger)
-        layout.addWidget(view_ledger_btn, 4, 0, 1, 2)
+        export_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        export_btn.clicked.connect(self._export_suppliers)
+        action_layout.addWidget(export_btn)
         
-        return group
-    
-    def _create_action_buttons(self):
-        """Create action buttons bar."""
-        frame = QFrame()
-        frame.setStyleSheet(f"""
+        layout.addWidget(action_bar)
+        
+        # Statistics Cards - Row 1
+        stats_frame1 = QFrame()
+        stats_layout1 = QHBoxLayout(stats_frame1)
+        stats_layout1.setSpacing(20)
+        
+        self.total_suppliers_label = self._create_stat_card("Total Suppliers", "0", self.colors['accent_primary'])
+        self.active_suppliers_label = self._create_stat_card("Active Suppliers", "0", self.colors['success'])
+        self.credit_suppliers_label = self._create_stat_card("Credit Suppliers", "0", self.colors['accent_gold'])
+        
+        stats_layout1.addWidget(self.total_suppliers_label)
+        stats_layout1.addWidget(self.active_suppliers_label)
+        stats_layout1.addWidget(self.credit_suppliers_label)
+        
+        layout.addWidget(stats_frame1)
+        
+        # Statistics Cards - Row 2 (Financial Summary)
+        stats_frame2 = QFrame()
+        stats_layout2 = QHBoxLayout(stats_frame2)
+        stats_layout2.setSpacing(20)
+        
+        self.total_pending_label = self._create_stat_card("Total Pending to Pay", "₹0.00", self.colors['danger'])
+        self.total_paid_label = self._create_stat_card("Total Amount Paid", "₹0.00", self.colors['success'])
+        self.total_received_label = self._create_stat_card("Total Received from Suppliers", "₹0.00", self.colors['accent_cyan'])
+        
+        stats_layout2.addWidget(self.total_pending_label)
+        stats_layout2.addWidget(self.total_paid_label)
+        stats_layout2.addWidget(self.total_received_label)
+        
+        layout.addWidget(stats_frame2)
+        
+        # Suppliers Table
+        table_frame = QFrame()
+        table_frame.setStyleSheet(f"""
             QFrame {{
                 background-color: {self.colors['secondary_bg']};
                 border-radius: 10px;
                 padding: 20px;
             }}
         """)
+        table_layout = QVBoxLayout(table_frame)
+        table_layout.setSpacing(15)
         
-        layout = QHBoxLayout(frame)
-        layout.setSpacing(15)
-        
-        # Add/Save Button
-        save_btn = QPushButton("💾 Add/Save Supplier")
-        save_btn.setStyleSheet(self.get_button_style('add') + """
-            QPushButton {
-                padding: 15px 30px;
-                font-size: 15px;
-                font-weight: bold;
-            }
-        """)
-        save_btn.clicked.connect(self._save_supplier)
-        layout.addWidget(save_btn)
-        
-        # Update Button
-        update_btn = QPushButton("✏️ Update Supplier")
-        update_btn.setStyleSheet(self.get_button_style('primary') + """
-            QPushButton {
-                padding: 15px 30px;
-                font-size: 15px;
-            }
-        """)
-        update_btn.clicked.connect(self._update_supplier)
-        layout.addWidget(update_btn)
-        
-        # Delete Button
-        delete_btn = QPushButton("🗑️ Delete Supplier")
-        delete_btn.setStyleSheet(self.get_button_style('cancel') + """
-            QPushButton {
-                padding: 15px 30px;
-                font-size: 15px;
-            }
-        """)
-        delete_btn.clicked.connect(self._delete_supplier)
-        layout.addWidget(delete_btn)
-        
-        # Clear Form Button
-        clear_btn = QPushButton("🔄 Clear Form")
-        clear_btn.setStyleSheet(self.get_button_style('secondary') + """
-            QPushButton {
-                padding: 15px 30px;
-                font-size: 15px;
-            }
-        """)
-        clear_btn.clicked.connect(self._clear_form)
-        layout.addWidget(clear_btn)
-        
-        layout.addStretch()
-        
-        return frame
-    
-    def _create_supplier_list_section(self):
-        """Create supplier list table."""
-        group = QGroupBox("📋 All Suppliers")
-        group.setStyleSheet(f"""
-            QGroupBox {{
-                font-size: 18px;
-                font-weight: bold;
+        table_title = QLabel("📋 Supplier Directory")
+        table_title.setStyleSheet(f"""
+            QLabel {{
                 color: {self.colors['accent_primary']};
-                border: 2px solid {self.colors['accent_primary']};
-                border-radius: 10px;
-                margin-top: 15px;
-                padding-top: 20px;
+                font-size: 16px;
+                font-weight: bold;
             }}
         """)
+        table_layout.addWidget(table_title)
         
-        layout = QVBoxLayout(group)
-        layout.setSpacing(15)
-        layout.setContentsMargins(20, 25, 20, 20)
-        
-        # Search
-        search_layout = QHBoxLayout()
-        search_label = QLabel("🔍 Search:")
-        self.supplier_search = QLineEdit()
-        self.supplier_search.setPlaceholderText("Search by name, phone, email...")
-        self.supplier_search.setStyleSheet(self.get_input_style())
-        self.supplier_search.textChanged.connect(self._filter_supplier_table)
-        search_layout.addWidget(search_label)
-        search_layout.addWidget(self.supplier_search)
-        layout.addLayout(search_layout)
-        
-        # Table
-        self.supplier_table = QTableWidget(0, 8)
-        self.supplier_table.setHorizontalHeaderLabels([
-            "Supplier Name", "Type", "Contact", "Email", "Balance Type", 
-            "Current Balance", "Payment Terms", "ID"
+        # Create table
+        self.suppliers_table = QTableWidget(0, 13)
+        self.suppliers_table.setHorizontalHeaderLabels([
+            "Supplier Name", "Contact Person", "Phone", "Email", "Company", 
+            "Payment Terms", "Pending Amount", "Amount Paid", "Received from Supplier", 
+            "GST", "Created Date", "Actions", "ID"
         ])
         
         # Configure table
-        header = self.supplier_table.horizontalHeader()
+        self._configure_table()
+        
+        table_layout.addWidget(self.suppliers_table)
+        
+        layout.addWidget(table_frame)
+        
+        scroll.setWidget(content)
+        main_layout.addWidget(scroll)
+        
+        # Update statistics
+        self._update_statistics()
+    
+    def _create_stat_card(self, title, value, color):
+        """Create a statistics card."""
+        card = QFrame()
+        card.setStyleSheet(f"""
+            QFrame {{
+                background-color: {self.colors['secondary_bg']};
+                border-radius: 10px;
+                border-left: 5px solid {color};
+                padding: 20px;
+            }}
+        """)
+        card_layout = QVBoxLayout(card)
+        card_layout.setSpacing(8)
+        
+        title_label = QLabel(title)
+        title_label.setStyleSheet(f"""
+            QLabel {{
+                color: {self.colors['text_secondary']};
+                font-size: 13px;
+                font-weight: 500;
+            }}
+        """)
+        card_layout.addWidget(title_label)
+        
+        value_label = QLabel(value)
+        value_label.setStyleSheet(f"""
+            QLabel {{
+                color: {color};
+                font-size: 28px;
+                font-weight: bold;
+            }}
+        """)
+        value_label.setProperty('stat_value', True)
+        card_layout.addWidget(value_label)
+        
+        return card
+    
+    def _configure_table(self):
+        """Configure table appearance and behavior."""
+        # Enable sorting
+        self.suppliers_table.setSortingEnabled(True)
+        
+        # Configure header
+        header = self.suppliers_table.horizontalHeader()
         header.setStyleSheet(f"""
             QHeaderView::section {{
                 background-color: {self.colors['accent_primary']};
                 color: white;
-                padding: 12px;
+                padding: 12px 8px;
                 border: none;
+                border-right: 1px solid {self.colors['primary_bg']};
                 font-weight: bold;
                 font-size: 13px;
             }}
+            QHeaderView::section:hover {{
+                background-color: {self.colors['accent_secondary']};
+            }}
         """)
         
-        self.supplier_table.setColumnWidth(0, 200)
-        self.supplier_table.setColumnWidth(1, 120)
-        self.supplier_table.setColumnWidth(2, 120)
-        self.supplier_table.setColumnWidth(3, 180)
-        self.supplier_table.setColumnWidth(4, 120)
-        self.supplier_table.setColumnWidth(5, 150)
-        self.supplier_table.setColumnWidth(6, 150)
-        self.supplier_table.setColumnHidden(7, True)
-        
-        self.supplier_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
-        self.supplier_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        self.supplier_table.setAlternatingRowColors(True)
-        self.supplier_table.setStyleSheet(self.get_table_style())
-        self.supplier_table.setMinimumHeight(400)
-        self.supplier_table.itemClicked.connect(self._load_supplier_to_form)
-        
-        layout.addWidget(self.supplier_table)
-        
-        return group
-    
-    def _load_data(self):
-        """Load suppliers and payments data."""
-        if os.path.exists(self.suppliers_file):
-            try:
-                with open(self.suppliers_file, 'r', encoding='utf-8') as f:
-                    self.suppliers = json.load(f)
-            except:
-                self.suppliers = []
-        
-        if os.path.exists(self.payments_file):
-            try:
-                with open(self.payments_file, 'r', encoding='utf-8') as f:
-                    self.payments = json.load(f)
-            except:
-                self.payments = []
-    
-    def _save_data(self):
-        """Save suppliers and payments data."""
-        try:
-            with open(self.suppliers_file, 'w', encoding='utf-8') as f:
-                json.dump(self.suppliers, f, indent=4, ensure_ascii=False)
-            
-            with open(self.payments_file, 'w', encoding='utf-8') as f:
-                json.dump(self.payments, f, indent=4, ensure_ascii=False)
-            
-            return True
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to save data:\n{str(e)}")
-            return False
-    
-    def _save_supplier(self):
-        """Add/Save new supplier."""
-        name = self.supplier_name.text().strip()
-        contact = self.contact_number.text().strip()
-        
-        if not name or not contact:
-            QMessageBox.warning(self, "Validation Error", "Supplier Name and Contact Number are required!")
-            return
-        
-        supplier_data = {
-            'id': str(datetime.now().timestamp()),
-            'name': name,
-            'type': self.supplier_type.currentText(),
-            'contact': contact,
-            'alternate_contact': self.alternate_number.text().strip(),
-            'email': self.email.text().strip(),
-            'country': self.country.currentText(),
-            'city': self.city.text().strip(),
-            'address': self.address.toPlainText().strip(),
-            'opening_balance': self.opening_balance.value(),
-            'balance_type': self.balance_type.currentText(),
-            'credit_limit': self.credit_limit.value(),
-            'payment_terms': self.payment_terms.currentText(),
-            'gst': self.gst_number.text().strip(),
-            'pan': self.pan_number.text().strip(),
-            'bank_name': self.bank_name.text().strip(),
-            'account_number': self.account_number.text().strip(),
-            'iban': self.iban.text().strip(),
-            'swift': self.swift_code.text().strip(),
-            'branch': self.branch_name.text().strip(),
-            'ifsc': self.ifsc_code.text().strip(),
-            'amount_payable': 0.0,
-            'amount_paid': 0.0,
-            'created_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        # Set column widths
+        column_widths = {
+            0: 180,   # Supplier Name
+            1: 130,   # Contact Person
+            2: 110,   # Phone
+            3: 160,   # Email
+            4: 150,   # Company
+            5: 130,   # Payment Terms
+            6: 140,   # Pending Amount
+            7: 130,   # Amount Paid
+            8: 160,   # Received from Supplier
+            9: 110,   # GST
+            10: 120,  # Created Date
+            11: 200,  # Actions
+            12: 0     # ID (hidden)
         }
         
-        self.suppliers.append(supplier_data)
+        for col, width in column_widths.items():
+            if width == 0:
+                self.suppliers_table.setColumnHidden(col, True)
+            else:
+                self.suppliers_table.setColumnWidth(col, width)
         
-        if self._save_data():
-            QMessageBox.information(self, "Success", f"Supplier '{name}' added successfully!")
-            self._clear_form()
-            self._populate_supplier_table()
+        header.setStretchLastSection(False)
+        header.setSectionsMovable(False)
+        
+        # Configure vertical header
+        self.suppliers_table.verticalHeader().setVisible(True)
+        self.suppliers_table.verticalHeader().setDefaultSectionSize(50)
+        
+        # Table styling
+        self.suppliers_table.setAlternatingRowColors(True)
+        self.suppliers_table.setStyleSheet(self.get_table_style() + f"""
+            QTableWidget {{
+                gridline-color: #e0e0e0;
+                font-size: 13px;
+                selection-background-color: {self.colors['accent_primary']};
+                selection-color: white;
+            }}
+            QTableWidget::item {{
+                padding: 8px 10px;
+                border: none;
+            }}
+            QTableWidget::item:alternate {{
+                background-color: #f9f9f9;
+            }}
+        """)
+        
+        self.suppliers_table.setMinimumHeight(500)
+        self.suppliers_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.suppliers_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
     
-    def _update_supplier(self):
-        """Update existing supplier."""
-        if not self.current_supplier_id:
-            QMessageBox.warning(self, "No Selection", "Please select a supplier to update!")
-            return
+    def _load_suppliers(self):
+        """Load suppliers from JSON file."""
+        if os.path.exists(self.data_file):
+            try:
+                with open(self.data_file, 'r', encoding='utf-8') as f:
+                    self.suppliers = json.load(f)
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to load suppliers:\n{str(e)}")
+                self.suppliers = []
+        else:
+            self.suppliers = []
+    
+    def _save_suppliers(self):
+        """Save suppliers to JSON file."""
+        try:
+            with open(self.data_file, 'w', encoding='utf-8') as f:
+                json.dump(self.suppliers, f, indent=4, ensure_ascii=False)
+            return True
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to save suppliers:\n{str(e)}")
+            return False
+    
+    def _populate_table(self, suppliers_list=None):
+        """Populate table with suppliers including financial data."""
+        if suppliers_list is None:
+            suppliers_list = self.suppliers
         
-        name = self.supplier_name.text().strip()
-        contact = self.contact_number.text().strip()
+        self.suppliers_table.setRowCount(0)
+        self.suppliers_table.setSortingEnabled(False)
         
-        if not name or not contact:
-            QMessageBox.warning(self, "Validation Error", "Supplier Name and Contact Number are required!")
-            return
+        for supplier in suppliers_list:
+            row = self.suppliers_table.rowCount()
+            self.suppliers_table.insertRow(row)
+            
+            # Get financial data
+            financial = supplier.get('financial', {
+                'amount_pending': 0.0,
+                'amount_paid': 0.0,
+                'amount_received': 0.0
+            })
+            
+            # Supplier Name
+            name_item = QTableWidgetItem(supplier.get('name', ''))
+            name_item.setFont(QFont('Arial', 12, QFont.Weight.Bold))
+            self.suppliers_table.setItem(row, 0, name_item)
+            
+            # Contact Person
+            self.suppliers_table.setItem(row, 1, QTableWidgetItem(supplier.get('contact_person', 'N/A')))
+            
+            # Phone
+            phone_item = QTableWidgetItem(supplier.get('phone', ''))
+            phone_item.setForeground(QColor(self.colors['accent_primary']))
+            self.suppliers_table.setItem(row, 2, phone_item)
+            
+            # Email
+            self.suppliers_table.setItem(row, 3, QTableWidgetItem(supplier.get('email', 'N/A')))
+            
+            # Company
+            self.suppliers_table.setItem(row, 4, QTableWidgetItem(supplier.get('company', 'N/A')))
+            
+            # Payment Terms
+            payment_item = QTableWidgetItem(supplier.get('payment_terms', 'Cash'))
+            if 'Credit' in supplier.get('payment_terms', ''):
+                payment_item.setForeground(QColor(self.colors['accent_gold']))
+            else:
+                payment_item.setForeground(QColor(self.colors['success']))
+            self.suppliers_table.setItem(row, 5, payment_item)
+            
+            # Pending Amount (Amount Not Yet Paid to Supplier)
+            pending = financial.get('amount_pending', 0.0)
+            pending_item = QTableWidgetItem(f"₹{pending:,.2f}")
+            if pending > 0:
+                pending_item.setForeground(QColor(self.colors['danger']))
+                pending_item.setFont(QFont('Arial', 11, QFont.Weight.Bold))
+            else:
+                pending_item.setForeground(QColor(self.colors['success']))
+            self.suppliers_table.setItem(row, 6, pending_item)
+            
+            # Amount Paid
+            paid = financial.get('amount_paid', 0.0)
+            paid_item = QTableWidgetItem(f"₹{paid:,.2f}")
+            paid_item.setForeground(QColor(self.colors['success']))
+            self.suppliers_table.setItem(row, 7, paid_item)
+            
+            # Amount Received from Supplier
+            received = financial.get('amount_received', 0.0)
+            received_item = QTableWidgetItem(f"₹{received:,.2f}")
+            if received > 0:
+                received_item.setForeground(QColor(self.colors['accent_cyan']))
+                received_item.setFont(QFont('Arial', 11, QFont.Weight.Bold))
+            else:
+                received_item.setForeground(QColor(self.colors['text_secondary']))
+            self.suppliers_table.setItem(row, 8, received_item)
+            
+            # GST
+            self.suppliers_table.setItem(row, 9, QTableWidgetItem(supplier.get('gst', 'N/A')))
+            
+            # Created Date
+            created_date = supplier.get('created_date', '')
+            if created_date:
+                try:
+                    date_obj = datetime.strptime(created_date, '%Y-%m-%d %H:%M:%S')
+                    formatted_date = date_obj.strftime('%d-%m-%Y')
+                except:
+                    formatted_date = created_date
+            else:
+                formatted_date = 'N/A'
+            self.suppliers_table.setItem(row, 10, QTableWidgetItem(formatted_date))
+            
+            # Actions
+            actions_widget = self._create_action_buttons(supplier)
+            self.suppliers_table.setCellWidget(row, 11, actions_widget)
+            
+            # ID (hidden)
+            self.suppliers_table.setItem(row, 12, QTableWidgetItem(supplier.get('id', '')))
         
-        for i, supplier in enumerate(self.suppliers):
-            if supplier['id'] == self.current_supplier_id:
-                # Preserve payment data
-                amount_payable = supplier.get('amount_payable', 0.0)
-                amount_paid = supplier.get('amount_paid', 0.0)
+        self.suppliers_table.setSortingEnabled(True)
+        self._update_statistics()
+    
+    def _create_action_buttons(self, supplier):
+        """Create action buttons for each row."""
+        widget = QWidget()
+        layout = QHBoxLayout(widget)
+        layout.setContentsMargins(5, 2, 5, 2)
+        layout.setSpacing(5)
+        
+        # Financial Button
+        financial_btn = QPushButton("💰")
+        financial_btn.setToolTip("Manage Payments")
+        financial_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #10b981;
+                color: white;
+                border: none;
+                padding: 5px 10px;
+                border-radius: 4px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #059669;
+            }
+        """)
+        financial_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        financial_btn.clicked.connect(lambda: self._manage_supplier_finances(supplier))
+        layout.addWidget(financial_btn)
+        
+        # View Button
+        view_btn = QPushButton("👁️")
+        view_btn.setToolTip("View Details")
+        view_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #4a9eff;
+                color: white;
+                border: none;
+                padding: 5px 10px;
+                border-radius: 4px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #3a8eef;
+            }
+        """)
+        view_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        view_btn.clicked.connect(lambda: self._view_supplier(supplier))
+        layout.addWidget(view_btn)
+        
+        # Edit Button
+        edit_btn = QPushButton("✏️")
+        edit_btn.setToolTip("Edit Supplier")
+        edit_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #f5a623;
+                color: white;
+                border: none;
+                padding: 5px 10px;
+                border-radius: 4px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #e59613;
+            }
+        """)
+        edit_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        edit_btn.clicked.connect(lambda: self._edit_supplier(supplier))
+        layout.addWidget(edit_btn)
+        
+        # Delete Button
+        delete_btn = QPushButton("🗑️")
+        delete_btn.setToolTip("Delete Supplier")
+        delete_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #ff4444;
+                color: white;
+                border: none;
+                padding: 5px 10px;
+                border-radius: 4px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #ee3333;
+            }
+        """)
+        delete_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        delete_btn.clicked.connect(lambda: self._delete_supplier(supplier))
+        layout.addWidget(delete_btn)
+        
+        layout.addStretch()
+        return widget
+    
+    def _add_supplier(self):
+        """Open dialog to add new supplier."""
+        dialog = SupplierDialog(self.colors, self.get_input_style, self.get_button_style, parent=self)
+        
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            supplier_data = dialog.get_supplier_data()
+            if supplier_data:
+                self.suppliers.append(supplier_data)
+                if self._save_suppliers():
+                    QMessageBox.information(self, "Success", f"Supplier '{supplier_data['name']}' added successfully!")
+                    self._populate_table()
+    
+    def _edit_supplier(self, supplier):
+        """Open dialog to edit supplier."""
+        dialog = SupplierDialog(self.colors, self.get_input_style, self.get_button_style, 
+                                supplier_data=supplier, parent=self)
+        
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            updated_data = dialog.get_supplier_data()
+            if updated_data:
+                # Find and update supplier
+                for i, s in enumerate(self.suppliers):
+                    if s['id'] == supplier['id']:
+                        self.suppliers[i] = updated_data
+                        break
                 
-                self.suppliers[i] = {
-                    'id': self.current_supplier_id,
-                    'name': name,
-                    'type': self.supplier_type.currentText(),
-                    'contact': contact,
-                    'alternate_contact': self.alternate_number.text().strip(),
-                    'email': self.email.text().strip(),
-                    'country': self.country.currentText(),
-                    'city': self.city.text().strip(),
-                    'address': self.address.toPlainText().strip(),
-                    'opening_balance': self.opening_balance.value(),
-                    'balance_type': self.balance_type.currentText(),
-                    'credit_limit': self.credit_limit.value(),
-                    'payment_terms': self.payment_terms.currentText(),
-                    'gst': self.gst_number.text().strip(),
-                    'pan': self.pan_number.text().strip(),
-                    'bank_name': self.bank_name.text().strip(),
-                    'account_number': self.account_number.text().strip(),
-                    'iban': self.iban.text().strip(),
-                    'swift': self.swift_code.text().strip(),
-                    'branch': self.branch_name.text().strip(),
-                    'ifsc': self.ifsc_code.text().strip(),
-                    'amount_payable': amount_payable,
-                    'amount_paid': amount_paid,
-                    'created_date': supplier.get('created_date'),
-                    'modified_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                }
-                break
-        
-        if self._save_data():
-            QMessageBox.information(self, "Success", f"Supplier '{name}' updated successfully!")
-            self._clear_form()
-            self._populate_supplier_table()
+                if self._save_suppliers():
+                    QMessageBox.information(self, "Success", f"Supplier '{updated_data['name']}' updated successfully!")
+                    self._populate_table()
     
-    def _delete_supplier(self):
-        """Delete supplier."""
-        if not self.current_supplier_id:
-            QMessageBox.warning(self, "No Selection", "Please select a supplier to delete!")
-            return
-        
+    def _delete_supplier(self, supplier):
+        """Delete supplier after confirmation."""
         reply = QMessageBox.question(
             self,
             "Confirm Delete",
-            "Are you sure you want to delete this supplier?\n\nThis action cannot be undone.",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            f"Are you sure you want to delete supplier '{supplier['name']}'?\n\nThis action cannot be undone.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
         )
         
         if reply == QMessageBox.StandardButton.Yes:
-            self.suppliers = [s for s in self.suppliers if s['id'] != self.current_supplier_id]
+            # Remove supplier
+            self.suppliers = [s for s in self.suppliers if s['id'] != supplier['id']]
             
-            if self._save_data():
-                QMessageBox.information(self, "Success", "Supplier deleted successfully!")
-                self._clear_form()
-                self._populate_supplier_table()
+            if self._save_suppliers():
+                QMessageBox.information(self, "Success", f"Supplier '{supplier['name']}' deleted successfully!")
+                self._populate_table()
     
-    def _clear_form(self):
-        """Clear all form fields."""
-        self.current_supplier_id = None
-        self.supplier_name.clear()
-        self.supplier_type.setCurrentIndex(0)
-        self.contact_number.clear()
-        self.alternate_number.clear()
-        self.email.clear()
-        self.country.setCurrentIndex(0)
-        self.city.clear()
-        self.address.clear()
-        self.opening_balance.setValue(0)
-        self.balance_type.setCurrentIndex(0)
-        self.credit_limit.setValue(0)
-        self.payment_terms.setCurrentIndex(0)
-        self.gst_number.clear()
-        self.pan_number.clear()
-        self.bank_name.clear()
-        self.account_number.clear()
-        self.iban.clear()
-        self.swift_code.clear()
-        self.branch_name.clear()
-        self.ifsc_code.clear()
-        self.current_balance_label.setText("₹ 0.00")
-        self.amount_payable_label.setText("₹ 0.00")
-        self.amount_paid_label.setText("₹ 0.00")
-        self.remaining_balance_label.setText("₹ 0.00")
+    def _view_supplier(self, supplier):
+        """View supplier details in a dialog."""
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Supplier Details")
+        dialog.setModal(True)
+        dialog.setMinimumWidth(550)
+        
+        layout = QVBoxLayout(dialog)
+        layout.setSpacing(20)
+        layout.setContentsMargins(30, 30, 30, 30)
+        
+        # Title
+        title = QLabel(f"📋 {supplier.get('name', 'N/A')}")
+        title.setStyleSheet(f"""
+            QLabel {{
+                color: {self.colors['accent_primary']};
+                font-size: 22px;
+                font-weight: bold;
+            }}
+        """)
+        layout.addWidget(title)
+        
+        # Details
+        details_text = f"""
+        <table style='width:100%; border-collapse: collapse;'>
+            <tr><td style='padding:8px; font-weight:bold; width:40%;'>Contact Person:</td><td style='padding:8px;'>{supplier.get('contact_person', 'N/A')}</td></tr>
+            <tr style='background-color:#f5f5f5;'><td style='padding:8px; font-weight:bold;'>Phone:</td><td style='padding:8px;'>{supplier.get('phone', 'N/A')}</td></tr>
+            <tr><td style='padding:8px; font-weight:bold;'>Email:</td><td style='padding:8px;'>{supplier.get('email', 'N/A')}</td></tr>
+            <tr style='background-color:#f5f5f5;'><td style='padding:8px; font-weight:bold;'>Company:</td><td style='padding:8px;'>{supplier.get('company', 'N/A')}</td></tr>
+            <tr><td style='padding:8px; font-weight:bold;'>Address:</td><td style='padding:8px;'>{supplier.get('address', 'N/A')}</td></tr>
+            <tr style='background-color:#f5f5f5;'><td style='padding:8px; font-weight:bold;'>GST Number:</td><td style='padding:8px;'>{supplier.get('gst', 'N/A')}</td></tr>
+            <tr><td style='padding:8px; font-weight:bold;'>PAN Number:</td><td style='padding:8px;'>{supplier.get('pan', 'N/A')}</td></tr>
+            <tr style='background-color:#f5f5f5;'><td style='padding:8px; font-weight:bold;'>Payment Terms:</td><td style='padding:8px;'>{supplier.get('payment_terms', 'N/A')}</td></tr>
+            <tr><td style='padding:8px; font-weight:bold;'>Bank Name:</td><td style='padding:8px;'>{supplier.get('bank_name', 'N/A')}</td></tr>
+            <tr style='background-color:#f5f5f5;'><td style='padding:8px; font-weight:bold;'>Account Number:</td><td style='padding:8px;'>{supplier.get('account_number', 'N/A')}</td></tr>
+            <tr><td style='padding:8px; font-weight:bold;'>IFSC Code:</td><td style='padding:8px;'>{supplier.get('ifsc', 'N/A')}</td></tr>
+            <tr style='background-color:#f5f5f5;'><td style='padding:8px; font-weight:bold;'>Notes:</td><td style='padding:8px;'>{supplier.get('notes', 'N/A')}</td></tr>
+            <tr><td style='padding:8px; font-weight:bold;'>Created Date:</td><td style='padding:8px;'>{supplier.get('created_date', 'N/A')}</td></tr>
+            <tr style='background-color:#f5f5f5;'><td style='padding:8px; font-weight:bold;'>Modified Date:</td><td style='padding:8px;'>{supplier.get('modified_date', 'N/A')}</td></tr>
+        </table>
+        """
+        
+        details_label = QLabel(details_text)
+        details_label.setStyleSheet("""
+            QLabel {
+                background-color: white;
+                border: 1px solid #e0e0e0;
+                border-radius: 8px;
+                padding: 15px;
+            }
+        """)
+        details_label.setWordWrap(True)
+        layout.addWidget(details_label)
+        
+        # Close button
+        close_btn = QPushButton("✖ Close")
+        close_btn.setStyleSheet(self.get_button_style('cancel'))
+        close_btn.clicked.connect(dialog.accept)
+        layout.addWidget(close_btn)
+        
+        dialog.exec()
     
-    def _populate_supplier_table(self):
-        """Populate supplier table."""
-        self.supplier_table.setRowCount(0)
+    def _filter_suppliers(self):
+        """Filter suppliers based on search text."""
+        search_text = self.search_input.text().lower().strip()
+        
+        if not search_text:
+            self._populate_table()
+            return
+        
+        filtered = [
+            s for s in self.suppliers
+            if search_text in s.get('name', '').lower()
+            or search_text in s.get('phone', '').lower()
+            or search_text in s.get('email', '').lower()
+            or search_text in s.get('company', '').lower()
+            or search_text in s.get('contact_person', '').lower()
+        ]
+        
+        self._populate_table(filtered)
+    
+    def _update_statistics(self):
+        """Update statistics cards including financial summaries."""
+        total = len(self.suppliers)
+        credit_count = sum(1 for s in self.suppliers if 'Credit' in s.get('payment_terms', ''))
+        
+        # Calculate financial totals
+        total_pending = 0.0
+        total_paid = 0.0
+        total_received = 0.0
         
         for supplier in self.suppliers:
-            row = self.supplier_table.rowCount()
-            self.supplier_table.insertRow(row)
-            
-            self.supplier_table.setItem(row, 0, QTableWidgetItem(supplier.get('name', '')))
-            self.supplier_table.setItem(row, 1, QTableWidgetItem(supplier.get('type', '')))
-            self.supplier_table.setItem(row, 2, QTableWidgetItem(supplier.get('contact', '')))
-            self.supplier_table.setItem(row, 3, QTableWidgetItem(supplier.get('email', 'N/A')))
-            self.supplier_table.setItem(row, 4, QTableWidgetItem(supplier.get('balance_type', '')))
-            
-            # Calculate current balance
-            balance = supplier.get('opening_balance', 0.0) + supplier.get('amount_payable', 0.0) - supplier.get('amount_paid', 0.0)
-            self.supplier_table.setItem(row, 5, QTableWidgetItem(f"₹ {balance:,.2f}"))
-            
-            self.supplier_table.setItem(row, 6, QTableWidgetItem(supplier.get('payment_terms', '')))
-            self.supplier_table.setItem(row, 7, QTableWidgetItem(supplier.get('id', '')))
-    
-    def _filter_supplier_table(self):
-        """Filter supplier table based on search."""
-        search_text = self.supplier_search.text().lower()
+            financial = supplier.get('financial', {})
+            total_pending += financial.get('amount_pending', 0.0)
+            total_paid += financial.get('amount_paid', 0.0)
+            total_received += financial.get('amount_received', 0.0)
         
-        for row in range(self.supplier_table.rowCount()):
-            show = False
-            for col in range(7):
-                item = self.supplier_table.item(row, col)
-                if item and search_text in item.text().lower():
-                    show = True
-                    break
-            self.supplier_table.setRowHidden(row, not show)
+        # Update stat cards
+        for card in [self.total_suppliers_label, self.active_suppliers_label, self.credit_suppliers_label,
+                     self.total_pending_label, self.total_paid_label, self.total_received_label]:
+            for label in card.findChildren(QLabel):
+                if label.property('stat_value'):
+                    if card == self.total_suppliers_label:
+                        label.setText(str(total))
+                    elif card == self.active_suppliers_label:
+                        label.setText(str(total))
+                    elif card == self.credit_suppliers_label:
+                        label.setText(str(credit_count))
+                    elif card == self.total_pending_label:
+                        label.setText(f"₹{total_pending:,.2f}")
+                    elif card == self.total_paid_label:
+                        label.setText(f"₹{total_paid:,.2f}")
+                    elif card == self.total_received_label:
+                        label.setText(f"₹{total_received:,.2f}")
     
-    def _load_supplier_to_form(self, item):
-        """Load selected supplier to form."""
-        row = item.row()
-        supplier_id = self.supplier_table.item(row, 7).text()
-        
-        supplier = next((s for s in self.suppliers if s['id'] == supplier_id), None)
-        if not supplier:
+    def _export_suppliers(self):
+        """Export suppliers to CSV."""
+        if not self.suppliers:
+            QMessageBox.warning(self, "No Data", "No suppliers to export!")
             return
         
-        self.current_supplier_id = supplier_id
+        filename, _ = QFileDialog.getSaveFileName(
+            self,
+            "Export Suppliers",
+            f"suppliers_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+            "CSV Files (*.csv);;All Files (*.*)"
+        )
         
-        self.supplier_name.setText(supplier.get('name', ''))
-        self.supplier_type.setCurrentText(supplier.get('type', 'Regular'))
-        self.contact_number.setText(supplier.get('contact', ''))
-        self.alternate_number.setText(supplier.get('alternate_contact', ''))
-        self.email.setText(supplier.get('email', ''))
-        self.country.setCurrentText(supplier.get('country', 'India'))
-        self.city.setText(supplier.get('city', ''))
-        self.address.setPlainText(supplier.get('address', ''))
-        self.opening_balance.setValue(supplier.get('opening_balance', 0.0))
-        self.balance_type.setCurrentText(supplier.get('balance_type', 'Payable'))
-        self.credit_limit.setValue(supplier.get('credit_limit', 0.0))
-        self.payment_terms.setCurrentText(supplier.get('payment_terms', 'Cash'))
-        self.gst_number.setText(supplier.get('gst', ''))
-        self.pan_number.setText(supplier.get('pan', ''))
-        self.bank_name.setText(supplier.get('bank_name', ''))
-        self.account_number.setText(supplier.get('account_number', ''))
-        self.iban.setText(supplier.get('iban', ''))
-        self.swift_code.setText(supplier.get('swift', ''))
-        self.branch_name.setText(supplier.get('branch', ''))
-        self.ifsc_code.setText(supplier.get('ifsc', ''))
-        
-        # Update payment tracking
-        self._update_payment_tracking(supplier)
-        self._calculate_current_balance()
+        if filename:
+            try:
+                import csv
+                
+                with open(filename, 'w', newline='', encoding='utf-8') as f:
+                    writer = csv.writer(f)
+                    
+                    # Headers
+                    writer.writerow([
+                        'Supplier Name', 'Contact Person', 'Phone', 'Email', 'Company',
+                        'Address', 'GST', 'PAN', 'Payment Terms', 'Bank Name',
+                        'Account Number', 'IFSC', 'Notes', 'Created Date', 'Modified Date'
+                    ])
+                    
+                    # Data
+                    for supplier in self.suppliers:
+                        writer.writerow([
+                            supplier.get('name', ''),
+                            supplier.get('contact_person', ''),
+                            supplier.get('phone', ''),
+                            supplier.get('email', ''),
+                            supplier.get('company', ''),
+                            supplier.get('address', ''),
+                            supplier.get('gst', ''),
+                            supplier.get('pan', ''),
+                            supplier.get('payment_terms', ''),
+                            supplier.get('bank_name', ''),
+                            supplier.get('account_number', ''),
+                            supplier.get('ifsc', ''),
+                            supplier.get('notes', ''),
+                            supplier.get('created_date', ''),
+                            supplier.get('modified_date', '')
+                        ])
+                
+                QMessageBox.information(self, "Success", f"Suppliers exported successfully!\n{filename}")
+            
+            except Exception as e:
+                QMessageBox.critical(self, "Export Error", f"Failed to export suppliers:\n{str(e)}")
     
-    def _calculate_current_balance(self):
-        """Calculate and display current balance."""
-        opening = self.opening_balance.value()
+    def _calculate_all_supplier_financials(self):
+        """Calculate financial data for all suppliers from invoices."""
+        if not os.path.exists(self.invoices_dir):
+            return
         
-        if self.current_supplier_id:
-            supplier = next((s for s in self.suppliers if s['id'] == self.current_supplier_id), None)
-            if supplier:
-                payable = supplier.get('amount_payable', 0.0)
-                paid = supplier.get('amount_paid', 0.0)
-                current_balance = opening + payable - paid
-                self.current_balance_label.setText(f"₹ {current_balance:,.2f}")
+        # Reset all supplier financials
+        for supplier in self.suppliers:
+            if 'financial' not in supplier:
+                supplier['financial'] = {
+                    'total_payable': 0.0,
+                    'amount_paid': 0.0,
+                    'amount_pending': 0.0,
+                    'amount_received': 0.0,
+                    'transactions': []
+                }
             else:
-                self.current_balance_label.setText(f"₹ {opening:,.2f}")
-        else:
-            self.current_balance_label.setText(f"₹ {opening:,.2f}")
+                # Keep manual transactions, reset calculated values
+                supplier['financial']['total_payable'] = 0.0
+                supplier['financial']['amount_pending'] = 0.0
+        
+        # Calculate from invoices
+        for filename in os.listdir(self.invoices_dir):
+            if filename.endswith('.json'):
+                try:
+                    with open(os.path.join(self.invoices_dir, filename), 'r', encoding='utf-8') as f:
+                        invoice = json.load(f)
+                    
+                    # Process each item in the invoice
+                    for item in invoice.get('items', []):
+                        supplier_name = item.get('supplier', '').strip()
+                        supplier_amount = item.get('supplier_amount', 0.0)
+                        
+                        if supplier_name and supplier_amount > 0:
+                            # Find matching supplier
+                            for supplier in self.suppliers:
+                                if supplier['name'].lower() == supplier_name.lower():
+                                    supplier['financial']['total_payable'] += supplier_amount
+                                    break
+                except Exception as e:
+                    print(f"Error processing invoice {filename}: {e}")
+        
+        # Calculate pending amounts
+        for supplier in self.suppliers:
+            financial = supplier['financial']
+            total_payable = financial['total_payable']
+            amount_paid = financial['amount_paid']
+            financial['amount_pending'] = max(0, total_payable - amount_paid)
+        
+        # Save updated financials
+        self._save_suppliers()
     
-    def _update_payment_tracking(self, supplier):
-        """Update payment tracking displays."""
-        payable = supplier.get('amount_payable', 0.0)
-        paid = supplier.get('amount_paid', 0.0)
-        remaining = payable - paid
-        
-        self.amount_payable_label.setText(f"₹ {payable:,.2f}")
-        self.amount_paid_label.setText(f"₹ {paid:,.2f}")
-        self.remaining_balance_label.setText(f"₹ {remaining:,.2f}")
-    
-    def _record_payment(self):
-        """Record payment to supplier."""
-        if not self.current_supplier_id:
-            QMessageBox.warning(self, "No Supplier", "Please select a supplier first!")
-            return
-        
-        # Simple payment dialog
-        from PyQt6.QtWidgets import QDialog, QFormLayout, QDialogButtonBox
-        
+    def _manage_supplier_finances(self, supplier):
+        """Open dialog to manage supplier financial transactions."""
         dialog = QDialog(self)
-        dialog.setWindowTitle("Record Payment")
+        dialog.setWindowTitle(f"Financial Management - {supplier.get('name')}")
         dialog.setModal(True)
+        dialog.setMinimumWidth(700)
+        dialog.setMinimumHeight(600)
         
-        layout = QFormLayout(dialog)
+        layout = QVBoxLayout(dialog)
+        layout.setSpacing(20)
+        layout.setContentsMargins(25, 25, 25, 25)
         
-        amount_spin = QDoubleSpinBox()
-        amount_spin.setRange(0, 99999999.99)
-        amount_spin.setPrefix("₹ ")
-        amount_spin.setDecimals(2)
-        amount_spin.setStyleSheet(self.get_input_style())
-        layout.addRow("Payment Amount:", amount_spin)
+        # Title
+        title = QLabel(f"💰 Financial Overview - {supplier.get('name')}")
+        title.setStyleSheet(f"""
+            QLabel {{
+                color: {self.colors['accent_primary']};
+                font-size: 20px;
+                font-weight: bold;
+            }}
+        """)
+        layout.addWidget(title)
         
-        notes_edit = QTextEdit()
-        notes_edit.setMaximumHeight(60)
-        notes_edit.setStyleSheet(self.get_input_style())
-        layout.addRow("Notes:", notes_edit)
+        # Financial Summary Cards
+        summary_frame = QFrame()
+        summary_frame.setStyleSheet(f"""
+            QFrame {{
+                background-color: {self.colors['secondary_bg']};
+                border-radius: 10px;
+                padding: 20px;
+            }}
+        """)
+        summary_layout = QVBoxLayout(summary_frame)
         
-        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
-        buttons.accepted.connect(dialog.accept)
-        buttons.rejected.connect(dialog.reject)
-        layout.addRow(buttons)
+        financial = supplier.get('financial', {
+            'total_payable': 0.0,
+            'amount_paid': 0.0,
+            'amount_pending': 0.0,
+            'amount_received': 0.0
+        })
         
-        if dialog.exec() == QDialog.DialogCode.Accepted:
-            amount = amount_spin.value()
-            notes = notes_edit.toPlainText()
+        summary_text = f"""
+        <table style='width:100%; border-collapse: collapse;'>
+            <tr style='background-color:#fee; border-left:5px solid #ff4444;'>
+                <td style='padding:15px; font-weight:bold; font-size:14px;'>Amount Not Yet Paid to Supplier:</td>
+                <td style='padding:15px; font-weight:bold; font-size:18px; color:#ff4444; text-align:right;'>₹{financial.get('amount_pending', 0.0):,.2f}</td>
+            </tr>
+            <tr style='background-color:#efe; border-left:5px solid #10b981;'>
+                <td style='padding:15px; font-weight:bold; font-size:14px;'>Amount Already Paid to Supplier:</td>
+                <td style='padding:15px; font-weight:bold; font-size:18px; color:#10b981; text-align:right;'>₹{financial.get('amount_paid', 0.0):,.2f}</td>
+            </tr>
+            <tr style='background-color:#eff; border-left:5px solid #06b6d4;'>
+                <td style='padding:15px; font-weight:bold; font-size:14px;'>Amount Received from Supplier:</td>
+                <td style='padding:15px; font-weight:bold; font-size:18px; color:#06b6d4; text-align:right;'>₹{financial.get('amount_received', 0.0):,.2f}</td>
+            </tr>
+            <tr style='background-color:#f5f5f5; border-left:5px solid #7c3aed;'>
+                <td style='padding:15px; font-weight:bold; font-size:14px;'>Total Payable (from invoices):</td>
+                <td style='padding:15px; font-weight:bold; font-size:16px; color:#7c3aed; text-align:right;'>₹{financial.get('total_payable', 0.0):,.2f}</td>
+            </tr>
+        </table>
+        """
+        
+        summary_label = QLabel(summary_text)
+        summary_label.setWordWrap(True)
+        summary_layout.addWidget(summary_label)
+        
+        layout.addWidget(summary_frame)
+        
+        # Payment Actions
+        actions_group = QGroupBox("Record Transaction")
+        actions_group.setStyleSheet(f"""
+            QGroupBox {{
+                color: {self.colors['accent_primary']};
+                font-weight: bold;
+                font-size: 14px;
+                border: 2px solid {self.colors['accent_primary']};
+                border-radius: 8px;
+                margin-top: 10px;
+                padding-top: 15px;
+            }}
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px;
+            }}
+        """)
+        actions_layout = QVBoxLayout(actions_group)
+        actions_layout.setSpacing(15)
+        
+        # Payment to Supplier
+        payment_frame = QFrame()
+        payment_layout = QHBoxLayout(payment_frame)
+        
+        payment_label = QLabel("Payment to Supplier:")
+        payment_label.setMinimumWidth(180)
+        payment_layout.addWidget(payment_label)
+        
+        payment_input = QDoubleSpinBox()
+        payment_input.setRange(0, 999999999)
+        payment_input.setDecimals(2)
+        payment_input.setPrefix("₹ ")
+        payment_input.setStyleSheet(self.get_input_style())
+        payment_layout.addWidget(payment_input)
+        
+        payment_btn = QPushButton("💵 Record Payment")
+        payment_btn.setStyleSheet(self.get_button_style('add'))
+        payment_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        payment_btn.clicked.connect(lambda: self._record_payment(supplier, payment_input.value(), dialog))
+        payment_layout.addWidget(payment_btn)
+        
+        actions_layout.addWidget(payment_frame)
+        
+        # Receipt from Supplier
+        receipt_frame = QFrame()
+        receipt_layout = QHBoxLayout(receipt_frame)
+        
+        receipt_label = QLabel("Receipt from Supplier:")
+        receipt_label.setMinimumWidth(180)
+        receipt_layout.addWidget(receipt_label)
+        
+        receipt_input = QDoubleSpinBox()
+        receipt_input.setRange(0, 999999999)
+        receipt_input.setDecimals(2)
+        receipt_input.setPrefix("₹ ")
+        receipt_input.setStyleSheet(self.get_input_style())
+        receipt_layout.addWidget(receipt_input)
+        
+        receipt_btn = QPushButton("📥 Record Receipt")
+        receipt_btn.setStyleSheet(self.get_button_style('primary'))
+        receipt_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        receipt_btn.clicked.connect(lambda: self._record_receipt(supplier, receipt_input.value(), dialog))
+        receipt_layout.addWidget(receipt_btn)
+        
+        actions_layout.addWidget(receipt_frame)
+        
+        layout.addWidget(actions_group)
+        
+        # Transaction History
+        history_label = QLabel("📜 Transaction History")
+        history_label.setStyleSheet(f"""
+            QLabel {{
+                color: {self.colors['accent_primary']};
+                font-size: 16px;
+                font-weight: bold;
+                margin-top: 10px;
+            }}
+        """)
+        layout.addWidget(history_label)
+        
+        # Transaction table
+        transactions_table = QTableWidget(0, 4)
+        transactions_table.setHorizontalHeaderLabels(["Date", "Type", "Amount", "Description"])
+        transactions_table.horizontalHeader().setStretchLastSection(True)
+        transactions_table.setAlternatingRowColors(True)
+        transactions_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        transactions_table.setMinimumHeight(200)
+        
+        # Populate transaction history
+        transactions = financial.get('transactions', [])
+        for trans in reversed(transactions):  # Show newest first
+            row = transactions_table.rowCount()
+            transactions_table.insertRow(row)
             
-            if amount <= 0:
-                QMessageBox.warning(self, "Invalid Amount", "Please enter a valid payment amount!")
-                return
+            transactions_table.setItem(row, 0, QTableWidgetItem(trans.get('date', '')))
             
-            # Update supplier payment data
-            for supplier in self.suppliers:
-                if supplier['id'] == self.current_supplier_id:
-                    supplier['amount_paid'] = supplier.get('amount_paid', 0.0) + amount
-                    break
+            trans_type = trans.get('type', '')
+            type_item = QTableWidgetItem(trans_type)
+            if trans_type == 'Payment':
+                type_item.setForeground(QColor(self.colors['success']))
+            elif trans_type == 'Receipt':
+                type_item.setForeground(QColor(self.colors['accent_cyan']))
+            transactions_table.setItem(row, 1, type_item)
             
-            # Record payment transaction
-            payment_record = {
-                'id': str(datetime.now().timestamp()),
-                'supplier_id': self.current_supplier_id,
-                'amount': amount,
-                'notes': notes,
-                'date': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            }
-            self.payments.append(payment_record)
+            amount = trans.get('amount', 0.0)
+            amount_item = QTableWidgetItem(f"₹{amount:,.2f}")
+            amount_item.setFont(QFont('Arial', 11, QFont.Weight.Bold))
+            transactions_table.setItem(row, 2, amount_item)
             
-            if self._save_data():
-                QMessageBox.information(self, "Success", f"Payment of ₹{amount:,.2f} recorded successfully!")
-                self._load_supplier_to_form(self.supplier_table.item(self.supplier_table.currentRow(), 0))
-                self._populate_supplier_table()
+            transactions_table.setItem(row, 3, QTableWidgetItem(trans.get('description', '')))
+        
+        layout.addWidget(transactions_table)
+        
+        # Buttons
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()
+        
+        refresh_btn = QPushButton("🔄 Refresh from Invoices")
+        refresh_btn.setStyleSheet(self.get_button_style('primary'))
+        refresh_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        refresh_btn.clicked.connect(lambda: self._refresh_supplier_financials(supplier, dialog))
+        button_layout.addWidget(refresh_btn)
+        
+        close_btn = QPushButton("✖ Close")
+        close_btn.setStyleSheet(self.get_button_style('cancel'))
+        close_btn.clicked.connect(dialog.accept)
+        button_layout.addWidget(close_btn)
+        
+        layout.addLayout(button_layout)
+        
+        dialog.exec()
     
-    def _view_ledger(self):
-        """View supplier ledger."""
-        if not self.current_supplier_id:
-            QMessageBox.warning(self, "No Supplier", "Please select a supplier first!")
+    def _record_payment(self, supplier, amount, dialog):
+        """Record a payment made to the supplier."""
+        if amount <= 0:
+            QMessageBox.warning(self, "Invalid Amount", "Please enter a valid payment amount.")
             return
         
-        QMessageBox.information(self, "Supplier Ledger", 
-                               "Ledger feature will show all transactions, payments, and balance history.\n\n"
-                               "This will be fully integrated with the Balance Report.")
+        # Add transaction
+        if 'financial' not in supplier:
+            supplier['financial'] = {
+                'total_payable': 0.0,
+                'amount_paid': 0.0,
+                'amount_pending': 0.0,
+                'amount_received': 0.0,
+                'transactions': []
+            }
+        
+        transaction = {
+            'date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'type': 'Payment',
+            'amount': amount,
+            'description': f'Payment made to {supplier.get("name")}'
+        }
+        
+        supplier['financial']['transactions'].append(transaction)
+        supplier['financial']['amount_paid'] += amount
+        supplier['financial']['amount_pending'] = max(0, supplier['financial']['total_payable'] - supplier['financial']['amount_paid'])
+        
+        if self._save_suppliers():
+            QMessageBox.information(self, "Success", f"Payment of ₹{amount:,.2f} recorded successfully!")
+            self._populate_table()
+            dialog.accept()
+    
+    def _record_receipt(self, supplier, amount, dialog):
+        """Record a receipt/return from the supplier."""
+        if amount <= 0:
+            QMessageBox.warning(self, "Invalid Amount", "Please enter a valid receipt amount.")
+            return
+        
+        # Add transaction
+        if 'financial' not in supplier:
+            supplier['financial'] = {
+                'total_payable': 0.0,
+                'amount_paid': 0.0,
+                'amount_pending': 0.0,
+                'amount_received': 0.0,
+                'transactions': []
+            }
+        
+        transaction = {
+            'date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'type': 'Receipt',
+            'amount': amount,
+            'description': f'Receipt/return from {supplier.get("name")}'
+        }
+        
+        supplier['financial']['transactions'].append(transaction)
+        supplier['financial']['amount_received'] += amount
+        
+        if self._save_suppliers():
+            QMessageBox.information(self, "Success", f"Receipt of ₹{amount:,.2f} recorded successfully!")
+            self._populate_table()
+            dialog.accept()
+    
+    def _refresh_supplier_financials(self, supplier, dialog):
+        """Refresh financial calculations from invoices for a specific supplier."""
+        self._calculate_all_supplier_financials()
+        self._populate_table()
+        dialog.accept()
+        QMessageBox.information(self, "Refreshed", "Financial data has been recalculated from invoices.")
+        # Reopen dialog with updated data
+        self._manage_supplier_finances(supplier)

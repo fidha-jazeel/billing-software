@@ -32,7 +32,8 @@ from travel_billing_software.ui.settings import SettingsPage
 from travel_billing_software.ui.reports import ReportsPage
 from travel_billing_software.ui.home import HomePage
 from travel_billing_software.ui.ai_features import AIFeaturesPage
-from travel_billing_software.ui.supplier_page import SupplierPage
+from travel_billing_software.ui.expenses_page import ExpensesPage
+from travel_billing_software.ui.supplier_billing_page import SupplierBillingPage
 
 # Import database manager
 try:
@@ -110,7 +111,8 @@ class DashboardImproved(QMainWindow):
         for page_id, label, icon in [
             ('home', '🏠 Home', 'home'),
             ('reports', '📊 Reports', 'reports'),
-            ('supplier', '👥 Supplier Page', 'supplier'),
+            ('expenses', '💰 Expenses', 'expenses'),
+            ('supplier_billing', '📋 Supplier Billing', 'supplier_billing'),
             ('ai', '🤖 AI Features', 'ai'),
             ('settings', '⚙ Settings', 'settings'),
             ('about', 'ℹ About', 'about'),
@@ -129,14 +131,16 @@ class DashboardImproved(QMainWindow):
         # Create pages
         self.home_page = self._create_home_page()
         self.reports_page = self._create_reports_page()
-        self.supplier_page = self._create_supplier_page()
+        self.expenses_page = self._create_expenses_page()
+        self.supplier_billing_page = self._create_supplier_billing_page()
         self.ai_page = self._create_ai_page()
         self.settings_page = self._create_settings_page()
         self.about_page = self._create_about_page()
 
         self.content_stack.addWidget(self.home_page)
         self.content_stack.addWidget(self.reports_page)
-        self.content_stack.addWidget(self.supplier_page)
+        self.content_stack.addWidget(self.expenses_page)
+        self.content_stack.addWidget(self.supplier_billing_page)
         self.content_stack.addWidget(self.ai_page)
         self.content_stack.addWidget(self.settings_page)
         self.content_stack.addWidget(self.about_page)
@@ -193,8 +197,10 @@ class DashboardImproved(QMainWindow):
             self.content_stack.setCurrentWidget(self.home_page)
         elif page_id == 'reports':
             self.content_stack.setCurrentWidget(self.reports_page)
-        elif page_id == 'supplier':
-            self.content_stack.setCurrentWidget(self.supplier_page)
+        elif page_id == 'expenses':
+            self.content_stack.setCurrentWidget(self.expenses_page)
+        elif page_id == 'supplier_billing':
+            self.content_stack.setCurrentWidget(self.supplier_billing_page)
         elif page_id == 'ai':
             self.content_stack.setCurrentWidget(self.ai_page)
         elif page_id == 'settings':
@@ -1777,9 +1783,13 @@ class DashboardImproved(QMainWindow):
                           get_input_style, get_spinbox_style, 
                           get_button_style, get_scrollarea_style, self.db)
     
-    def _create_supplier_page(self) -> QWidget:
-        """Create the Supplier Management page."""
-        return SupplierPage(COLORS, get_table_style, get_button_style, get_input_style, self)
+    def _create_expenses_page(self) -> QWidget:
+        """Create the Expenses Management page."""
+        return ExpensesPage(COLORS, get_table_style, get_button_style, get_input_style, self)
+    
+    def _create_supplier_billing_page(self) -> QWidget:
+        """Create the Supplier Billing page."""
+        return SupplierBillingPage(COLORS, get_input_style, get_button_style, get_combobox_style, self)
         
     def _create_ai_page(self) -> QWidget:
         """Create the AI Features page."""
