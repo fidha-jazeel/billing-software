@@ -41,8 +41,8 @@ class SettingsPage(QWidget):
             QWidget().setLayout(self.layout())
             
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(20, 20, 20, 20)
-        main_layout.setSpacing(15)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
 
         # Header
         heading = QLabel(f"<h2 style='color:{self.COLORS['accent_secondary']};'>⚙️ Settings</h2>")
@@ -51,11 +51,13 @@ class SettingsPage(QWidget):
         # Scroll area
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setStyleSheet(self.get_scrollarea_style())
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setStyleSheet(self.get_scrollarea_style() + "QScrollArea { margin: 0px; padding: 0px; }")
         
         settings_widget = QWidget()
         self.content_layout = QVBoxLayout(settings_widget)
-        self.content_layout.setSpacing(20)
+        self.content_layout.setSpacing(0)
 
         # 1. APPLICATION APPEARANCE (New Feature)
         self._create_appearance_section()

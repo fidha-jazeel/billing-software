@@ -66,40 +66,28 @@ class SupplierBillingPage(QWidget):
         # Scroll area with dark theme
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         scroll.setStyleSheet(f"""
             QScrollArea {{ 
                 border: none; 
-                background-color: {self.dark_theme['bg_primary']}; 
-            }}
-            QScrollBar:vertical {{
-                background-color: {self.dark_theme['bg_secondary']};
-                width: 12px;
-                border: none;
-            }}
-            QScrollBar::handle:vertical {{
-                background-color: {self.dark_theme['button_bg']};
-                border-radius: 6px;
-                min-height: 30px;
-            }}
-            QScrollBar::handle:vertical:hover {{
-                background-color: {self.dark_theme['button_hover']};
-            }}
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
-                height: 0px;
+                background-color: {self.dark_theme['bg_primary']};
+                margin: 0px;
+                padding: 0px;
             }}
         """)
         
         content = QWidget()
         layout = QVBoxLayout(content)
-        layout.setContentsMargins(30, 30, 30, 30)
-        layout.setSpacing(25)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
         
         # Header Section
         header_frame = QFrame()
         header_frame.setStyleSheet(f"QFrame {{ background-color: transparent; border: none; }}")
         header_layout = QVBoxLayout(header_frame)
         header_layout.setContentsMargins(0, 0, 0, 0)
-        header_layout.setSpacing(10)
+        header_layout.setSpacing(0)
         
         title = QLabel("📋 Supplier Billing")
         title.setStyleSheet(f"""
@@ -136,11 +124,11 @@ class SupplierBillingPage(QWidget):
             }}
         """)
         content_layout = QVBoxLayout(content_frame)
-        content_layout.setSpacing(20)
+        content_layout.setSpacing(0)
         
         # TOP ROW - Supplier Details (Dark Theme)
         top_row = QHBoxLayout()
-        top_row.setSpacing(15)
+        top_row.setSpacing(0)
         
         # Dark theme input style
         dark_input_style = f"""
@@ -309,7 +297,7 @@ class SupplierBillingPage(QWidget):
         
         # ITEM TABLE AREA (Dark Theme)
         table_section = QVBoxLayout()
-        table_section.setSpacing(10)
+        table_section.setSpacing(0)
         
         table_label = QLabel("Items")
         table_label.setStyleSheet(f"""
@@ -402,11 +390,11 @@ class SupplierBillingPage(QWidget):
         
         # BOTTOM SECTION - Payments and Summary (Dark Theme)
         bottom_section = QHBoxLayout()
-        bottom_section.setSpacing(30)
+        bottom_section.setSpacing(0)
         
         # LEFT SIDE - Payment Section (Dark Theme)
         payment_section = QVBoxLayout()
-        payment_section.setSpacing(10)
+        payment_section.setSpacing(0)
         
         payment_label = QLabel("Payments")
         payment_label.setStyleSheet(f"""
@@ -421,7 +409,7 @@ class SupplierBillingPage(QWidget):
         
         # Payment rows container
         self.payment_container = QVBoxLayout()
-        self.payment_container.setSpacing(10)
+        self.payment_container.setSpacing(0)
         payment_section.addLayout(self.payment_container)
         
         # Add first two payment rows by default
@@ -456,7 +444,7 @@ class SupplierBillingPage(QWidget):
         
         # RIGHT SIDE - Summary Panel (Dark Theme)
         summary_section = QVBoxLayout()
-        summary_section.setSpacing(15)
+        summary_section.setSpacing(0)
         
         summary_frame = QFrame()
         summary_frame.setStyleSheet(f"""
@@ -468,7 +456,7 @@ class SupplierBillingPage(QWidget):
             }}
         """)
         summary_layout = QVBoxLayout(summary_frame)
-        summary_layout.setSpacing(12)
+        summary_layout.setSpacing(0)
         
         summary_title = QLabel("Summary")
         summary_title.setStyleSheet(f"""
@@ -623,7 +611,7 @@ class SupplierBillingPage(QWidget):
         
         # BOTTOM BUTTONS (Dark Theme)
         button_layout = QHBoxLayout()
-        button_layout.setSpacing(15)
+        button_layout.setSpacing(0)
         button_layout.addStretch()
         
         # Share Button (Dark Theme - Purple Accent)
@@ -804,7 +792,7 @@ class SupplierBillingPage(QWidget):
     def _add_payment_row(self):
         """Add a new payment row."""
         payment_row_layout = QHBoxLayout()
-        payment_row_layout.setSpacing(10)
+        payment_row_layout.setSpacing(0)
         
         # Payment Type ComboBox (Dark Theme)
         payment_type = QComboBox()

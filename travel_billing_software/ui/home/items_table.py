@@ -79,7 +79,7 @@ class ItemsTableWidget(QFrame):
         )
         
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(0, 0, 0, 0)
         
         # Header
         header_layout = QHBoxLayout()
@@ -284,7 +284,7 @@ class ItemsTableWidget(QFrame):
         actions_widget = QWidget()
         actions_layout = QHBoxLayout(actions_widget)
         actions_layout.setContentsMargins(0, 0, 0, 0)
-        actions_layout.setSpacing(5)
+        actions_layout.setSpacing(0)
         
         # Add Passport button
         add_passport_btn = QPushButton("➕")

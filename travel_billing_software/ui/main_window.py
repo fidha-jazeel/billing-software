@@ -96,14 +96,14 @@ class DashboardImproved(QMainWindow):
             }
         """)
         sidebar_layout = QVBoxLayout(sidebar)
-        sidebar_layout.setContentsMargins(0, 10, 0, 10)
+        sidebar_layout.setContentsMargins(0, 0, 0, 0)
+        sidebar_layout.setSpacing(0)
 
         # Sidebar title
         title = QLabel("<b style='font-size:16px; color:#9b9bff;'>🏢 Menu</b>")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         sidebar_layout.addWidget(title)
-        sidebar_layout.addSpacing(30)
 
         # Navigation buttons
         for page_id, label, icon in [
@@ -155,7 +155,7 @@ class DashboardImproved(QMainWindow):
     def _create_sidebar_button(self, label: str, page_id: str) -> QPushButton:
         """Create a styled sidebar button."""
         btn = QPushButton(label)
-        btn.setMinimumHeight(45)
+        btn.setMinimumHeight(40)
         btn.setCursor(Qt.CursorShape.PointingHandCursor)
 
         btn.setStyleSheet("""
@@ -165,7 +165,7 @@ class DashboardImproved(QMainWindow):
                 border: none;
                 border-left: 3px solid transparent;
                 text-align: left;
-                padding-left: 15px;
+                padding-left: 10px;
                 font-size: 25px;
                 font-weight: 500;
             }

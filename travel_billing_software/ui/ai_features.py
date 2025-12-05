@@ -90,8 +90,8 @@ class AIFeaturesPage(QWidget):
 
         content = QWidget()
         layout = QVBoxLayout(content)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(15)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
 
         # Header
         heading = QLabel("🤖 AI Insights")
@@ -124,7 +124,7 @@ class AIFeaturesPage(QWidget):
         """
         )
         presets_layout = QVBoxLayout(presets_frame)
-        presets_layout.setSpacing(8)
+        presets_layout.setSpacing(0)
 
         presets_title = QLabel("⭐ Quick AI Insights")
         presets_title.setStyleSheet(
@@ -133,7 +133,7 @@ class AIFeaturesPage(QWidget):
         presets_layout.addWidget(presets_title)
 
         row1 = QHBoxLayout()
-        row1.setSpacing(8)
+        row1.setSpacing(0)
 
         btn_this_month = QPushButton("📅 This Month Overview")
         btn_this_month.setStyleSheet(self.get_button_style("add"))
@@ -164,7 +164,7 @@ class AIFeaturesPage(QWidget):
         presets_layout.addLayout(row1)
 
         row2 = QHBoxLayout()
-        row2.setSpacing(8)
+        row2.setSpacing(0)
 
         btn_top_customers = QPushButton("👥 Top Customers")
         btn_top_customers.setStyleSheet(self.get_button_style("add"))
@@ -209,7 +209,7 @@ class AIFeaturesPage(QWidget):
         """
         )
         custom_layout = QVBoxLayout(custom_frame)
-        custom_layout.setSpacing(10)
+        custom_layout.setSpacing(0)
 
         custom_label = QLabel("✍️ Ask your own question")
         custom_label.setStyleSheet(

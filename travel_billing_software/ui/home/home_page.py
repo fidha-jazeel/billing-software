@@ -122,36 +122,21 @@ class HomePage(QWidget):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         scroll.setStyleSheet("""
             QScrollArea {
                 border: none;
                 background-color: #1a1a1a;
-            }
-            QScrollBar:vertical {
-                border: none;
-                background: #2a2a2a;
-                width: 12px;
                 margin: 0px;
-            }
-            QScrollBar::handle:vertical {
-                background: #7c3aed;
-                min-height: 20px;
-                border-radius: 6px;
-            }
-            QScrollBar::handle:vertical:hover {
-                background: #a78bfa;
-            }
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-                height: 0px;
+                padding: 0px;
             }
         """)
         
         # Content widget
         content = QWidget()
         layout = QVBoxLayout(content)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(15)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
         
         # Welcome heading
         welcome_heading = QLabel(f"Welcome To {self.company_info['name']} Billing")
@@ -160,7 +145,7 @@ class HomePage(QWidget):
             f"color: {self.colors['accent_cyan']}; "
             f"font-size: 26px; font-weight: bold; "
             f"font-family: 'Segoe UI', Arial, sans-serif; "
-            f"margin-bottom: 10px; "
+            f"margin: 0px; padding: 0px; "
             f"}}"
         )
         welcome_heading.setAlignment(Qt.AlignmentFlag.AlignCenter)

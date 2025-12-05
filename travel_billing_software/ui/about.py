@@ -18,8 +18,8 @@ class AboutPage(QWidget):
     def init_ui(self):
         """Initialize the About page UI."""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(15)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
 
         # Scroll area to fit all content
         scroll = QScrollArea()
@@ -51,8 +51,8 @@ class AboutPage(QWidget):
         # Container widget for scroll area
         scroll_content = QWidget()
         scroll_layout = QVBoxLayout(scroll_content)
-        scroll_layout.setContentsMargins(0, 0, 10, 0)
-        scroll_layout.setSpacing(15)
+        scroll_layout.setContentsMargins(0, 0, 0, 0)
+        scroll_layout.setSpacing(0)
 
         # Header
         heading = QLabel(f"<h2 style='color:{self.COLORS['accent_secondary']};'>ℹ️ About</h2>")
@@ -68,7 +68,7 @@ class AboutPage(QWidget):
             }}
         """)
         info_layout = QVBoxLayout(info_frame)
-        info_layout.setSpacing(15)
+        info_layout.setSpacing(0)
         
         # App name and tagline
         app_name = QLabel(f"<h1 style='color:{self.COLORS['accent_primary']};'>🎫 Al Chishtiya Travels Billing Software</h1>")

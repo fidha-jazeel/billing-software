@@ -62,7 +62,7 @@ class AddPaymentDialog(QDialog):
         
         # Payment Form
         form_layout = QFormLayout()
-        form_layout.setSpacing(12)
+        form_layout.setSpacing(0)
         
         # Date
         self.date_edit = QDateEdit()
@@ -147,8 +147,8 @@ class PaymentsPage(QWidget):
     def _init_ui(self):
         """Initialize the UI."""
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(20, 20, 20, 20)
-        main_layout.setSpacing(20)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
         
         # Header
         header = QLabel("💰 Payments Management")
