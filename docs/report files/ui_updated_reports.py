@@ -4,6 +4,7 @@ Vyapar-style Reports with sidebar navigation and dynamic content panels.
 Contains comprehensive travel billing reports with filters and export options.
 """
 import os
+import json
 from datetime import datetime
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                              QFrame, QScrollArea, QTableWidget, QPushButton,
@@ -12,8 +13,6 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QStackedWidget, QListWidget, QListWidgetItem)
 from PyQt6.QtCore import Qt, QDate
 from PyQt6.QtGui import QColor, QFont
-from travel_billing_software.database.db_manager import get_db_instance
-from travel_billing_software.utils.logger import get_logger
 
 
 class ReportsPage(QWidget):
@@ -44,12 +43,6 @@ class ReportsPage(QWidget):
         self.get_label_style = get_label_style
         self.dashboard = dashboard_ref
         
-        # Initialize database
-        self.db = get_db_instance()
-        
-        # Initialize logger
-        self.logger = get_logger()
-        
         # Store all invoices data for filtering
         self.all_invoices = []
         
@@ -65,8 +58,6 @@ class ReportsPage(QWidget):
         # Enable sorting
         table.setSortingEnabled(True)
         
-
-
         # Configure header
         header = table.horizontalHeader()
         header.setStyleSheet("""
@@ -85,7 +76,7 @@ class ReportsPage(QWidget):
             }
         """)
         header.setDefaultAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-
+        
         # Make header sticky and non-movable
         header.setStretchLastSection(False)
         header.setSectionsMovable(False)
@@ -113,7 +104,7 @@ class ReportsPage(QWidget):
                 border: 1px solid #777777;
             }
         """)
-
+        
         # Alternating row colors for better readability
         table.setAlternatingRowColors(True)
         table.setStyleSheet(self.get_table_style() + """
@@ -145,7 +136,7 @@ class ReportsPage(QWidget):
                 color: #FFFFFF;
             }
         """)
-
+    
     def _init_ui(self):
         """Initialize the UI components with Vyapar-style layout."""
         # Main layout - horizontal split
@@ -308,35 +299,29 @@ class ReportsPage(QWidget):
     
     def _refresh_current_report(self, index):
         """Refresh data for the currently selected report."""
-        try:
-            # Load all invoices
-            self._load_all_invoices()
-            
-            # Refresh based on report type
-            if index == 0:  # Sale Report
-                self._populate_sale_report()
-            elif index == 1:  # Purchase Report
-                self._populate_purchase_report()
-            elif index == 2:  # All Transactions
-                self._populate_all_transactions()
-            elif index == 3:  # Day Book
-                self._populate_day_book()
-            elif index == 4:  # Profit and Loss
-                self._populate_profit_loss()
-            elif index == 5:  # Bill Wise Profit
-                self._populate_bill_wise_profit()
-            elif index == 6:  # Cash Transactions
-                self._populate_cash_transactions()
-            elif index == 7:  # Balance Report
-                self._populate_balance_report()
-            
-            # Update payment summary whenever report is refreshed
-            self._update_payment_summary()
-            
-            self.logger.log_info(f"Report refreshed successfully: index {index}", 'billing_app')
-        except Exception as e:
-            self.logger.log_error(f"Error refreshing report at index {index}", exception=e, logger_name='billing_errors')
-            QMessageBox.critical(self, "Error", f"Failed to refresh report: {str(e)}")
+        # Load all invoices
+        self._load_all_invoices()
+        
+        # Refresh based on report type
+        if index == 0:  # Sale Report
+            self._populate_sale_report()
+        elif index == 1:  # Purchase Report
+            self._populate_purchase_report()
+        elif index == 2:  # All Transactions
+            self._populate_all_transactions()
+        elif index == 3:  # Day Book
+            self._populate_day_book()
+        elif index == 4:  # Profit and Loss
+            self._populate_profit_loss()
+        elif index == 5:  # Bill Wise Profit
+            self._populate_bill_wise_profit()
+        elif index == 6:  # Cash Transactions
+            self._populate_cash_transactions()
+        elif index == 7:  # Balance Report
+            self._populate_balance_report()
+        
+        # Update payment summary whenever report is refreshed
+        self._update_payment_summary()
     
     def _create_payment_summary_section(self) -> QFrame:
         """Create payment summary section showing total cash and bank received."""
@@ -427,106 +412,66 @@ class ReportsPage(QWidget):
             total_cash = 0.0
             total_bank = 0.0
             
-            # Get all payments from database
-            all_payments = self.db.get_all_payments_received()
+            invoices_dir = self.invoice_config.get('save_directory', 'invoices')
+            if not os.path.exists(invoices_dir):
+                os.makedirs(invoices_dir, exist_ok=True)
             
-            for payment in all_payments:
-                amount = float(payment.get('amount', 0))
-                payment_mode = payment.get('payment_mode', '').upper()
-                
-                if payment_mode == 'CASH':
-                    total_cash += amount
-                elif payment_mode in ['BANK_TRANSFER', 'UPI', 'CARD', 'CHEQUE', 'ONLINE']:
-                    total_bank += amount
+            for filename in os.listdir(invoices_dir):
+                if filename.endswith(".json"):
+                    filepath = os.path.join(invoices_dir, filename)
+                    try:
+                        with open(filepath, 'r') as f:
+                            invoice_data = json.load(f)
+                        
+                        payment_mode = invoice_data.get("payment_mode", "Cash")
+                        received_str = invoice_data.get("received", "0")
+                        
+                        # Clean the received amount string
+                        received = float(received_str.replace('₹', '').replace(',', '').strip() or 0)
+                        
+                        # Categorize payment
+                        if payment_mode == "Cash":
+                            total_cash += received
+                        else:
+                            # All non-cash payments are considered bank
+                            total_bank += received
+                            
+                    except Exception as e:
+                        print(f"Error processing invoice {filename}: {e}")
+                        continue
             
-            # Update labels
-            if hasattr(self, 'lbl_total_cash'):
-                self.lbl_total_cash.setText(f"₹{total_cash:,.2f}")
-            if hasattr(self, 'lbl_total_bank'):
-                self.lbl_total_bank.setText(f"₹{total_bank:,.2f}")
-            
-            self.logger.log_info(f"Payment summary updated - Cash: ₹{total_cash:,.2f}, Bank: ₹{total_bank:,.2f}", 'billing_app')
+            # Update labels with formatted currency
+            self.lbl_total_cash.setText(f"₹{total_cash:,.2f}")
+            self.lbl_total_bank.setText(f"₹{total_bank:,.2f}")
             
         except Exception as e:
-            self.logger.log_error("Error updating payment summary", exception=e, logger_name='billing_errors')
             print(f"Error updating payment summary: {e}")
+            self.lbl_total_cash.setText("₹0.00")
+            self.lbl_total_bank.setText("₹0.00")
     
     def _load_all_invoices(self):
-        """Load all invoices from database."""
+        """Load all invoices from files."""
         self.all_invoices = []
         
         try:
-            # Fetch all invoices from database
-            invoices = self.db.get_all_invoices()
+            invoices_dir = self.invoice_config.get('save_directory', 'invoices')
+            if not os.path.exists(invoices_dir):
+                return
             
-            self.logger.log_info(f"Loading {len(invoices)} invoices from database", 'billing_app')
+            invoice_files = [f for f in os.listdir(invoices_dir) if f.endswith('.json')]
             
-            for inv in invoices:
-                # Convert invoice_date to dd/MM/yyyy format
-                invoice_date_str = inv.get('invoice_date', '')
+            for filename in invoice_files:
+                filepath = os.path.join(invoices_dir, filename)
                 try:
-                    if invoice_date_str:
-                        # Parse from yyyy-MM-dd (database format) to dd/MM/yyyy
-                        from datetime import datetime
-                        date_obj = datetime.strptime(invoice_date_str, '%Y-%m-%d')
-                        invoice_date_formatted = date_obj.strftime('%d/%m/%Y')
-                    else:
-                        invoice_date_formatted = ''
-                except:
-                    invoice_date_formatted = invoice_date_str
-                
-                # Convert database row to dictionary format
-                invoice_dict = {
-                    'invoice_number': inv.get('invoice_number', ''),
-                    'invoice_date': invoice_date_formatted,
-                    'customer_name': inv.get('customer_name', ''),
-                    'customer_phone': inv.get('contact_number', ''),  # Fixed field name from database
-                    'total_amount': float(inv.get('total_amount', 0)),
-                    'paid_amount': float(inv.get('paid_amount', 0)),
-                    'balance': float(inv.get('balance', 0)),
-                    'payment_status': inv.get('payment_status', 'UNPAID'),
-                    'passengers': [],
-                    'tickets': []
-                }
-                
-                # Get invoice items (tickets) for this invoice
-                items = self.db.get_invoice_items(inv['id'])
-                
-                for item in items:
-                    # Add passenger info
-                    passenger_name = item.get('passenger_name', '')
-                    passenger_contact = item.get('passenger_contact', '')
-                    
-                    if passenger_name:
-                        # Check if passenger already added
-                        if not any(p['name'] == passenger_name for p in invoice_dict['passengers']):
-                            invoice_dict['passengers'].append({
-                                'name': passenger_name,
-                                'contact_number': passenger_contact
-                            })
-                    
-                    # Add ticket/item info
-                    invoice_dict['tickets'].append({
-                        'pnr': item.get('pnr_number', ''),
-                        'supplier_name': item.get('supplier_name', ''),
-                        'sector': item.get('sector', ''),
-                        'booking_type': item.get('service_type_name', ''),  # service_type_name is the booking type
-                        'quantity': int(item.get('quantity', 1)),
-                        'supplier_amount': float(item.get('cost_price', 0)),
-                        'total_amount': float(item.get('total_amount', 0)),
-                        'passport_number': item.get('passport_number', '')
-                    })
-                
-                self.all_invoices.append(invoice_dict)
-            
-            self.logger.log_info(f"Successfully loaded {len(self.all_invoices)} invoices with {sum(len(inv['tickets']) for inv in self.all_invoices)} items", 'billing_app')
-                
+                    with open(filepath, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                        data['_filepath'] = filepath
+                        self.all_invoices.append(data)
+                except Exception as e:
+                    print(f"Error loading {filename}: {e}")
+        
         except Exception as e:
-            self.logger.log_error(f"Failed to load invoices from database", exception=e, logger_name='billing_errors')
-            QMessageBox.critical(self, "Error", f"Failed to load invoices: {str(e)}")
             print(f"Error loading invoices: {e}")
-            import traceback
-            traceback.print_exc()
     
     def _create_common_filters(self) -> QFrame:
         """Create common filter section for reports with enhanced styling."""
@@ -913,28 +858,19 @@ class ReportsPage(QWidget):
     
     def _clear_filters(self):
         """Clear all filter values and show confirmation."""
-        try:
-            self.logger.log_info("Clearing all filters", 'billing_app')
-            
-            self.filter_from_date.setDate(QDate.currentDate().addMonths(-1))
-            self.filter_to_date.setDate(QDate.currentDate())
-            self.filter_contact.clear()
-            self.filter_passenger.clear()
-            self.filter_sector.clear()
-            self.filter_supplier.setCurrentIndex(0)
-            self.filter_type.setCurrentIndex(0)
-            
-            # Apply the cleared filters
-            self._handle_filter_change()
-            
-            # Show confirmation
-            QMessageBox.information(self, "Filters Cleared", "All filters have been reset to default values.")
-            
-            self.logger.log_info("Filters cleared successfully", 'billing_app')
-            
-        except Exception as e:
-            self.logger.log_error("Error clearing filters", exception=e, logger_name='billing_errors')
-            QMessageBox.critical(self, "Error", f"Failed to clear filters: {str(e)}")
+        self.filter_from_date.setDate(QDate.currentDate().addMonths(-1))
+        self.filter_to_date.setDate(QDate.currentDate())
+        self.filter_contact.clear()
+        self.filter_passenger.clear()
+        self.filter_sector.clear()
+        self.filter_supplier.setCurrentIndex(0)
+        self.filter_type.setCurrentIndex(0)
+        
+        # Apply the cleared filters
+        self._handle_filter_change()
+        
+        # Show confirmation
+        QMessageBox.information(self, "Filters Cleared", "All filters have been reset to default values.")
     
     def _handle_filter_change(self):
         """Unified filter change handler that refreshes the current report.
@@ -943,96 +879,65 @@ class ReportsPage(QWidget):
         date range, firm selector, etc.). It collects all active filter values
         and applies them to refresh the report data without duplicate calls.
         """
-        try:
-            self.logger.log_info("Handling filter change", 'billing_app')
-            
-            # Get current report index
-            current_index = self.content_stack.currentIndex()
-            
-            # Load all invoices
-            self._load_all_invoices()
-            
-            # Refresh the current report with updated filters
-            self._refresh_current_report(current_index)
-            
-        except Exception as e:
-            self.logger.log_error("Error handling filter change", exception=e, logger_name='billing_errors')
-            QMessageBox.critical(self, "Error", f"Failed to apply filter changes: {str(e)}")
+        # Get current report index
+        current_index = self.content_stack.currentIndex()
+        
+        # Load all invoices
+        self._load_all_invoices()
+        
+        # Refresh the current report with updated filters
+        self._refresh_current_report(current_index)
     
     def _apply_filters(self, invoices):
         """Apply current filters to invoice list."""
-        try:
-            filtered = []
-            
-            from_date = self.filter_from_date.date().toPyDate()
-            to_date = self.filter_to_date.date().toPyDate()
-            contact = self.filter_contact.text().lower()
-            passenger = self.filter_passenger.text().lower()
-            sector = self.filter_sector.text().lower()
-            supplier = self.filter_supplier.currentText()
-            booking_type = self.filter_type.currentText()
-            
-            self.logger.log_info(f"Applying filters - Date: {from_date} to {to_date}, Contact: '{contact}', Passenger: '{passenger}', Sector: '{sector}', Supplier: '{supplier}', Type: '{booking_type}'", 'billing_app')
-            
-            for invoice in invoices:
-                try:
-                    # Date filter
-                    try:
-                        date_str = invoice.get('invoice_date', '')
-                        if date_str:
-                            day, month, year = map(int, date_str.split('/'))
-                            invoice_date = datetime(year, month, day).date()
-                            if not (from_date <= invoice_date <= to_date):
-                                continue
-                    except Exception as date_error:
-                        self.logger.log_warning(f"Date parsing error for invoice {invoice.get('invoice_number', 'Unknown')}: {date_error}", 'billing_app')
-                        pass
-                    
-                    # Contact filter
-                    if contact and contact not in invoice.get('customer_phone', '').lower():
+        filtered = []
+        
+        from_date = self.filter_from_date.date().toPyDate()
+        to_date = self.filter_to_date.date().toPyDate()
+        contact = self.filter_contact.text().lower()
+        passenger = self.filter_passenger.text().lower()
+        sector = self.filter_sector.text().lower()
+        supplier = self.filter_supplier.currentText()
+        booking_type = self.filter_type.currentText()
+        
+        for invoice in invoices:
+            # Date filter
+            try:
+                date_str = invoice.get('invoice_date', '')
+                if date_str:
+                    day, month, year = map(int, date_str.split('/'))
+                    invoice_date = datetime(year, month, day).date()
+                    if not (from_date <= invoice_date <= to_date):
                         continue
-                    
-                    # Type filter
-                    if booking_type != "All":
-                        # Check tickets for booking type
-                        tickets = invoice.get('tickets', [])
-                        if not any(ticket.get('booking_type', '') == booking_type for ticket in tickets):
-                            continue
-                    
-                    # Passenger, sector, supplier filters (check tickets)
-                    if passenger or sector or supplier != "All":
-                        match_found = False
-                        tickets = invoice.get('tickets', [])
-                        passengers_list = invoice.get('passengers', [])
-                        
-                        for ticket in tickets:
-                            if passenger:
-                                # Check in passengers list
-                                for pax in passengers_list:
-                                    if passenger in pax.get('name', '').lower():
-                                        match_found = True
-                                        break
-                            if sector and sector in ticket.get('sector', '').lower():
-                                match_found = True
-                            if supplier != "All" and supplier == ticket.get('supplier_name', ''):
-                                match_found = True
-                            if match_found:
-                                break
-                        if not match_found and (passenger or sector or supplier != "All"):
-                            continue
-                    
-                    filtered.append(invoice)
-                except Exception as invoice_error:
-                    self.logger.log_error(f"Error filtering invoice {invoice.get('invoice_number', 'Unknown')}", exception=invoice_error, logger_name='billing_errors')
+            except:
+                pass
+            
+            # Contact filter
+            if contact and contact not in invoice.get('contact_number', '').lower():
+                continue
+            
+            # Type filter
+            if booking_type != "All" and invoice.get('type', '') != booking_type:
+                continue
+            
+            # Passenger, sector, supplier filters (check items)
+            if passenger or sector or supplier != "All":
+                match_found = False
+                for item in invoice.get('items', []):
+                    if passenger and passenger in item.get('passenger_name', '').lower():
+                        match_found = True
+                    if sector and sector in item.get('sector', '').lower():
+                        match_found = True
+                    if supplier != "All" and supplier == item.get('supplier', ''):
+                        match_found = True
+                    if match_found:
+                        break
+                if not match_found and (passenger or sector or supplier != "All"):
                     continue
             
-            self.logger.log_info(f"Filter applied - {len(filtered)} records matched out of {len(invoices)}", 'billing_app')
-            return filtered
-            
-        except Exception as e:
-            self.logger.log_error("Error applying filters", exception=e, logger_name='billing_errors')
-            QMessageBox.critical(self, "Filter Error", f"An error occurred while applying filters: {str(e)}")
-            return []
+            filtered.append(invoice)
+        
+        return filtered
     
     def _show_no_records_message(self, report_name):
         """Show message when no records match the filter criteria."""
@@ -1096,7 +1001,7 @@ class ReportsPage(QWidget):
         content = QWidget()
         layout = QVBoxLayout(content)
         layout.setContentsMargins(25, 25, 25, 25)
-        layout.setSpacing(20)
+        layout.setSpacing(12)
         
         # Header
         header = self._create_report_header(
@@ -1105,13 +1010,13 @@ class ReportsPage(QWidget):
         )
         layout.addWidget(header)
         
+        # Payment Summary Section
+        payment_summary_frame = self._create_payment_summary_section()
+        layout.addWidget(payment_summary_frame)
+        
         # Filters
         filters = self._create_common_filters()
         layout.addWidget(filters)
-        
-        # Payment Summary Section
-        payment_summary = self._create_payment_summary_section()
-        layout.addWidget(payment_summary)
         
         # Summary Cards
         self.sale_summary_frame = self._create_summary_cards(['Total Sales', 'Total Invoices', 'Avg Invoice Value'])
@@ -1163,89 +1068,7 @@ class ReportsPage(QWidget):
     
     def _populate_sale_report(self):
         """Populate sale report with filtered data."""
-        try:
-            self.logger.log_info("Populating sale report", 'billing_app')
-            
-            filtered_invoices = self._apply_filters(self.all_invoices)
-            
-            self.sale_table.setRowCount(0)
-            
-            # Check if no records found
-            if not filtered_invoices:
-                self.logger.log_warning("No records found for sale report with current filters", 'billing_app')
-                self._show_no_records_message("Sale Report")
-                # Update summary with zeros
-                self._update_summary_cards(self.sale_summary_frame, [
-                    "₹0.00",
-                    "0",
-                    "₹0.00"
-                ])
-                return
-            
-            total_sales = 0.0
-            
-            for invoice in filtered_invoices:
-                try:
-                    row = self.sale_table.rowCount()
-                    self.sale_table.insertRow(row)
-                    
-                    # Invoice Number
-                    self.sale_table.setItem(row, 0, QTableWidgetItem(invoice.get('invoice_number', '')))
-                    
-                    # Date
-                    self.sale_table.setItem(row, 1, QTableWidgetItem(invoice.get('invoice_date', '')))
-                    
-                    # Customer
-                    self.sale_table.setItem(row, 2, QTableWidgetItem(invoice.get('customer_name', '')))
-                    
-                    # Contact
-                    self.sale_table.setItem(row, 3, QTableWidgetItem(invoice.get('customer_phone', '')))
-                    
-                    # Type - Get from first ticket
-                    tickets = invoice.get('tickets', [])
-                    booking_type = tickets[0].get('booking_type', '') if tickets else ''
-                    self.sale_table.setItem(row, 4, QTableWidgetItem(booking_type))
-                    
-                    # Total
-                    total = float(invoice.get('total_amount', 0))
-                    total_sales += total
-                    
-                    total_item = QTableWidgetItem(f"₹{total:,.2f}")
-                    total_item.setForeground(QColor(self.colors['accent_gold']))
-                    self.sale_table.setItem(row, 5, total_item)
-                    
-                    # Status
-                    payment_status = invoice.get('payment_status', 'UNPAID')
-                    if payment_status == 'PAID':
-                        status = '✅ Paid'
-                        color = self.colors['success']
-                    elif payment_status == 'PARTIAL':
-                        status = '⏳ Partial'
-                        color = self.colors.get('warning', '#FFA500')
-                    else:
-                        status = '❌ Unpaid'
-                        color = self.colors['danger']
-                    
-                    status_item = QTableWidgetItem(status)
-                    status_item.setForeground(QColor(color))
-                    self.sale_table.setItem(row, 6, status_item)
-                    
-                except Exception as row_error:
-                    self.logger.log_error(f"Error adding row for invoice {invoice.get('invoice_number', 'Unknown')}", exception=row_error, logger_name='billing_errors')
-                    continue
-            
-            # Update summary
-            self._update_summary_cards(self.sale_summary_frame, [
-                f"₹{total_sales:,.2f}",
-                str(len(filtered_invoices)),
-                f"₹{total_sales/len(filtered_invoices):,.2f}" if filtered_invoices else "₹0.00"
-            ])
-            
-            self.logger.log_info(f"Sale report populated successfully with {len(filtered_invoices)} records, Total: ₹{total_sales:,.2f}", 'billing_app')
-            
-        except Exception as e:
-            self.logger.log_error("Error populating sale report", exception=e, logger_name='billing_errors')
-            QMessageBox.critical(self, "Error", f"Failed to populate sale report: {str(e)}")
+        filtered_invoices = self._apply_filters(self.all_invoices)
         
         self.sale_table.setRowCount(0)
         
@@ -1323,8 +1146,8 @@ class ReportsPage(QWidget):
         
         content = QWidget()
         layout = QVBoxLayout(content)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(15)
+        layout.setContentsMargins(25, 25, 25, 25)
+        layout.setSpacing(12)
         
         # Header
         header = QLabel("📉 Purchase Report")
@@ -1449,8 +1272,8 @@ class ReportsPage(QWidget):
         
         content = QWidget()
         layout = QVBoxLayout(content)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(15)
+        layout.setContentsMargins(25, 25, 25, 25)
+        layout.setSpacing(12)
         
         # Header
         header = QLabel("📋 All Transactions")
@@ -1598,8 +1421,8 @@ class ReportsPage(QWidget):
         
         content = QWidget()
         layout = QVBoxLayout(content)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(15)
+        layout.setContentsMargins(25, 25, 25, 25)
+        layout.setSpacing(12)
         
         # Header
         header = QLabel("📅 Day Book")
@@ -1754,8 +1577,8 @@ class ReportsPage(QWidget):
         
         content = QWidget()
         layout = QVBoxLayout(content)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(15)
+        layout.setContentsMargins(25, 25, 25, 25)
+        layout.setSpacing(12)
         
         # Header
         header = QLabel("💰 Profit and Loss Statement")
@@ -1898,8 +1721,8 @@ class ReportsPage(QWidget):
         
         content = QWidget()
         layout = QVBoxLayout(content)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(15)
+        layout.setContentsMargins(25, 25, 25, 25)
+        layout.setSpacing(12)
         
         # Header
         header = QLabel("📊 Bill Wise Profit Analysis")
@@ -2039,12 +1862,12 @@ class ReportsPage(QWidget):
     def _create_summary_cards(self, titles) -> QFrame:
         """Create summary cards frame with enhanced styling."""
         frame = QFrame()
-        frame.setStyleSheet(f"""
-            QFrame {{
+        frame.setStyleSheet("""
+            QFrame {
                 background-color: transparent;
                 border: none;
                 padding: 10px 0px;
-            }}
+            }
         """)
         
         layout = QHBoxLayout(frame)
@@ -2052,36 +1875,34 @@ class ReportsPage(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         
         cards = []
-        colors_list = [self.colors['success'], self.colors['accent_gold'], self.colors['accent_primary']]
         
         for idx, title in enumerate(titles):
             card = QFrame()
-            accent_color = colors_list[idx % len(colors_list)]
-            card.setStyleSheet(f"""
-                QFrame {{
-                    background-color: {self.colors['secondary_bg']};
-                    border-radius: 10px;
-                    border-left: 5px solid {accent_color};
-                    padding: 20px 25px;
-                }}
+            card.setStyleSheet("""
+                QFrame {
+                    background-color: #000000;
+                    border-radius: 8px;
+                    border: 2px solid #777777;
+                    padding: 18px;
+                }
             """)
             card_layout = QVBoxLayout(card)
-            card_layout.setSpacing(8)
+            card_layout.setSpacing(6)
             card_layout.setContentsMargins(0, 0, 0, 0)
             
             title_label = QLabel(title)
-            title_label.setStyleSheet(f"""
-                color: {self.colors['text_secondary']}; 
-                font-size: 13px; 
-                font-weight: 500;
+            title_label.setStyleSheet("""
+                color: #FFFFFF;
+                font-size: 13px;
+                font-weight: bold;
                 letter-spacing: 0.5px;
             """)
             card_layout.addWidget(title_label)
             
             value_label = QLabel("₹0.00")
-            value_label.setStyleSheet(f"""
-                color: {accent_color}; 
-                font-size: 24px; 
+            value_label.setStyleSheet("""
+                color: #FFFFFF;
+                font-size: 24px;
                 font-weight: bold;
                 letter-spacing: 0.5px;
             """)
@@ -2155,8 +1976,8 @@ class ReportsPage(QWidget):
         
         content = QWidget()
         layout = QVBoxLayout(content)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(15)
+        layout.setContentsMargins(25, 25, 25, 25)
+        layout.setSpacing(12)
         
         # Header
         header = QLabel("💵 Cash Transactions Report")
@@ -2199,16 +2020,16 @@ class ReportsPage(QWidget):
         self.cash_transactions_table.setHorizontalHeaderLabels([
             "Date", "Invoice #", "Customer (Payer)", "Contact", "Cash Received", "Cash Paid", "Balance", "Status"
         ])
-        # Configure with optimal column widths
+        # Configure with equal column widths
         self._configure_table(self.cash_transactions_table, {
-            0: 100,  # Date
-            1: 140,  # Invoice #
+            0: 'stretch',  # Date
+            1: 'stretch',  # Invoice #
             2: 'stretch',  # Customer (Payer)
-            3: 120,  # Contact
-            4: 130,  # Cash Received
-            5: 120,  # Cash Paid
-            6: 120,  # Balance
-            7: 110   # Status
+            3: 'stretch',  # Contact
+            4: 'stretch',  # Cash Received
+            5: 'stretch',  # Cash Paid
+            6: 'stretch',  # Balance
+            7: 'stretch'   # Status
         })
         self.cash_transactions_table.setMinimumHeight(500)
         layout.addWidget(self.cash_transactions_table)
@@ -2324,8 +2145,8 @@ class ReportsPage(QWidget):
         
         content = QWidget()
         layout = QVBoxLayout(content)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(15)
+        layout.setContentsMargins(25, 25, 25, 25)
+        layout.setSpacing(12)
         
         # Header
         header = QLabel("⚖️ Balance Report")

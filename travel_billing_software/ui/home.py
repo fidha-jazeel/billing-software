@@ -427,9 +427,7 @@ class HomePage(QWidget):
         # Row 1: Customer Name & Contact
         lbl_cust_name = QLabel("Customer Name:")
         lbl_cust_name.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 14px;")
-        lbl_cust_name.setAlignment(
-    Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
-)
+        lbl_cust_name.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
 
         invoice_layout.addWidget(lbl_cust_name, 1, 0)
         
@@ -441,11 +439,8 @@ class HomePage(QWidget):
         
         lbl_contact = QLabel("Contact Number:")
         lbl_contact.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 14px;")
-        lbl_contact.setAlignment(
-    Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
-)
-
-        invoice_layout.addWidget(lbl_contact, 1, 2)
+        lbl_contact.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        invoice_layout.addWidget(lbl_contact, 3, 0)
         
         self.contact_number = QLineEdit()
         self.contact_number.setPlaceholderText("Enter contact number")
@@ -455,9 +450,7 @@ class HomePage(QWidget):
         # Row 2: Address
         lbl_address = QLabel("Address:")
         lbl_address.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 14px;")
-        lbl_address.setAlignment(
-    Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
-) 
+        lbl_address.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter) 
         invoice_layout.addWidget(lbl_address, 2, 0)
         
         self.customer_address = QLineEdit()

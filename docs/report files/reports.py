@@ -13,7 +13,6 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
 from PyQt6.QtCore import Qt, QDate
 from PyQt6.QtGui import QColor, QFont
 from travel_billing_software.database.db_manager import get_db_instance
-from travel_billing_software.utils.logger import get_logger
 
 
 class ReportsPage(QWidget):
@@ -46,9 +45,6 @@ class ReportsPage(QWidget):
         
         # Initialize database
         self.db = get_db_instance()
-        
-        # Initialize logger
-        self.logger = get_logger()
         
         # Store all invoices data for filtering
         self.all_invoices = []
@@ -269,9 +265,6 @@ class ReportsPage(QWidget):
         self.sale_report_view = self._create_sale_report_view()
         self.content_stack.addWidget(self.sale_report_view)
         
-        # Initialize payment summary
-        self._update_payment_summary()
-        
         # Purchase Report
         self.purchase_report_view = self._create_purchase_report_view()
         self.content_stack.addWidget(self.purchase_report_view)
@@ -308,257 +301,104 @@ class ReportsPage(QWidget):
     
     def _refresh_current_report(self, index):
         """Refresh data for the currently selected report."""
-        try:
-            # Load all invoices
-            self._load_all_invoices()
-            
-            # Refresh based on report type
-            if index == 0:  # Sale Report
-                self._populate_sale_report()
-            elif index == 1:  # Purchase Report
-                self._populate_purchase_report()
-            elif index == 2:  # All Transactions
-                self._populate_all_transactions()
-            elif index == 3:  # Day Book
-                self._populate_day_book()
-            elif index == 4:  # Profit and Loss
-                self._populate_profit_loss()
-            elif index == 5:  # Bill Wise Profit
-                self._populate_bill_wise_profit()
-            elif index == 6:  # Cash Transactions
-                self._populate_cash_transactions()
-            elif index == 7:  # Balance Report
-                self._populate_balance_report()
-            
-            # Update payment summary whenever report is refreshed
-            self._update_payment_summary()
-            
-            self.logger.log_info(f"Report refreshed successfully: index {index}", 'billing_app')
-        except Exception as e:
-            self.logger.log_error(f"Error refreshing report at index {index}", exception=e, logger_name='billing_errors')
-            QMessageBox.critical(self, "Error", f"Failed to refresh report: {str(e)}")
-    
-    def _create_payment_summary_section(self) -> QFrame:
-        """Create payment summary section showing total cash and bank received."""
-        summary_frame = QFrame()
-        summary_frame.setStyleSheet("""
-            QFrame {
-                background-color: #000000;
-                border-radius: 8px;
-                border: 2px solid #777777;
-                padding: 15px;
-            }
-        """)
-        summary_layout = QHBoxLayout(summary_frame)
-        summary_layout.setContentsMargins(15, 15, 15, 15)
-        summary_layout.setSpacing(20)
+        # Load all invoices
+        self._load_all_invoices()
         
-        # Total Cash Received Box
-        cash_box = QFrame()
-        cash_box.setStyleSheet("""
-            QFrame {
-                background-color: #0F0F0F;
-                border-radius: 8px;
-                border: 2px solid #777777;
-                padding: 15px;
-            }
-        """)
-        cash_layout = QVBoxLayout(cash_box)
-        cash_layout.setSpacing(6)
-        
-        cash_title = QLabel("💵 Total Cash Received")
-        cash_title.setStyleSheet("""
-            color: #FFFFFF;
-            font-size: 14px;
-            font-weight: bold;
-        """)
-        cash_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        cash_layout.addWidget(cash_title)
-        
-        self.lbl_total_cash = QLabel("₹0.00")
-        self.lbl_total_cash.setStyleSheet("""
-            color: #FFFFFF;
-            font-size: 24px;
-            font-weight: bold;
-        """)
-        self.lbl_total_cash.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        cash_layout.addWidget(self.lbl_total_cash)
-        
-        summary_layout.addWidget(cash_box)
-        
-        # Total Bank Received Box
-        bank_box = QFrame()
-        bank_box.setStyleSheet("""
-            QFrame {
-                background-color: #0F0F0F;
-                border-radius: 8px;
-                border: 2px solid #777777;
-                padding: 15px;
-            }
-        """)
-        bank_layout = QVBoxLayout(bank_box)
-        bank_layout.setSpacing(6)
-        
-        bank_title = QLabel("🏦 Total Bank Received")
-        bank_title.setStyleSheet("""
-            color: #FFFFFF;
-            font-size: 14px;
-            font-weight: bold;
-        """)
-        bank_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        bank_layout.addWidget(bank_title)
-        
-        self.lbl_total_bank = QLabel("₹0.00")
-        self.lbl_total_bank.setStyleSheet("""
-            color: #FFFFFF;
-            font-size: 24px;
-            font-weight: bold;
-        """)
-        self.lbl_total_bank.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        bank_layout.addWidget(self.lbl_total_bank)
-        
-        summary_layout.addWidget(bank_box)
-        
-        return summary_frame
-    
-    def _update_payment_summary(self):
-        """Calculate and update total cash and bank received from all invoices."""
-        try:
-            total_cash = 0.0
-            total_bank = 0.0
-            
-            # Get all payments from database
-            all_payments = self.db.get_all_payments_received()
-            
-            for payment in all_payments:
-                amount = float(payment.get('amount', 0))
-                payment_mode = payment.get('payment_mode', '').upper()
-                
-                if payment_mode == 'CASH':
-                    total_cash += amount
-                elif payment_mode in ['BANK_TRANSFER', 'UPI', 'CARD', 'CHEQUE', 'ONLINE']:
-                    total_bank += amount
-            
-            # Update labels
-            if hasattr(self, 'lbl_total_cash'):
-                self.lbl_total_cash.setText(f"₹{total_cash:,.2f}")
-            if hasattr(self, 'lbl_total_bank'):
-                self.lbl_total_bank.setText(f"₹{total_bank:,.2f}")
-            
-            self.logger.log_info(f"Payment summary updated - Cash: ₹{total_cash:,.2f}, Bank: ₹{total_bank:,.2f}", 'billing_app')
-            
-        except Exception as e:
-            self.logger.log_error("Error updating payment summary", exception=e, logger_name='billing_errors')
-            print(f"Error updating payment summary: {e}")
+        # Refresh based on report type
+        if index == 0:  # Sale Report
+            self._populate_sale_report()
+        elif index == 1:  # Purchase Report
+            self._populate_purchase_report()
+        elif index == 2:  # All Transactions
+            self._populate_all_transactions()
+        elif index == 3:  # Day Book
+            self._populate_day_book()
+        elif index == 4:  # Profit and Loss
+            self._populate_profit_loss()
+        elif index == 5:  # Bill Wise Profit
+            self._populate_bill_wise_profit()
+        elif index == 6:  # Cash Transactions
+            self._populate_cash_transactions()
+        elif index == 7:  # Balance Report
+            self._populate_balance_report()
     
     def _load_all_invoices(self):
         """Load all invoices from database."""
         self.all_invoices = []
         
         try:
-            # Fetch all invoices from database
-            invoices = self.db.get_all_invoices()
+            # Get all invoices from database
+            db_invoices = self.db.get_all_invoices()
             
-            self.logger.log_info(f"Loading {len(invoices)} invoices from database", 'billing_app')
-            
-            for inv in invoices:
-                # Convert invoice_date to dd/MM/yyyy format
-                invoice_date_str = inv.get('invoice_date', '')
-                try:
-                    if invoice_date_str:
-                        # Parse from yyyy-MM-dd (database format) to dd/MM/yyyy
-                        from datetime import datetime
-                        date_obj = datetime.strptime(invoice_date_str, '%Y-%m-%d')
-                        invoice_date_formatted = date_obj.strftime('%d/%m/%Y')
-                    else:
-                        invoice_date_formatted = ''
-                except:
-                    invoice_date_formatted = invoice_date_str
-                
-                # Convert database row to dictionary format
-                invoice_dict = {
-                    'invoice_number': inv.get('invoice_number', ''),
-                    'invoice_date': invoice_date_formatted,
-                    'customer_name': inv.get('customer_name', ''),
-                    'customer_phone': inv.get('contact_number', ''),  # Fixed field name from database
-                    'total_amount': float(inv.get('total_amount', 0)),
-                    'paid_amount': float(inv.get('paid_amount', 0)),
-                    'balance': float(inv.get('balance', 0)),
-                    'payment_status': inv.get('payment_status', 'UNPAID'),
-                    'passengers': [],
-                    'tickets': []
-                }
-                
-                # Get invoice items (tickets) for this invoice
+            # Convert database format to match expected structure
+            for inv in db_invoices:
+                # Get invoice items
                 items = self.db.get_invoice_items(inv['id'])
                 
+                # Format items for reports
+                formatted_items = []
                 for item in items:
-                    # Add passenger info
-                    passenger_name = item.get('passenger_name', '')
-                    passenger_contact = item.get('passenger_contact', '')
-                    
-                    if passenger_name:
-                        # Check if passenger already added
-                        if not any(p['name'] == passenger_name for p in invoice_dict['passengers']):
-                            invoice_dict['passengers'].append({
-                                'name': passenger_name,
-                                'contact_number': passenger_contact
-                            })
-                    
-                    # Add ticket/item info
-                    invoice_dict['tickets'].append({
-                        'pnr': item.get('pnr_number', ''),
-                        'supplier_name': item.get('supplier_name', ''),
+                    formatted_items.append({
+                        'passenger_name': item.get('passenger_name', ''),
+                        'supplier': item.get('supplier', ''),
                         'sector': item.get('sector', ''),
-                        'booking_type': item.get('service_type_name', ''),  # service_type_name is the booking type
-                        'quantity': int(item.get('quantity', 1)),
-                        'supplier_amount': float(item.get('cost_price', 0)),
-                        'total_amount': float(item.get('total_amount', 0)),
-                        'passport_number': item.get('passport_number', '')
+                        'pnr': item.get('pnr', ''),
+                        'qty': item.get('qty', 1),
+                        'supplier_amount': item.get('cost_price', 0.0),
+                        'selling_price': item.get('selling_price', 0.0)
                     })
                 
-                self.all_invoices.append(invoice_dict)
-            
-            self.logger.log_info(f"Successfully loaded {len(self.all_invoices)} invoices with {sum(len(inv['tickets']) for inv in self.all_invoices)} items", 'billing_app')
+                # Format invoice data
+                invoice_data = {
+                    'invoice_number': inv.get('invoice_number', ''),
+                    'invoice_date': inv.get('invoice_date', ''),
+                    'date': inv.get('invoice_date', ''),
+                    'customer_name': inv.get('customer_name', ''),
+                    'contact_name': inv.get('customer_name', ''),
+                    'contact_number': inv.get('customer_phone', ''),
+                    'total': inv.get('grand_total', 0),
+                    'total_amount': inv.get('grand_total', 0),
+                    'paid_amount': inv.get('paid_amount', 0),
+                    'balance': f"₹{inv.get('balance_due', 0):,.2f}",
+                    'items': formatted_items,
+                    'payment_method': inv.get('payment_method', 'Cash'),
+                    'type': 'Sale'
+                }
+                
+                # Add passenger info if available
+                if inv.get('passenger_names'):
+                    invoice_data['passenger_names'] = inv['passenger_names']
+                    
+                self.all_invoices.append(invoice_data)
                 
         except Exception as e:
-            self.logger.log_error(f"Failed to load invoices from database", exception=e, logger_name='billing_errors')
-            QMessageBox.critical(self, "Error", f"Failed to load invoices: {str(e)}")
-            print(f"Error loading invoices: {e}")
-            import traceback
-            traceback.print_exc()
+            print(f"Error loading invoices from database: {e}")
     
     def _create_common_filters(self) -> QFrame:
         """Create common filter section for reports with enhanced styling."""
         filter_frame = QFrame()
-        filter_frame.setStyleSheet("""
-            QFrame {
-                background-color: #0F0F0F;
-                border-radius: 8px;
-                border: 2px solid #777777;
-                padding: 0px;
-                margin: 0px;
-            }
+        filter_frame.setStyleSheet(f"""
+            QFrame {{
+                background-color: {self.colors['secondary_bg']};
+                border-radius: 10px;
+                border: 1px solid #e0e0e0;
+                padding: 20px;
+            }}
         """)
         
         filter_layout = QVBoxLayout(filter_frame)
-        filter_layout.setSpacing(10)
-        filter_layout.setContentsMargins(14, 14, 14, 14)
+        filter_layout.setSpacing(15)
+        filter_layout.setContentsMargins(20, 20, 20, 20)
         
-        # Title with white border
+        # Title
         filter_title = QLabel("🔍 Filter Options")
-        filter_title.setStyleSheet("""
-            QLabel {
-                color: #FFFFFF;
-                font-size: 14px;
+        filter_title.setStyleSheet(f"""
+            QLabel {{
+                color: {self.colors['accent_primary']};
+                font-size: 15px;
                 font-weight: bold;
                 letter-spacing: 0.5px;
-                padding: 8px;
-                margin: 0px 0px 10px 0px;
-                border: 1px solid #777777;
-                border-radius: 4px;
-                background-color: #1A1A1A;
-            }
+            }}
         """)
         filter_layout.addWidget(filter_title)
         
@@ -567,328 +407,86 @@ class ReportsPage(QWidget):
         date_row.setSpacing(10)
         
         from_label = QLabel("From:")
-        from_label.setStyleSheet("color: #FFFFFF; font-weight: bold;")
+        from_label.setStyleSheet(self.get_label_style())
         date_row.addWidget(from_label)
         
         self.filter_from_date = QDateEdit()
         self.filter_from_date.setCalendarPopup(True)
         self.filter_from_date.setDate(QDate.currentDate().addMonths(-1))
-        self.filter_from_date.setStyleSheet("""
-            QDateEdit {
-                background-color: #1A1A1A;
-                color: #FFFFFF;
-                border: none;
-                border-radius: 4px;
-                padding: 8px;
-            }
-            QDateEdit::drop-down {
-                border: none;
-                background-color: #1A1A1A;
-            }
-        """)
+        self.filter_from_date.setStyleSheet(self.get_input_style())
         date_row.addWidget(self.filter_from_date)
         
         to_label = QLabel("To:")
-        to_label.setStyleSheet("color: #FFFFFF; font-weight: bold;")
+        to_label.setStyleSheet(self.get_label_style())
         date_row.addWidget(to_label)
         
         self.filter_to_date = QDateEdit()
         self.filter_to_date.setCalendarPopup(True)
         self.filter_to_date.setDate(QDate.currentDate())
-        self.filter_to_date.setStyleSheet("""
-            QDateEdit {
-                background-color: #1A1A1A;
-                color: #FFFFFF;
-                border: none;
-                border-radius: 4px;
-                padding: 8px;
-            }
-            QDateEdit::drop-down {
-                border: none;
-                background-color: #1A1A1A;
-            }
-        """)
+        self.filter_to_date.setStyleSheet(self.get_input_style())
         date_row.addWidget(self.filter_to_date)
         
         filter_layout.addLayout(date_row)
         
-        # Contact Number - Two separate bordered boxes
+        # Contact Number
         contact_row = QHBoxLayout()
-        contact_row.setSpacing(10)
-        
-        contact_label_box = QFrame()
-        contact_label_box.setStyleSheet("""
-            QFrame {
-                background-color: #121212;
-                border: 1px solid #777777;
-                border-radius: 5px;
-                padding: 6px 10px;
-            }
-        """)
-        contact_label_layout = QHBoxLayout(contact_label_box)
-        contact_label_layout.setContentsMargins(0, 0, 0, 0)
         contact_label = QLabel("Contact:")
-        contact_label.setStyleSheet("color: #FFFFFF; font-weight: bold; background: transparent; border: none;")
-        contact_label_layout.addWidget(contact_label)
-        contact_row.addWidget(contact_label_box)
-        
-        contact_input_box = QFrame()
-        contact_input_box.setStyleSheet("""
-            QFrame {
-                background-color: #000000;
-                border: 1px solid #777777;
-                border-radius: 5px;
-                padding: 6px 10px;
-            }
-        """)
-        contact_input_layout = QHBoxLayout(contact_input_box)
-        contact_input_layout.setContentsMargins(0, 0, 0, 0)
+        contact_label.setStyleSheet(self.get_label_style())
+        contact_row.addWidget(contact_label)
         
         self.filter_contact = QLineEdit()
         self.filter_contact.setPlaceholderText("Search by contact number...")
-        self.filter_contact.setStyleSheet("""
-            QLineEdit {
-                background-color: transparent;
-                color: #FFFFFF;
-                border: none;
-                padding: 2px;
-            }
-            QLineEdit::placeholder {
-                color: #CCCCCC;
-            }
-            QLineEdit:focus {
-                outline: none;
-                border: none;
-            }
-        """)
-        contact_input_layout.addWidget(self.filter_contact)
-        contact_row.addWidget(contact_input_box, 1)
+        self.filter_contact.setStyleSheet(self.get_input_style())
+        contact_row.addWidget(self.filter_contact)
         
         filter_layout.addLayout(contact_row)
         
-        # Passenger Name - Two separate bordered boxes
+        # Passenger Name
         passenger_row = QHBoxLayout()
-        passenger_row.setSpacing(10)
-        
-        passenger_label_box = QFrame()
-        passenger_label_box.setStyleSheet("""
-            QFrame {
-                background-color: #121212;
-                border: 1px solid #777777;
-                border-radius: 5px;
-                padding: 6px 10px;
-            }
-        """)
-        passenger_label_layout = QHBoxLayout(passenger_label_box)
-        passenger_label_layout.setContentsMargins(0, 0, 0, 0)
         passenger_label = QLabel("Passenger:")
-        passenger_label.setStyleSheet("color: #FFFFFF; font-weight: bold; background: transparent; border: none;")
-        passenger_label_layout.addWidget(passenger_label)
-        passenger_row.addWidget(passenger_label_box)
-        
-        passenger_input_box = QFrame()
-        passenger_input_box.setStyleSheet("""
-            QFrame {
-                background-color: #000000;
-                border: 1px solid #777777;
-                border-radius: 5px;
-                padding: 6px 10px;
-            }
-        """)
-        passenger_input_layout = QHBoxLayout(passenger_input_box)
-        passenger_input_layout.setContentsMargins(0, 0, 0, 0)
+        passenger_label.setStyleSheet(self.get_label_style())
+        passenger_row.addWidget(passenger_label)
         
         self.filter_passenger = QLineEdit()
         self.filter_passenger.setPlaceholderText("Search by passenger name...")
-        self.filter_passenger.setStyleSheet("""
-            QLineEdit {
-                background-color: transparent;
-                color: #FFFFFF;
-                border: none;
-                padding: 2px;
-            }
-            QLineEdit::placeholder {
-                color: #CCCCCC;
-            }
-            QLineEdit:focus {
-                outline: none;
-                border: none;
-            }
-        """)
-        passenger_input_layout.addWidget(self.filter_passenger)
-        passenger_row.addWidget(passenger_input_box, 1)
+        self.filter_passenger.setStyleSheet(self.get_input_style())
+        passenger_row.addWidget(self.filter_passenger)
         
         filter_layout.addLayout(passenger_row)
         
-        # Sector and Supplier Row
+        # Sector and Supplier
         sector_supplier_row = QHBoxLayout()
-        sector_supplier_row.setSpacing(10)
         
-        # Sector - Two separate bordered boxes
-        sector_label_box = QFrame()
-        sector_label_box.setStyleSheet("""
-            QFrame {
-                background-color: #121212;
-                border: 1px solid #777777;
-                border-radius: 5px;
-                padding: 6px 10px;
-            }
-        """)
-        sector_label_layout = QHBoxLayout(sector_label_box)
-        sector_label_layout.setContentsMargins(0, 0, 0, 0)
         sector_label = QLabel("Sector:")
-        sector_label.setStyleSheet("color: #FFFFFF; font-weight: bold; background: transparent; border: none;")
-        sector_label_layout.addWidget(sector_label)
-        sector_supplier_row.addWidget(sector_label_box)
-        
-        sector_input_box = QFrame()
-        sector_input_box.setStyleSheet("""
-            QFrame {
-                background-color: #000000;
-                border: 1px solid #777777;
-                border-radius: 5px;
-                padding: 6px 10px;
-            }
-        """)
-        sector_input_layout = QHBoxLayout(sector_input_box)
-        sector_input_layout.setContentsMargins(0, 0, 0, 0)
+        sector_label.setStyleSheet(self.get_label_style())
+        sector_supplier_row.addWidget(sector_label)
         
         self.filter_sector = QLineEdit()
         self.filter_sector.setPlaceholderText("Sector...")
-        self.filter_sector.setStyleSheet("""
-            QLineEdit {
-                background-color: transparent;
-                color: #FFFFFF;
-                border: none;
-                padding: 2px;
-            }
-            QLineEdit::placeholder {
-                color: #CCCCCC;
-            }
-            QLineEdit:focus {
-                outline: none;
-                border: none;
-            }
-        """)
-        sector_input_layout.addWidget(self.filter_sector)
-        sector_supplier_row.addWidget(sector_input_box, 1)
+        self.filter_sector.setStyleSheet(self.get_input_style())
+        sector_supplier_row.addWidget(self.filter_sector)
         
-        # Supplier - Two separate bordered boxes
-        supplier_label_box = QFrame()
-        supplier_label_box.setStyleSheet("""
-            QFrame {
-                background-color: #121212;
-                border: 1px solid #777777;
-                border-radius: 5px;
-                padding: 6px 10px;
-            }
-        """)
-        supplier_label_layout = QHBoxLayout(supplier_label_box)
-        supplier_label_layout.setContentsMargins(0, 0, 0, 0)
         supplier_label = QLabel("Supplier:")
-        supplier_label.setStyleSheet("color: #FFFFFF; font-weight: bold; background: transparent; border: none;")
-        supplier_label_layout.addWidget(supplier_label)
-        sector_supplier_row.addWidget(supplier_label_box)
-        
-        supplier_input_box = QFrame()
-        supplier_input_box.setStyleSheet("""
-            QFrame {
-                background-color: #000000;
-                border: 1px solid #777777;
-                border-radius: 5px;
-                padding: 6px 10px;
-            }
-        """)
-        supplier_input_layout = QHBoxLayout(supplier_input_box)
-        supplier_input_layout.setContentsMargins(0, 0, 0, 0)
+        supplier_label.setStyleSheet(self.get_label_style())
+        sector_supplier_row.addWidget(supplier_label)
         
         self.filter_supplier = QComboBox()
         self.filter_supplier.addItems(["All", "IndiGo", "Air India", "SpiceJet", "Vistara", "AirAsia", "Other"])
-        self.filter_supplier.setStyleSheet("""
-            QComboBox {
-                background-color: transparent;
-                color: #FFFFFF;
-                border: none;
-                padding: 2px;
-            }
-            QComboBox::drop-down {
-                border: none;
-                background-color: transparent;
-            }
-            QComboBox QAbstractItemView {
-                background-color: #1A1A1A;
-                color: #FFFFFF;
-                selection-background-color: #333333;
-                border: 1px solid #777777;
-            }
-            QComboBox:focus {
-                outline: none;
-                border: none;
-            }
-        """)
-        supplier_input_layout.addWidget(self.filter_supplier)
-        sector_supplier_row.addWidget(supplier_input_box, 1)
+        self.filter_supplier.setStyleSheet(self.get_input_style())
+        sector_supplier_row.addWidget(self.filter_supplier)
         
         filter_layout.addLayout(sector_supplier_row)
         
-        # Booking Type - Two separate bordered boxes
+        # Booking Type
         type_row = QHBoxLayout()
-        type_row.setSpacing(10)
-        
-        type_label_box = QFrame()
-        type_label_box.setStyleSheet("""
-            QFrame {
-                background-color: #121212;
-                border: 1px solid #777777;
-                border-radius: 5px;
-                padding: 6px 10px;
-            }
-        """)
-        type_label_layout = QHBoxLayout(type_label_box)
-        type_label_layout.setContentsMargins(0, 0, 0, 0)
         type_label = QLabel("Type:")
-        type_label.setStyleSheet("color: #FFFFFF; font-weight: bold; background: transparent; border: none;")
-        type_label_layout.addWidget(type_label)
-        type_row.addWidget(type_label_box)
-        
-        type_input_box = QFrame()
-        type_input_box.setStyleSheet("""
-            QFrame {
-                background-color: #000000;
-                border: 1px solid #777777;
-                border-radius: 5px;
-                padding: 6px 10px;
-            }
-        """)
-        type_input_layout = QHBoxLayout(type_input_box)
-        type_input_layout.setContentsMargins(0, 0, 0, 0)
+        type_label.setStyleSheet(self.get_label_style())
+        type_row.addWidget(type_label)
         
         self.filter_type = QComboBox()
         self.filter_type.addItems(["All", "Flight", "Hotel", "Visa", "Tour Package", "Insurance", "Other"])
-        self.filter_type.setStyleSheet("""
-            QComboBox {
-                background-color: transparent;
-                color: #FFFFFF;
-                border: none;
-                padding: 2px;
-            }
-            QComboBox::drop-down {
-                border: none;
-                background-color: transparent;
-            }
-            QComboBox QAbstractItemView {
-                background-color: #1A1A1A;
-                color: #FFFFFF;
-                selection-background-color: #333333;
-                border: 1px solid #777777;
-            }
-            QComboBox:focus {
-                outline: none;
-                border: none;
-            }
-        """)
-        type_input_layout.addWidget(self.filter_type)
-        type_row.addWidget(type_input_box, 1)
+        self.filter_type.setStyleSheet(self.get_input_style())
+        type_row.addWidget(self.filter_type)
         
         filter_layout.addLayout(type_row)
         
@@ -913,28 +511,19 @@ class ReportsPage(QWidget):
     
     def _clear_filters(self):
         """Clear all filter values and show confirmation."""
-        try:
-            self.logger.log_info("Clearing all filters", 'billing_app')
-            
-            self.filter_from_date.setDate(QDate.currentDate().addMonths(-1))
-            self.filter_to_date.setDate(QDate.currentDate())
-            self.filter_contact.clear()
-            self.filter_passenger.clear()
-            self.filter_sector.clear()
-            self.filter_supplier.setCurrentIndex(0)
-            self.filter_type.setCurrentIndex(0)
-            
-            # Apply the cleared filters
-            self._handle_filter_change()
-            
-            # Show confirmation
-            QMessageBox.information(self, "Filters Cleared", "All filters have been reset to default values.")
-            
-            self.logger.log_info("Filters cleared successfully", 'billing_app')
-            
-        except Exception as e:
-            self.logger.log_error("Error clearing filters", exception=e, logger_name='billing_errors')
-            QMessageBox.critical(self, "Error", f"Failed to clear filters: {str(e)}")
+        self.filter_from_date.setDate(QDate.currentDate().addMonths(-1))
+        self.filter_to_date.setDate(QDate.currentDate())
+        self.filter_contact.clear()
+        self.filter_passenger.clear()
+        self.filter_sector.clear()
+        self.filter_supplier.setCurrentIndex(0)
+        self.filter_type.setCurrentIndex(0)
+        
+        # Apply the cleared filters
+        self._handle_filter_change()
+        
+        # Show confirmation
+        QMessageBox.information(self, "Filters Cleared", "All filters have been reset to default values.")
     
     def _handle_filter_change(self):
         """Unified filter change handler that refreshes the current report.
@@ -943,96 +532,65 @@ class ReportsPage(QWidget):
         date range, firm selector, etc.). It collects all active filter values
         and applies them to refresh the report data without duplicate calls.
         """
-        try:
-            self.logger.log_info("Handling filter change", 'billing_app')
-            
-            # Get current report index
-            current_index = self.content_stack.currentIndex()
-            
-            # Load all invoices
-            self._load_all_invoices()
-            
-            # Refresh the current report with updated filters
-            self._refresh_current_report(current_index)
-            
-        except Exception as e:
-            self.logger.log_error("Error handling filter change", exception=e, logger_name='billing_errors')
-            QMessageBox.critical(self, "Error", f"Failed to apply filter changes: {str(e)}")
+        # Get current report index
+        current_index = self.content_stack.currentIndex()
+        
+        # Load all invoices
+        self._load_all_invoices()
+        
+        # Refresh the current report with updated filters
+        self._refresh_current_report(current_index)
     
     def _apply_filters(self, invoices):
         """Apply current filters to invoice list."""
-        try:
-            filtered = []
-            
-            from_date = self.filter_from_date.date().toPyDate()
-            to_date = self.filter_to_date.date().toPyDate()
-            contact = self.filter_contact.text().lower()
-            passenger = self.filter_passenger.text().lower()
-            sector = self.filter_sector.text().lower()
-            supplier = self.filter_supplier.currentText()
-            booking_type = self.filter_type.currentText()
-            
-            self.logger.log_info(f"Applying filters - Date: {from_date} to {to_date}, Contact: '{contact}', Passenger: '{passenger}', Sector: '{sector}', Supplier: '{supplier}', Type: '{booking_type}'", 'billing_app')
-            
-            for invoice in invoices:
-                try:
-                    # Date filter
-                    try:
-                        date_str = invoice.get('invoice_date', '')
-                        if date_str:
-                            day, month, year = map(int, date_str.split('/'))
-                            invoice_date = datetime(year, month, day).date()
-                            if not (from_date <= invoice_date <= to_date):
-                                continue
-                    except Exception as date_error:
-                        self.logger.log_warning(f"Date parsing error for invoice {invoice.get('invoice_number', 'Unknown')}: {date_error}", 'billing_app')
-                        pass
-                    
-                    # Contact filter
-                    if contact and contact not in invoice.get('customer_phone', '').lower():
+        filtered = []
+        
+        from_date = self.filter_from_date.date().toPyDate()
+        to_date = self.filter_to_date.date().toPyDate()
+        contact = self.filter_contact.text().lower()
+        passenger = self.filter_passenger.text().lower()
+        sector = self.filter_sector.text().lower()
+        supplier = self.filter_supplier.currentText()
+        booking_type = self.filter_type.currentText()
+        
+        for invoice in invoices:
+            # Date filter
+            try:
+                date_str = invoice.get('invoice_date', '')
+                if date_str:
+                    day, month, year = map(int, date_str.split('/'))
+                    invoice_date = datetime(year, month, day).date()
+                    if not (from_date <= invoice_date <= to_date):
                         continue
-                    
-                    # Type filter
-                    if booking_type != "All":
-                        # Check tickets for booking type
-                        tickets = invoice.get('tickets', [])
-                        if not any(ticket.get('booking_type', '') == booking_type for ticket in tickets):
-                            continue
-                    
-                    # Passenger, sector, supplier filters (check tickets)
-                    if passenger or sector or supplier != "All":
-                        match_found = False
-                        tickets = invoice.get('tickets', [])
-                        passengers_list = invoice.get('passengers', [])
-                        
-                        for ticket in tickets:
-                            if passenger:
-                                # Check in passengers list
-                                for pax in passengers_list:
-                                    if passenger in pax.get('name', '').lower():
-                                        match_found = True
-                                        break
-                            if sector and sector in ticket.get('sector', '').lower():
-                                match_found = True
-                            if supplier != "All" and supplier == ticket.get('supplier_name', ''):
-                                match_found = True
-                            if match_found:
-                                break
-                        if not match_found and (passenger or sector or supplier != "All"):
-                            continue
-                    
-                    filtered.append(invoice)
-                except Exception as invoice_error:
-                    self.logger.log_error(f"Error filtering invoice {invoice.get('invoice_number', 'Unknown')}", exception=invoice_error, logger_name='billing_errors')
+            except:
+                pass
+            
+            # Contact filter
+            if contact and contact not in invoice.get('contact_number', '').lower():
+                continue
+            
+            # Type filter
+            if booking_type != "All" and invoice.get('type', '') != booking_type:
+                continue
+            
+            # Passenger, sector, supplier filters (check items)
+            if passenger or sector or supplier != "All":
+                match_found = False
+                for item in invoice.get('items', []):
+                    if passenger and passenger in item.get('passenger_name', '').lower():
+                        match_found = True
+                    if sector and sector in item.get('sector', '').lower():
+                        match_found = True
+                    if supplier != "All" and supplier == item.get('supplier', ''):
+                        match_found = True
+                    if match_found:
+                        break
+                if not match_found and (passenger or sector or supplier != "All"):
                     continue
             
-            self.logger.log_info(f"Filter applied - {len(filtered)} records matched out of {len(invoices)}", 'billing_app')
-            return filtered
-            
-        except Exception as e:
-            self.logger.log_error("Error applying filters", exception=e, logger_name='billing_errors')
-            QMessageBox.critical(self, "Filter Error", f"An error occurred while applying filters: {str(e)}")
-            return []
+            filtered.append(invoice)
+        
+        return filtered
     
     def _show_no_records_message(self, report_name):
         """Show message when no records match the filter criteria."""
@@ -1109,10 +667,6 @@ class ReportsPage(QWidget):
         filters = self._create_common_filters()
         layout.addWidget(filters)
         
-        # Payment Summary Section
-        payment_summary = self._create_payment_summary_section()
-        layout.addWidget(payment_summary)
-        
         # Summary Cards
         self.sale_summary_frame = self._create_summary_cards(['Total Sales', 'Total Invoices', 'Avg Invoice Value'])
         layout.addWidget(self.sale_summary_frame)
@@ -1163,89 +717,7 @@ class ReportsPage(QWidget):
     
     def _populate_sale_report(self):
         """Populate sale report with filtered data."""
-        try:
-            self.logger.log_info("Populating sale report", 'billing_app')
-            
-            filtered_invoices = self._apply_filters(self.all_invoices)
-            
-            self.sale_table.setRowCount(0)
-            
-            # Check if no records found
-            if not filtered_invoices:
-                self.logger.log_warning("No records found for sale report with current filters", 'billing_app')
-                self._show_no_records_message("Sale Report")
-                # Update summary with zeros
-                self._update_summary_cards(self.sale_summary_frame, [
-                    "₹0.00",
-                    "0",
-                    "₹0.00"
-                ])
-                return
-            
-            total_sales = 0.0
-            
-            for invoice in filtered_invoices:
-                try:
-                    row = self.sale_table.rowCount()
-                    self.sale_table.insertRow(row)
-                    
-                    # Invoice Number
-                    self.sale_table.setItem(row, 0, QTableWidgetItem(invoice.get('invoice_number', '')))
-                    
-                    # Date
-                    self.sale_table.setItem(row, 1, QTableWidgetItem(invoice.get('invoice_date', '')))
-                    
-                    # Customer
-                    self.sale_table.setItem(row, 2, QTableWidgetItem(invoice.get('customer_name', '')))
-                    
-                    # Contact
-                    self.sale_table.setItem(row, 3, QTableWidgetItem(invoice.get('customer_phone', '')))
-                    
-                    # Type - Get from first ticket
-                    tickets = invoice.get('tickets', [])
-                    booking_type = tickets[0].get('booking_type', '') if tickets else ''
-                    self.sale_table.setItem(row, 4, QTableWidgetItem(booking_type))
-                    
-                    # Total
-                    total = float(invoice.get('total_amount', 0))
-                    total_sales += total
-                    
-                    total_item = QTableWidgetItem(f"₹{total:,.2f}")
-                    total_item.setForeground(QColor(self.colors['accent_gold']))
-                    self.sale_table.setItem(row, 5, total_item)
-                    
-                    # Status
-                    payment_status = invoice.get('payment_status', 'UNPAID')
-                    if payment_status == 'PAID':
-                        status = '✅ Paid'
-                        color = self.colors['success']
-                    elif payment_status == 'PARTIAL':
-                        status = '⏳ Partial'
-                        color = self.colors.get('warning', '#FFA500')
-                    else:
-                        status = '❌ Unpaid'
-                        color = self.colors['danger']
-                    
-                    status_item = QTableWidgetItem(status)
-                    status_item.setForeground(QColor(color))
-                    self.sale_table.setItem(row, 6, status_item)
-                    
-                except Exception as row_error:
-                    self.logger.log_error(f"Error adding row for invoice {invoice.get('invoice_number', 'Unknown')}", exception=row_error, logger_name='billing_errors')
-                    continue
-            
-            # Update summary
-            self._update_summary_cards(self.sale_summary_frame, [
-                f"₹{total_sales:,.2f}",
-                str(len(filtered_invoices)),
-                f"₹{total_sales/len(filtered_invoices):,.2f}" if filtered_invoices else "₹0.00"
-            ])
-            
-            self.logger.log_info(f"Sale report populated successfully with {len(filtered_invoices)} records, Total: ₹{total_sales:,.2f}", 'billing_app')
-            
-        except Exception as e:
-            self.logger.log_error("Error populating sale report", exception=e, logger_name='billing_errors')
-            QMessageBox.critical(self, "Error", f"Failed to populate sale report: {str(e)}")
+        filtered_invoices = self._apply_filters(self.all_invoices)
         
         self.sale_table.setRowCount(0)
         
