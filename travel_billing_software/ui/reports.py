@@ -301,6 +301,34 @@ class ReportsPage(QWidget):
         self.balance_report_view = self._create_balance_report_view()
         self.content_stack.addWidget(self.balance_report_view)
     
+    def refresh_type_filter(self):
+        """Refresh the Type filter combobox with updated values from database."""
+        if not hasattr(self, 'filter_type'):
+            return
+        
+        try:
+            current_selection = self.filter_type.currentText()
+            self.filter_type.clear()
+            
+            # Reload types from database
+            type_items = ["All"]
+            db_types = self.db.get_dropdown_items('type')
+            if db_types:
+                type_items.extend(db_types)
+            else:
+                type_items.extend(["Visa", "Ticket", "Hajj", "Umra"])
+            
+            self.filter_type.addItems(type_items)
+            
+            # Restore previous selection if still valid
+            idx = self.filter_type.findText(current_selection)
+            if idx >= 0:
+                self.filter_type.setCurrentIndex(idx)
+            else:
+                self.filter_type.setCurrentIndex(0)  # Default to "All"
+        except Exception as e:
+            print(f"Error refreshing type filter: {e}")
+    
     def _on_report_selected(self, index):
         """Handle report category selection."""
         if index >= 0:
@@ -865,7 +893,20 @@ class ReportsPage(QWidget):
         type_input_layout.setContentsMargins(0, 0, 0, 0)
         
         self.filter_type = QComboBox()
-        self.filter_type.addItems(["All", "Flight", "Hotel", "Visa", "Tour Package", "Insurance", "Other"])
+        # Load types from database dynamically
+        type_items = ["All"]
+        try:
+            db_types = self.db.get_dropdown_items('type')
+            if db_types:
+                type_items.extend(db_types)
+            else:
+                # Fallback to default if database is empty
+                type_items.extend(["Visa", "Ticket", "Hajj", "Umra"])
+        except Exception as e:
+            print(f"Warning: Could not load types from database: {e}")
+            type_items.extend(["Visa", "Ticket", "Hajj", "Umra"])
+        
+        self.filter_type.addItems(type_items)
         self.filter_type.setStyleSheet("""
             QComboBox {
                 background-color: transparent;

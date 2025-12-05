@@ -36,6 +36,7 @@ class InvoiceFormWidget(QFrame):
         get_dateedit_style: callable,
         get_combobox_style: callable,
         generate_invoice_number: callable,
+        db=None,
         parent=None
     ):
         """
@@ -49,6 +50,7 @@ class InvoiceFormWidget(QFrame):
             get_dateedit_style: Function to get date edit stylesheet
             get_combobox_style: Function to get combobox stylesheet
             generate_invoice_number: Function to generate invoice number
+            db: Database manager instance for loading dropdown items
             parent: Parent widget
         """
         super().__init__(parent)
@@ -59,6 +61,7 @@ class InvoiceFormWidget(QFrame):
         self.get_dateedit_style = get_dateedit_style
         self.get_combobox_style = get_combobox_style
         self.generate_invoice_number = generate_invoice_number
+        self.db = db
         
         # Collapse state and animation
         self.is_collapsed = False
@@ -201,7 +204,19 @@ class InvoiceFormWidget(QFrame):
         collapsible_layout.addWidget(lbl_type, 0, 2)
         
         self.invoice_type = QComboBox()
-        self.invoice_type.addItems(["Visa", "Ticket", "Hajj", "Umra"])
+        # Load types from database, fallback to default if database not available
+        if self.db:
+            try:
+                types = self.db.get_dropdown_items('type')
+                if types:
+                    self.invoice_type.addItems(types)
+                else:
+                    self.invoice_type.addItems(["Visa", "Ticket", "Hajj", "Umra"])
+            except Exception as e:
+                log_error(f"Failed to load types from database: {e}", logger_name="invoice_form_errors")
+                self.invoice_type.addItems(["Visa", "Ticket", "Hajj", "Umra"])
+        else:
+            self.invoice_type.addItems(["Visa", "Ticket", "Hajj", "Umra"])
         self.invoice_type.setStyleSheet(self._get_custom_combobox_style())
         self.invoice_type.setMinimumWidth(250)
         collapsible_layout.addWidget(self.invoice_type, 0, 3)

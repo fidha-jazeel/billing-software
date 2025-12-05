@@ -174,7 +174,8 @@ class HomePage(QWidget):
             get_input_style=self.get_input_style,
             get_dateedit_style=self.get_dateedit_style,
             get_combobox_style=self.get_combobox_style,
-            generate_invoice_number=self.invoice_generator.generate
+            generate_invoice_number=self.invoice_generator.generate,
+            db=self.db_ops.db
         )
         layout.addWidget(self.invoice_form)
         

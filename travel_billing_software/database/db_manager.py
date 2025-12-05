@@ -275,6 +275,12 @@ class DatabaseManager:
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
             
+            CREATE TABLE IF NOT EXISTS dropdown_types (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT UNIQUE NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+            
             -- Settings Table
             CREATE TABLE IF NOT EXISTS settings (
                 key TEXT PRIMARY KEY,
@@ -361,6 +367,11 @@ class DatabaseManager:
             if cur.fetchone()['count'] == 0:
                 classes = [('Economy',), ('Premium Economy',), ('Business',), ('First Class',)]
                 cur.executemany("INSERT INTO dropdown_classes (name) VALUES (?)", classes)
+            
+            cur.execute("SELECT COUNT(*) as count FROM dropdown_types")
+            if cur.fetchone()['count'] == 0:
+                types = [('Visa',), ('Ticket',), ('Hajj',), ('Umra',)]
+                cur.executemany("INSERT INTO dropdown_types (name) VALUES (?)", types)
             
             self.conn.commit()
         except Exception as e:
@@ -1340,15 +1351,17 @@ class DatabaseManager:
     # ===================================================================================
     
     def get_dropdown_items(self, item_type: str) -> List[str]:
-        """Get dropdown items for sectors or classes."""
+        """Get dropdown items for sectors, classes, or types."""
         try:
+            cur = self.conn.cursor()
             if item_type == 'sector':
-                cur = self.conn.cursor()
                 cur.execute("SELECT name FROM dropdown_sectors ORDER BY name")
                 return [row[0] for row in cur.fetchall()]
             elif item_type == 'class':
-                cur = self.conn.cursor()
                 cur.execute("SELECT name FROM dropdown_classes ORDER BY name")
+                return [row[0] for row in cur.fetchall()]
+            elif item_type == 'type':
+                cur.execute("SELECT name FROM dropdown_types ORDER BY name")
                 return [row[0] for row in cur.fetchall()]
             return []
         except Exception as e:
@@ -1363,6 +1376,8 @@ class DatabaseManager:
                 cur.execute("INSERT INTO dropdown_sectors (name) VALUES (?)", (name,))
             elif item_type == 'class':
                 cur.execute("INSERT INTO dropdown_classes (name) VALUES (?)", (name,))
+            elif item_type == 'type':
+                cur.execute("INSERT INTO dropdown_types (name) VALUES (?)", (name,))
             else:
                 return False
             self.conn.commit()
@@ -1371,6 +1386,44 @@ class DatabaseManager:
             return False
         except Exception as e:
             print(f"✗ Error adding dropdown item: {e}")
+            return False
+    
+    def edit_dropdown_item(self, item_type: str, old_name: str, new_name: str) -> bool:
+        """Edit a dropdown item."""
+        try:
+            cur = self.conn.cursor()
+            if item_type == 'sector':
+                cur.execute("UPDATE dropdown_sectors SET name = ? WHERE name = ?", (new_name, old_name))
+            elif item_type == 'class':
+                cur.execute("UPDATE dropdown_classes SET name = ? WHERE name = ?", (new_name, old_name))
+            elif item_type == 'type':
+                cur.execute("UPDATE dropdown_types SET name = ? WHERE name = ?", (new_name, old_name))
+            else:
+                return False
+            self.conn.commit()
+            return cur.rowcount > 0
+        except sqlite3.IntegrityError:
+            return False
+        except Exception as e:
+            print(f"✗ Error editing dropdown item: {e}")
+            return False
+    
+    def delete_dropdown_item(self, item_type: str, name: str) -> bool:
+        """Delete a dropdown item."""
+        try:
+            cur = self.conn.cursor()
+            if item_type == 'sector':
+                cur.execute("DELETE FROM dropdown_sectors WHERE name = ?", (name,))
+            elif item_type == 'class':
+                cur.execute("DELETE FROM dropdown_classes WHERE name = ?", (name,))
+            elif item_type == 'type':
+                cur.execute("DELETE FROM dropdown_types WHERE name = ?", (name,))
+            else:
+                return False
+            self.conn.commit()
+            return cur.rowcount > 0
+        except Exception as e:
+            print(f"✗ Error deleting dropdown item: {e}")
             return False
     
     # ===================================================================================

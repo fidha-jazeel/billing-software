@@ -264,9 +264,131 @@ class SettingsPage(QWidget):
 
         create_list_manager("Suppliers:", "suppliers")
         layout.addSpacing(10)
-        create_list_manager("Travel Classes:", "classes")
+        
+        # === MANAGE TYPES SECTION (Database-backed, identical to Supplier style) ===
+        if self.db:
+            self._create_types_manager(layout)
         
         self.content_layout.addWidget(frame)
+    
+    def _create_types_manager(self, parent_layout):
+        """Create the Manage Types section - identical to Supplier style (Add & Delete only)."""
+        # Section Title
+        lbl = QLabel("Manage Types:")
+        lbl.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size: 16px;")
+        parent_layout.addWidget(lbl)
+        
+        # Input and Add button row (same as Supplier)
+        row = QHBoxLayout()
+        self.types_input = QLineEdit()
+        self.types_input.setPlaceholderText("Add new type...")
+        self.types_input.setStyleSheet(self.get_input_style())
+        
+        btn_add = QPushButton("➕")
+        btn_add.setFixedWidth(70)
+        btn_add.setStyleSheet(self.get_button_style('add'))
+        btn_add.setCursor(Qt.CursorShape.PointingHandCursor)
+        
+        row.addWidget(self.types_input)
+        row.addWidget(btn_add)
+        parent_layout.addLayout(row)
+        
+        # List widget (same style as Supplier)
+        self.types_list = QListWidget()
+        self.types_list.setFixedHeight(200)
+        self.types_list.setStyleSheet(f"background: {self.COLORS['primary_bg']}; color: #ddd; border: 1px solid #444; border-radius: 4px;")
+        
+        # Load types from database
+        types = self.db.get_dropdown_items('type')
+        self.types_list.addItems(types)
+        
+        parent_layout.addWidget(self.types_list)
+        
+        # Delete Button (same style as Supplier)
+        btn_remove = QPushButton("➖ Remove Selected")
+        btn_remove.setStyleSheet("""
+            QPushButton { background-color: #ef4444; color: white; border-radius: 4px; padding: 5px; }
+            QPushButton:hover { background-color: #dc2626; }
+        """)
+        btn_remove.setCursor(Qt.CursorShape.PointingHandCursor)
+        parent_layout.addWidget(btn_remove)
+        
+        # Connect button actions
+        btn_add.clicked.connect(self._add_type)
+        btn_remove.clicked.connect(self._delete_type)
+    
+    def _add_type(self):
+        """Add a new type (same logic as Supplier add)."""
+        text = self.types_input.text().strip()
+        if not text:
+            return
+        
+        # Check if already exists
+        existing_types = self.db.get_dropdown_items('type')
+        if text in existing_types:
+            QMessageBox.warning(self, "Exists", "Type already exists.")
+            return
+        
+        # Add to database
+        if self.db.add_dropdown_item('type', text):
+            self.types_list.addItem(text)
+            self.types_input.clear()
+            self._refresh_all_type_dropdowns()
+        else:
+            QMessageBox.warning(self, "Error", "Failed to add type.")
+    
+    def _delete_type(self):
+        """Delete the selected type (same logic as Supplier delete)."""
+        row = self.types_list.currentRow()
+        if row < 0:
+            QMessageBox.warning(self, "No Selection", "Please select a type to delete.")
+            return
+        
+        item = self.types_list.item(row).text()
+        
+        # Confirmation dialog
+        reply = QMessageBox.question(
+            self, 
+            "Confirm Delete", 
+            f"Are you sure you want to delete '{item}'?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+        
+        if reply == QMessageBox.StandardButton.Yes:
+            if self.db.delete_dropdown_item('type', item):
+                self.types_list.takeItem(row)
+                self._refresh_all_type_dropdowns()
+            else:
+                QMessageBox.warning(self, "Error", "Failed to delete type.")
+    
+    def _refresh_all_type_dropdowns(self):
+        """Refresh all Type dropdowns in the application."""
+        if not self.main_window:
+            return
+        
+        try:
+            # Refresh Home Page Type dropdown
+            if hasattr(self.main_window, 'home_page'):
+                home_page = self.main_window.home_page
+                if hasattr(home_page, 'invoice_form') and hasattr(home_page.invoice_form, 'invoice_type'):
+                    current_type = home_page.invoice_form.invoice_type.currentText()
+                    home_page.invoice_form.invoice_type.clear()
+                    types = self.db.get_dropdown_items('type')
+                    home_page.invoice_form.invoice_type.addItems(types)
+                    
+                    # Restore selection if still valid
+                    idx = home_page.invoice_form.invoice_type.findText(current_type)
+                    if idx >= 0:
+                        home_page.invoice_form.invoice_type.setCurrentIndex(idx)
+            
+            # Refresh Reports Page Type filter
+            if hasattr(self.main_window, 'reports_page'):
+                reports_page = self.main_window.reports_page
+                if hasattr(reports_page, 'refresh_type_filter'):
+                    reports_page.refresh_type_filter()
+        except Exception as e:
+            print(f"Warning: Could not refresh type dropdowns: {e}")
 
     def save_all_settings(self):
         """Persist all settings to config.json and trigger updates."""
