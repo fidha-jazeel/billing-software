@@ -414,8 +414,9 @@ class ExpensesPage(QWidget):
         table_frame = QFrame()
         table_frame.setStyleSheet(f"""
             QFrame {{
-                background-color: {self.colors['secondary_bg']};
+                background-color: #121212;
                 border-radius: 10px;
+                border: 1.2px solid #FFFFFF;
                 padding: 20px;
             }}
         """)
@@ -425,7 +426,7 @@ class ExpensesPage(QWidget):
         table_title = QLabel("📋 Expense Records")
         table_title.setStyleSheet(f"""
             QLabel {{
-                color: {self.colors['accent_primary']};
+                color: #FFFFFF;
                 font-size: 16px;
                 font-weight: bold;
             }}
@@ -498,16 +499,17 @@ class ExpensesPage(QWidget):
         header = self.expenses_table.horizontalHeader()
         header.setStyleSheet(f"""
             QHeaderView::section {{
-                background-color: {self.colors['accent_primary']};
-                color: white;
+                background-color: #161616;
+                color: #FFFFFF;
                 padding: 12px 8px;
-                border: none;
-                border-right: 1px solid {self.colors['primary_bg']};
+                border: 1.2px solid #FFFFFF;
+                border-right: 1.2px solid #FFFFFF;
                 font-weight: bold;
                 font-size: 13px;
+                min-height: 50px;
             }}
             QHeaderView::section:hover {{
-                background-color: {self.colors['accent_secondary']};
+                background-color: #1E1E1E;
             }}
         """)
         
@@ -538,22 +540,40 @@ class ExpensesPage(QWidget):
         # Configure vertical header
         self.expenses_table.verticalHeader().setVisible(True)
         self.expenses_table.verticalHeader().setDefaultSectionSize(50)
+        self.expenses_table.verticalHeader().setStyleSheet(f"""
+            QHeaderView::section {{
+                background-color: #161616;
+                color: #FFFFFF;
+                border: 1.2px solid #FFFFFF;
+                padding: 5px;
+                font-weight: bold;
+            }}
+        """)
         
         # Table styling
         self.expenses_table.setAlternatingRowColors(True)
         self.expenses_table.setStyleSheet(self.get_table_style() + f"""
             QTableWidget {{
-                gridline-color: #e0e0e0;
+                background-color: #121212;
+                gridline-color: #FFFFFF;
                 font-size: 13px;
-                selection-background-color: {self.colors['accent_primary']};
-                selection-color: white;
+                selection-background-color: #1E1E1E;
+                selection-color: #FFFFFF;
+                border: 1.2px solid #FFFFFF;
+                color: #FFFFFF;
             }}
             QTableWidget::item {{
                 padding: 8px 10px;
-                border: none;
+                border: 1px solid #FFFFFF;
+                background-color: #1E1E1E;
+                color: #FFFFFF;
             }}
             QTableWidget::item:alternate {{
-                background-color: #f9f9f9;
+                background-color: #161616;
+            }}
+            QTableWidget::item:selected {{
+                background-color: #2D2D2D;
+                color: #FFFFFF;
             }}
         """)
         
