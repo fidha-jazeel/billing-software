@@ -401,94 +401,70 @@ class HomePage(QWidget):
         self.items_table = self.table
 
     def _create_invoice_details_section(self) -> QFrame:
-        """Create invoice details section."""
+        """Create invoice details section with proper grid alignment."""
         invoice_details_frame = QFrame()
         invoice_details_frame.setStyleSheet(self.get_frame_style())
         invoice_layout = QGridLayout(invoice_details_frame)
         invoice_layout.setContentsMargins(20, 20, 20, 20)
         invoice_layout.setSpacing(15)
+        invoice_layout.setColumnStretch(1, 1)
+        invoice_layout.setColumnStretch(3, 1)
         
         # Invoice Details Title
         invoice_title = QLabel(f"<b style='color:{self.colors['accent_secondary']}; font-size:16px;'>📄 Invoice Details</b>")
         invoice_layout.addWidget(invoice_title, 0, 0, 1, 4)
         
-        # --- REORDERED FOR SPEED: Customer Name First ---
-        
-        # Row 1: Customer Name & Contact
+        # --- Row 1: Customer Name & Contact Number ---
         lbl_cust_name = QLabel("Customer Name:")
         lbl_cust_name.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 14px;")
-        lbl_cust_name.setAlignment(
-    Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
-)
-
+        lbl_cust_name.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         invoice_layout.addWidget(lbl_cust_name, 1, 0)
         
         self.customer_name = QLineEdit()
         self.customer_name.setPlaceholderText("Enter customer name")
         self.customer_name.setStyleSheet(self.get_input_style())
-        self.customer_name.setMinimumWidth(250)
+        self.customer_name.setMinimumHeight(40)
         invoice_layout.addWidget(self.customer_name, 1, 1)
         
         lbl_contact = QLabel("Contact Number:")
         lbl_contact.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 14px;")
-        lbl_contact.setAlignment(
-    Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
-)
-
+        lbl_contact.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         invoice_layout.addWidget(lbl_contact, 1, 2)
         
         self.contact_number = QLineEdit()
         self.contact_number.setPlaceholderText("Enter contact number")
         self.contact_number.setStyleSheet(self.get_input_style())
-        self.contact_number.setMinimumWidth(250)
+        self.contact_number.setMinimumHeight(40)
         invoice_layout.addWidget(self.contact_number, 1, 3)
-        # Row 2: Address
+        
+        # --- Row 2: Address (Spanning full width) ---
         lbl_address = QLabel("Address:")
         lbl_address.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 14px;")
-        lbl_address.setAlignment(
-    Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
-) 
+        lbl_address.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         invoice_layout.addWidget(lbl_address, 2, 0)
         
         self.customer_address = QLineEdit()
         self.customer_address.setPlaceholderText("Enter customer address")
         self.customer_address.setStyleSheet(self.get_input_style())
-        self.customer_address.setMinimumWidth(250)
+        self.customer_address.setMinimumHeight(40)
         invoice_layout.addWidget(self.customer_address, 2, 1, 1, 3)
         
-        # Row 2b: Type (moved from table to invoice section)
-        lbl_type = QLabel("Type:")
-        lbl_type.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 14px;")
-        lbl_type.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-        invoice_layout.addWidget(lbl_type, 2, 4)
-        
-        self.invoice_type = QComboBox()
-        self.invoice_type.addItems(["Select Type", "Flight", "Hotel", "Tour Package", "Visa", "Insurance", "Other"])
-        self.invoice_type.setEditable(True)
-        self.invoice_type.setStyleSheet(self.get_combobox_style())
-        self.invoice_type.setMinimumWidth(250)
-        invoice_layout.addWidget(self.invoice_type, 2, 5)
-
-        # Row 3: Invoice Info (Auto-filled usually, so placed last in tab order visual)
+        # --- Row 3: Invoice Number & Invoice Date ---
         lbl_inv_num = QLabel("Invoice Number:")
         lbl_inv_num.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 14px;")
-        lbl_inv_num.setAlignment(
-    Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
-)
+        lbl_inv_num.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         invoice_layout.addWidget(lbl_inv_num, 3, 0)
         
         self.invoice_number = QLineEdit()
         self.invoice_number.setText(self.generate_invoice_number())
         self.invoice_number.setPlaceholderText("Auto-generated")
         self.invoice_number.setStyleSheet(self.get_input_style())
-        self.invoice_number.setMinimumWidth(250)
+        self.invoice_number.setMinimumHeight(40)
         invoice_layout.addWidget(self.invoice_number, 3, 1)
         
         lbl_inv_date = QLabel("Invoice Date:")
         lbl_inv_date.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 14px;")
-        lbl_inv_date.setAlignment(
-    Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
-)
+        lbl_inv_date.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         invoice_layout.addWidget(lbl_inv_date, 3, 2)
         
         self.invoice_date = QDateEdit()
@@ -496,15 +472,40 @@ class HomePage(QWidget):
         self.invoice_date.setCalendarPopup(True)
         self.invoice_date.setDisplayFormat(self.invoice_config['date_format'])
         self.invoice_date.setStyleSheet(self.get_dateedit_style())
-        self.invoice_date.setMinimumWidth(250)
+        self.invoice_date.setMinimumHeight(40)
         invoice_layout.addWidget(self.invoice_date, 3, 3)
+        
+        # --- Row 4: Type & Payment Mode ---
+        lbl_type = QLabel("Type:")
+        lbl_type.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 14px;")
+        lbl_type.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        invoice_layout.addWidget(lbl_type, 4, 0)
+        
+        self.invoice_type = QComboBox()
+        self.invoice_type.addItems(["Select Type", "Ticket", "Hotel", "Tour Package", "Visa", "Insurance", "Refund", "Other"])
+        self.invoice_type.setEditable(True)
+        self.invoice_type.setStyleSheet(self.get_combobox_style())
+        self.invoice_type.setMinimumHeight(40)
+        invoice_layout.addWidget(self.invoice_type, 4, 1)
+        
+        lbl_payment_mode = QLabel("Payment Mode:")
+        lbl_payment_mode.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 14px;")
+        lbl_payment_mode.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        invoice_layout.addWidget(lbl_payment_mode, 4, 2)
+        
+        self.payment_mode = QComboBox()
+        self.payment_mode.addItems(["Cash", "Bank Transfer", "Google Pay", "PhonePe", "UPI", "Online Transfer", "Cheque"])
+        self.payment_mode.setStyleSheet(self.get_combobox_style())
+        self.payment_mode.setMinimumHeight(40)
+        invoice_layout.addWidget(self.payment_mode, 4, 3)
 
         # Set Explicit Tab Order for Speed
         QWidget.setTabOrder(self.customer_name, self.contact_number)
         QWidget.setTabOrder(self.contact_number, self.customer_address)
-        QWidget.setTabOrder(self.customer_address, self.invoice_type)
-        QWidget.setTabOrder(self.invoice_type, self.invoice_date)
-        QWidget.setTabOrder(self.invoice_date, self.invoice_number)
+        QWidget.setTabOrder(self.customer_address, self.invoice_number)
+        QWidget.setTabOrder(self.invoice_number, self.invoice_date)
+        QWidget.setTabOrder(self.invoice_date, self.invoice_type)
+        QWidget.setTabOrder(self.invoice_type, self.payment_mode)
         
         return invoice_details_frame
 
@@ -1098,6 +1099,7 @@ class HomePage(QWidget):
                 "contact_number": self.contact_number.text(),
                 "customer_address": self.customer_address.text(),
                 "type": self.invoice_type.currentText(),
+                "payment_mode": self.payment_mode.currentText(),
                 "items": [],
                 "subtotal": self.lbl_subtotal.text(),
                 "discount": self.txt_discount.text(),

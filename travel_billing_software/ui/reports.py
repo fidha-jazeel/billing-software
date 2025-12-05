@@ -239,6 +239,9 @@ class ReportsPage(QWidget):
         self.sale_report_view = self._create_sale_report_view()
         self.content_stack.addWidget(self.sale_report_view)
         
+        # Initialize payment summary
+        self._update_payment_summary()
+        
         # Purchase Report
         self.purchase_report_view = self._create_purchase_report_view()
         self.content_stack.addWidget(self.purchase_report_view)
@@ -295,6 +298,135 @@ class ReportsPage(QWidget):
             self._populate_cash_transactions()
         elif index == 7:  # Balance Report
             self._populate_balance_report()
+        
+        # Update payment summary whenever report is refreshed
+        self._update_payment_summary()
+    
+    def _create_payment_summary_section(self) -> QFrame:
+        """Create payment summary section showing total cash and bank received."""
+        summary_frame = QFrame()
+        summary_frame.setStyleSheet(f"""
+            QFrame {{
+                background-color: {self.colors['secondary_bg']};
+                border-radius: 10px;
+                border: 2px solid {self.colors['accent_primary']};
+                padding: 15px;
+            }}
+        """)
+        summary_layout = QHBoxLayout(summary_frame)
+        summary_layout.setContentsMargins(20, 15, 20, 15)
+        summary_layout.setSpacing(30)
+        
+        # Total Cash Received Box
+        cash_box = QFrame()
+        cash_box.setStyleSheet(f"""
+            QFrame {{
+                background-color: {self.colors['primary_bg']};
+                border-radius: 8px;
+                border: 2px solid {self.colors['success']};
+                padding: 15px;
+            }}
+        """)
+        cash_layout = QVBoxLayout(cash_box)
+        cash_layout.setSpacing(8)
+        
+        cash_title = QLabel("💵 Total Cash Received")
+        cash_title.setStyleSheet(f"""
+            color: {self.colors['success']};
+            font-size: 14px;
+            font-weight: bold;
+        """)
+        cash_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        cash_layout.addWidget(cash_title)
+        
+        self.lbl_total_cash = QLabel("₹0.00")
+        self.lbl_total_cash.setStyleSheet(f"""
+            color: {self.colors['accent_gold']};
+            font-size: 24px;
+            font-weight: bold;
+        """)
+        self.lbl_total_cash.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        cash_layout.addWidget(self.lbl_total_cash)
+        
+        summary_layout.addWidget(cash_box)
+        
+        # Total Bank Received Box
+        bank_box = QFrame()
+        bank_box.setStyleSheet(f"""
+            QFrame {{
+                background-color: {self.colors['primary_bg']};
+                border-radius: 8px;
+                border: 2px solid {self.colors['accent_cyan']};
+                padding: 15px;
+            }}
+        """)
+        bank_layout = QVBoxLayout(bank_box)
+        bank_layout.setSpacing(8)
+        
+        bank_title = QLabel("🏦 Total Bank Received")
+        bank_title.setStyleSheet(f"""
+            color: {self.colors['accent_cyan']};
+            font-size: 14px;
+            font-weight: bold;
+        """)
+        bank_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        bank_layout.addWidget(bank_title)
+        
+        self.lbl_total_bank = QLabel("₹0.00")
+        self.lbl_total_bank.setStyleSheet(f"""
+            color: {self.colors['accent_gold']};
+            font-size: 24px;
+            font-weight: bold;
+        """)
+        self.lbl_total_bank.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        bank_layout.addWidget(self.lbl_total_bank)
+        
+        summary_layout.addWidget(bank_box)
+        
+        return summary_frame
+    
+    def _update_payment_summary(self):
+        """Calculate and update total cash and bank received from all invoices."""
+        try:
+            total_cash = 0.0
+            total_bank = 0.0
+            
+            invoices_dir = self.invoice_config.get('save_directory', 'invoices')
+            if not os.path.exists(invoices_dir):
+                os.makedirs(invoices_dir, exist_ok=True)
+            
+            for filename in os.listdir(invoices_dir):
+                if filename.endswith(".json"):
+                    filepath = os.path.join(invoices_dir, filename)
+                    try:
+                        with open(filepath, 'r') as f:
+                            invoice_data = json.load(f)
+                        
+                        payment_mode = invoice_data.get("payment_mode", "Cash")
+                        received_str = invoice_data.get("received", "0")
+                        
+                        # Clean the received amount string
+                        received = float(received_str.replace('₹', '').replace(',', '').strip() or 0)
+                        
+                        # Categorize payment
+                        if payment_mode == "Cash":
+                            total_cash += received
+                        else:
+                            # All non-cash payments are considered bank
+                            total_bank += received
+                            
+                    except Exception as e:
+                        print(f"Error processing invoice {filename}: {e}")
+                        continue
+            
+            # Update labels with formatted currency
+            self.lbl_total_cash.setText(f"₹{total_cash:,.2f}")
+            self.lbl_total_bank.setText(f"₹{total_bank:,.2f}")
+            
+        except Exception as e:
+            print(f"Error updating payment summary: {e}")
+            self.lbl_total_cash.setText("₹0.00")
+            self.lbl_total_bank.setText("₹0.00")
     
     def _load_all_invoices(self):
         """Load all invoices from files."""
@@ -608,6 +740,10 @@ class ReportsPage(QWidget):
             "Comprehensive overview of all sales invoices and revenue"
         )
         layout.addWidget(header)
+        
+        # Payment Summary Section
+        payment_summary_frame = self._create_payment_summary_section()
+        layout.addWidget(payment_summary_frame)
         
         # Filters
         filters = self._create_common_filters()
