@@ -322,9 +322,11 @@ class SupplierBillingPage(QWidget):
         """)
         table_section.addWidget(table_label)
         
+
         # Items Table with Dark Theme
         self.items_table = QTableWidget(0, 4)
-        self.items_table.setHorizontalHeaderLabels(["#", "ITEM", "AMOUNT", "DELETE"])
+        self.items_table.setHorizontalHeaderLabels(["#", "Item Description", "Amount", "Actions"])
+        self.items_table.horizontalHeader().setVisible(True)
         self.items_table.setStyleSheet(f"""
             QTableWidget {{
                 background-color: {self.dark_theme['bg_secondary']};
@@ -335,14 +337,15 @@ class SupplierBillingPage(QWidget):
                 font-size: 13px;
             }}
             QHeaderView::section {{
-                background-color: {self.dark_theme['bg_tertiary']};
-                color: {self.dark_theme['text_primary']};
-                padding: 10px;
+                background-color: #1A1A1A;
+                color: #CCCCCC;
+                padding: 12px 8px;
                 border: none;
-                border-right: 1px solid {self.dark_theme['border']};
-                border-bottom: 1px solid {self.dark_theme['border']};
+                border-right: 1px solid #444444;
+                border-bottom: 1px solid #444444;
                 font-weight: bold;
                 font-size: 13px;
+                text-align: center;
             }}
             QTableWidget::item {{
                 padding: 8px;
