@@ -249,6 +249,9 @@ class SettingsPage(QWidget):
                     if self.config_manager.add_dropdown_item(key, text):
                         lst.addItem(text)
                         inp.clear()
+                        # Refresh Home page dropdowns if it's suppliers
+                        if key == 'suppliers':
+                            self._refresh_supplier_dropdowns()
                     else:
                         QMessageBox.warning(self, "Exists", "Item already exists.")
             
@@ -258,6 +261,9 @@ class SettingsPage(QWidget):
                     item = lst.item(row).text()
                     if self.config_manager.remove_dropdown_item(key, item):
                         lst.takeItem(row)
+                        # Refresh Home page dropdowns if it's suppliers
+                        if key == 'suppliers':
+                            self._refresh_supplier_dropdowns()
 
             btn_add.clicked.connect(add_item)
             btn_remove.clicked.connect(remove_item)
@@ -374,13 +380,23 @@ class SettingsPage(QWidget):
                 if hasattr(home_page, 'invoice_form') and hasattr(home_page.invoice_form, 'invoice_type'):
                     current_type = home_page.invoice_form.invoice_type.currentText()
                     home_page.invoice_form.invoice_type.clear()
+                    
+                    # Add empty option first (for no selection)
+                    home_page.invoice_form.invoice_type.addItem("")
+                    
+                    # Add all types from database
                     types = self.db.get_dropdown_items('type')
                     home_page.invoice_form.invoice_type.addItems(types)
                     
                     # Restore selection if still valid
-                    idx = home_page.invoice_form.invoice_type.findText(current_type)
-                    if idx >= 0:
-                        home_page.invoice_form.invoice_type.setCurrentIndex(idx)
+                    if current_type:  # Only restore if not empty
+                        idx = home_page.invoice_form.invoice_type.findText(current_type)
+                        if idx >= 0:
+                            home_page.invoice_form.invoice_type.setCurrentIndex(idx)
+                        else:
+                            home_page.invoice_form.invoice_type.setCurrentIndex(0)  # Default to empty
+                    else:
+                        home_page.invoice_form.invoice_type.setCurrentIndex(0)  # Keep empty
             
             # Refresh Reports Page Type filter
             if hasattr(self.main_window, 'reports_page'):
@@ -389,6 +405,34 @@ class SettingsPage(QWidget):
                     reports_page.refresh_type_filter()
         except Exception as e:
             print(f"Warning: Could not refresh type dropdowns: {e}")
+    
+    def _refresh_supplier_dropdowns(self):
+        """Refresh all Supplier dropdowns in the application."""
+        if not self.main_window:
+            return
+        
+        try:
+            # Refresh Home Page Supplier dropdowns in items table
+            if hasattr(self.main_window, 'home_page'):
+                home_page = self.main_window.home_page
+                if hasattr(home_page, 'items_table') and hasattr(home_page.items_table, 'refresh_supplier_dropdowns'):
+                    home_page.items_table.refresh_supplier_dropdowns()
+        except Exception as e:
+            print(f"Warning: Could not refresh type dropdowns: {e}")
+    
+    def _refresh_supplier_dropdowns(self):
+        """Refresh all Supplier dropdowns in the application."""
+        if not self.main_window:
+            return
+        
+        try:
+            # Refresh Home Page Supplier dropdowns in items table
+            if hasattr(self.main_window, 'home_page'):
+                home_page = self.main_window.home_page
+                if hasattr(home_page, 'items_table') and hasattr(home_page.items_table, 'refresh_supplier_dropdowns'):
+                    home_page.items_table.refresh_supplier_dropdowns()
+        except Exception as e:
+            print(f"Warning: Could not refresh supplier dropdowns: {e}")
 
     def save_all_settings(self):
         """Persist all settings to config.json and trigger updates."""

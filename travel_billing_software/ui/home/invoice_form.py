@@ -204,7 +204,12 @@ class InvoiceFormWidget(QFrame):
         collapsible_layout.addWidget(lbl_type, 0, 2)
         
         self.invoice_type = QComboBox()
-        # Load types from database, fallback to default if database not available
+        # Disable editing - dropdown selection only
+        self.invoice_type.setEditable(False)
+        
+        # Add empty placeholder first, then load types from database
+        self.invoice_type.addItem("")  # Empty option for no selection
+        
         if self.db:
             try:
                 types = self.db.get_dropdown_items('type')
@@ -217,6 +222,10 @@ class InvoiceFormWidget(QFrame):
                 self.invoice_type.addItems(["Visa", "Ticket", "Hajj", "Umra"])
         else:
             self.invoice_type.addItems(["Visa", "Ticket", "Hajj", "Umra"])
+        
+        # Set placeholder behavior by starting with empty selection
+        self.invoice_type.setCurrentIndex(0)
+        
         self.invoice_type.setStyleSheet(self._get_custom_combobox_style())
         self.invoice_type.setMinimumWidth(250)
         collapsible_layout.addWidget(self.invoice_type, 0, 3)
@@ -394,6 +403,7 @@ class InvoiceFormWidget(QFrame):
                 border: 1px solid {self.colors['border_primary']};
                 border-radius: 5px;
                 padding: 8px;
+                padding-right: 30px;
                 font-size: 15px;
                 min-height: 30px;
             }}
@@ -405,19 +415,47 @@ class InvoiceFormWidget(QFrame):
             }}
             QComboBox:hover {{
                 background-color: {self.colors['secondary_bg']};
-                border: 1px solid {self.colors['border_primary']};
+                border: 1px solid {self.colors['accent_primary']};
             }}
             QComboBox::drop-down {{
                 border: none;
                 background-color: {self.colors['accent_primary']};
-                width: 25px;
+                border-top-right-radius: 5px;
+                border-bottom-right-radius: 5px;
+                width: 30px;
+            }}
+            QComboBox::drop-down:hover {{
+                background-color: {self.colors['accent_secondary']};
+            }}
+            QComboBox::down-arrow {{
+                image: none;
+                border-left: 5px solid transparent;
+                border-right: 5px solid transparent;
+                border-top: 7px solid white;
+                margin-right: 5px;
             }}
             QComboBox QAbstractItemView {{
                 background-color: {self.colors['secondary_bg']};
                 color: {self.colors['text_secondary']};
                 selection-background-color: {self.colors['accent_primary']};
+                selection-color: white;
                 border: 1px solid {self.colors['border_primary']};
+                border-radius: 5px;
+                padding: 5px;
                 font-size: 15px;
+                outline: none;
+            }}
+            QComboBox QAbstractItemView::item {{
+                padding: 8px;
+                min-height: 25px;
+            }}
+            QComboBox QAbstractItemView::item:hover {{
+                background-color: {self.colors['accent_secondary']};
+                color: white;
+            }}
+            QComboBox QAbstractItemView::item:selected {{
+                background-color: {self.colors['accent_primary']};
+                color: white;
             }}
         """
     

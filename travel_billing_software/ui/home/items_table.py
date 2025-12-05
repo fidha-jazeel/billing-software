@@ -215,6 +215,7 @@ class ItemsTableWidget(QFrame):
             supplier.setEditable(True)
             supplier.addItems(self.get_supplier_list())
             supplier.setStyleSheet(combobox_style)
+            supplier.setObjectName(f"supplier_{row}")
             
             passport_number = QLineEdit()
             passport_number.setPlaceholderText("Passport No.")

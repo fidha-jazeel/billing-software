@@ -174,7 +174,7 @@ class ReportsPage(QWidget):
     def _create_sidebar(self) -> QWidget:
         """Create left sidebar with report categories."""
         sidebar_widget = QFrame()
-        sidebar_widget.setFixedWidth(280)
+        sidebar_widget.setFixedWidth(220)
         sidebar_widget.setStyleSheet(f"""
             QFrame {{
                 background-color: {self.colors['secondary_bg']};
@@ -211,10 +211,10 @@ class ReportsPage(QWidget):
             }}
             QListWidget::item {{
                 color: {self.colors['text_primary']};
-                padding: 15px 20px;
-                margin: 2px 8px;
+                padding: 14px 16px;
+                margin: 2px 6px;
                 border-radius: 8px;
-                font-size: 14px;
+                font-size: 16px;
                 font-weight: 500;
             }}
             QListWidget::item:hover {{
@@ -934,21 +934,172 @@ class ReportsPage(QWidget):
         
         filter_layout.addLayout(type_row)
         
-        # Apply and Clear buttons
+        # Invoice Number and Payment Status Row
+        invoice_status_row = QHBoxLayout()
+        invoice_status_row.setSpacing(10)
+        
+        # Invoice Number - Two separate bordered boxes
+        invoice_label_box = QFrame()
+        invoice_label_box.setStyleSheet("""
+            QFrame {
+                background-color: #121212;
+                border: 1px solid #777777;
+                border-radius: 5px;
+                padding: 6px 10px;
+            }
+        """)
+        invoice_label_layout = QHBoxLayout(invoice_label_box)
+        invoice_label_layout.setContentsMargins(0, 0, 0, 0)
+        invoice_label = QLabel("Invoice #:")
+        invoice_label.setStyleSheet("color: #FFFFFF; font-weight: bold; background: transparent; border: none;")
+        invoice_label_layout.addWidget(invoice_label)
+        invoice_status_row.addWidget(invoice_label_box)
+        
+        invoice_input_box = QFrame()
+        invoice_input_box.setStyleSheet("""
+            QFrame {
+                background-color: #000000;
+                border: 1px solid #777777;
+                border-radius: 5px;
+                padding: 6px 10px;
+            }
+        """)
+        invoice_input_layout = QHBoxLayout(invoice_input_box)
+        invoice_input_layout.setContentsMargins(0, 0, 0, 0)
+        
+        self.filter_invoice_number = QLineEdit()
+        self.filter_invoice_number.setPlaceholderText("Search by invoice number...")
+        self.filter_invoice_number.setStyleSheet("""
+            QLineEdit {
+                background-color: transparent;
+                color: #FFFFFF;
+                border: none;
+                padding: 2px;
+            }
+            QLineEdit::placeholder {
+                color: #CCCCCC;
+            }
+            QLineEdit:focus {
+                outline: none;
+                border: none;
+            }
+        """)
+        invoice_input_layout.addWidget(self.filter_invoice_number)
+        invoice_status_row.addWidget(invoice_input_box, 1)
+        
+        # Payment Status - Two separate bordered boxes
+        status_label_box = QFrame()
+        status_label_box.setStyleSheet("""
+            QFrame {
+                background-color: #121212;
+                border: 1px solid #777777;
+                border-radius: 5px;
+                padding: 6px 10px;
+            }
+        """)
+        status_label_layout = QHBoxLayout(status_label_box)
+        status_label_layout.setContentsMargins(0, 0, 0, 0)
+        status_label = QLabel("Payment Status:")
+        status_label.setStyleSheet("color: #FFFFFF; font-weight: bold; background: transparent; border: none;")
+        status_label_layout.addWidget(status_label)
+        invoice_status_row.addWidget(status_label_box)
+        
+        status_input_box = QFrame()
+        status_input_box.setStyleSheet("""
+            QFrame {
+                background-color: #000000;
+                border: 1px solid #777777;
+                border-radius: 5px;
+                padding: 6px 10px;
+            }
+        """)
+        status_input_layout = QHBoxLayout(status_input_box)
+        status_input_layout.setContentsMargins(0, 0, 0, 0)
+        
+        self.filter_payment_status = QComboBox()
+        self.filter_payment_status.addItems(["All", "Paid", "Unpaid", "Partial"])
+        self.filter_payment_status.setStyleSheet("""
+            QComboBox {
+                background-color: transparent;
+                color: #FFFFFF;
+                border: none;
+                padding: 2px;
+            }
+            QComboBox::drop-down {
+                border: none;
+                background-color: transparent;
+            }
+            QComboBox QAbstractItemView {
+                background-color: #1A1A1A;
+                color: #FFFFFF;
+                selection-background-color: #333333;
+                border: 1px solid #777777;
+            }
+            QComboBox:focus {
+                outline: none;
+                border: none;
+            }
+        """)
+        status_input_layout.addWidget(self.filter_payment_status)
+        invoice_status_row.addWidget(status_input_box, 1)
+        
+        filter_layout.addLayout(invoice_status_row)
+        
+        # Spacing before buttons
+        filter_layout.addSpacing(15)
+        
+        # Apply and Clear buttons - Enhanced styling
         btn_row = QHBoxLayout()
+        btn_row.setSpacing(15)
+        btn_row.addStretch()
         
         apply_btn = QPushButton("✓ Apply Filters")
-        apply_btn.setStyleSheet(self.get_button_style('add'))
+        apply_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #10b981;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 12px 30px;
+                font-weight: bold;
+                font-size: 14px;
+                min-width: 150px;
+            }
+            QPushButton:hover {
+                background-color: #059669;
+            }
+            QPushButton:pressed {
+                background-color: #047857;
+            }
+        """)
         apply_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         apply_btn.clicked.connect(self._handle_filter_change)
         btn_row.addWidget(apply_btn)
         
-        clear_btn = QPushButton("✕ Clear")
-        clear_btn.setStyleSheet(self.get_button_style('delete'))
+        clear_btn = QPushButton("✕ Clear Filters")
+        clear_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #ef4444;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 12px 30px;
+                font-weight: bold;
+                font-size: 14px;
+                min-width: 150px;
+            }
+            QPushButton:hover {
+                background-color: #dc2626;
+            }
+            QPushButton:pressed {
+                background-color: #b91c1c;
+            }
+        """)
         clear_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         clear_btn.clicked.connect(self._clear_filters)
         btn_row.addWidget(clear_btn)
         
+        btn_row.addStretch()
         filter_layout.addLayout(btn_row)
         
         return filter_frame
@@ -965,12 +1116,11 @@ class ReportsPage(QWidget):
             self.filter_sector.clear()
             self.filter_supplier.setCurrentIndex(0)
             self.filter_type.setCurrentIndex(0)
+            self.filter_invoice_number.clear()
+            self.filter_payment_status.setCurrentIndex(0)
             
             # Apply the cleared filters
             self._handle_filter_change()
-            
-            # Show confirmation
-            QMessageBox.information(self, "Filters Cleared", "All filters have been reset to default values.")
             
             self.logger.log_info("Filters cleared successfully", 'billing_app')
             
@@ -1013,8 +1163,10 @@ class ReportsPage(QWidget):
             sector = self.filter_sector.text().lower()
             supplier = self.filter_supplier.currentText()
             booking_type = self.filter_type.currentText()
+            invoice_number = self.filter_invoice_number.text().strip()
+            payment_status = self.filter_payment_status.currentText()
             
-            self.logger.log_info(f"Applying filters - Date: {from_date} to {to_date}, Contact: '{contact}', Passenger: '{passenger}', Sector: '{sector}', Supplier: '{supplier}', Type: '{booking_type}'", 'billing_app')
+            self.logger.log_info(f"Applying filters - Date: {from_date} to {to_date}, Contact: '{contact}', Passenger: '{passenger}', Sector: '{sector}', Supplier: '{supplier}', Type: '{booking_type}', Invoice: '{invoice_number}', Payment: '{payment_status}'", 'billing_app')
             
             for invoice in invoices:
                 try:
@@ -1029,6 +1181,16 @@ class ReportsPage(QWidget):
                     except Exception as date_error:
                         self.logger.log_warning(f"Date parsing error for invoice {invoice.get('invoice_number', 'Unknown')}: {date_error}", 'billing_app')
                         pass
+                    
+                    # Invoice Number filter
+                    if invoice_number and invoice_number.lower() not in str(invoice.get('invoice_number', '')).lower():
+                        continue
+                    
+                    # Payment Status filter
+                    if payment_status != "All":
+                        invoice_status = invoice.get('payment_status', '').strip()
+                        if payment_status != invoice_status:
+                            continue
                     
                     # Contact filter
                     if contact and contact not in invoice.get('customer_phone', '').lower():
