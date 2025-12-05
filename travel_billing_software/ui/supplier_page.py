@@ -247,20 +247,18 @@ class SupplierPage(QWidget):
         # Scroll area
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        scroll.setStyleSheet(f"QScrollArea {{ border: none; background-color: {self.colors['primary_bg']}; margin: 0px; padding: 0px; }}")
+        scroll.setStyleSheet(f"QScrollArea {{ border: none; background-color: {self.colors['primary_bg']}; }}")
         
         content = QWidget()
         layout = QVBoxLayout(content)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
+        layout.setContentsMargins(30, 30, 30, 30)
+        layout.setSpacing(20)
         
         # Header Section
         header_frame = QFrame()
         header_layout = QVBoxLayout(header_frame)
         header_layout.setContentsMargins(0, 0, 0, 0)
-        header_layout.setSpacing(0)
+        header_layout.setSpacing(10)
         
         title = QLabel("👥 Supplier Management")
         title.setStyleSheet(f"""
@@ -294,7 +292,7 @@ class SupplierPage(QWidget):
             }}
         """)
         action_layout = QHBoxLayout(action_bar)
-        action_layout.setSpacing(0)
+        action_layout.setSpacing(15)
         
         # Search box
         self.search_input = QLineEdit()
@@ -341,7 +339,7 @@ class SupplierPage(QWidget):
         # Statistics Cards - Row 1
         stats_frame1 = QFrame()
         stats_layout1 = QHBoxLayout(stats_frame1)
-        stats_layout1.setSpacing(0)
+        stats_layout1.setSpacing(20)
         
         self.total_suppliers_label = self._create_stat_card("Total Suppliers", "0", self.colors['accent_primary'])
         self.active_suppliers_label = self._create_stat_card("Active Suppliers", "0", self.colors['success'])
@@ -356,7 +354,7 @@ class SupplierPage(QWidget):
         # Statistics Cards - Row 2 (Financial Summary)
         stats_frame2 = QFrame()
         stats_layout2 = QHBoxLayout(stats_frame2)
-        stats_layout2.setSpacing(0)
+        stats_layout2.setSpacing(20)
         
         self.total_pending_label = self._create_stat_card("Total Pending to Pay", "₹0.00", self.colors['danger'])
         self.total_paid_label = self._create_stat_card("Total Amount Paid", "₹0.00", self.colors['success'])
@@ -378,7 +376,7 @@ class SupplierPage(QWidget):
             }}
         """)
         table_layout = QVBoxLayout(table_frame)
-        table_layout.setSpacing(0)
+        table_layout.setSpacing(15)
         
         table_title = QLabel("📋 Supplier Directory")
         table_title.setStyleSheet(f"""

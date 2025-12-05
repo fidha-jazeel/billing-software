@@ -82,22 +82,16 @@ class InvoiceFormWidget(QFrame):
     
     def _init_ui(self):
         """Initialize the UI components."""
-        self.setStyleSheet(self.get_frame_style() + """
-            QWidget { margin: 0px; padding: 0px; }
-            QLabel { margin: 0px; padding: 0px; }
-            QLineEdit { margin: 0px; }
-            QComboBox { margin: 0px; }
-            QDateEdit { margin: 0px; }
-        """)
+        self.setStyleSheet(self.get_frame_style())
         
         # Main layout
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.setSpacing(0)
+        main_layout.setContentsMargins(20, 20, 20, 20)
+        main_layout.setSpacing(10)
         
         # Header with title and collapse button
         header_layout = QGridLayout()
-        header_layout.setSpacing(0)
+        header_layout.setSpacing(10)
         
         title = QLabel(
             f"<b style='color:{self.colors['accent_secondary']}; font-size:18px;'>"
@@ -131,7 +125,7 @@ class InvoiceFormWidget(QFrame):
         
         # Always visible section: Customer Name & Contact
         always_visible = QGridLayout()
-        always_visible.setSpacing(0)
+        always_visible.setSpacing(15)
         
         lbl_cust_name = QLabel("Customer Name:")
         lbl_cust_name.setStyleSheet(
@@ -179,8 +173,8 @@ class InvoiceFormWidget(QFrame):
         )
         
         collapsible_layout = QGridLayout(self.collapsible_widget)
-        collapsible_layout.setContentsMargins(0, 0, 0, 0)
-        collapsible_layout.setSpacing(0)
+        collapsible_layout.setContentsMargins(0, 10, 0, 0)
+        collapsible_layout.setSpacing(15)
         
         # Row 1: Email & Type
         lbl_email = QLabel("Email:")

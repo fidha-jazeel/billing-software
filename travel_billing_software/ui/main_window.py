@@ -96,14 +96,14 @@ class DashboardImproved(QMainWindow):
             }
         """)
         sidebar_layout = QVBoxLayout(sidebar)
-        sidebar_layout.setContentsMargins(0, 0, 0, 0)
-        sidebar_layout.setSpacing(0)
+        sidebar_layout.setContentsMargins(0, 5, 0, 5)
 
         # Sidebar title
         title = QLabel("<b style='font-size:16px; color:#9b9bff;'>🏢 Menu</b>")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         sidebar_layout.addWidget(title)
+        sidebar_layout.addSpacing(15)
 
         # Navigation buttons
         for page_id, label, icon in [

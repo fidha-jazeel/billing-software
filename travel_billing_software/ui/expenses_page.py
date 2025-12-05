@@ -264,20 +264,18 @@ class ExpensesPage(QWidget):
         # Scroll area
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        scroll.setStyleSheet(f"QScrollArea {{ border: none; background-color: {self.colors['primary_bg']}; margin: 0px; padding: 0px; }}")
+        scroll.setStyleSheet(f"QScrollArea {{ border: none; background-color: {self.colors['primary_bg']}; }}")
         
         content = QWidget()
         layout = QVBoxLayout(content)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
+        layout.setContentsMargins(10, 12, 10, 12)
+        layout.setSpacing(10)
         
         # Header Section
         header_frame = QFrame()
         header_layout = QVBoxLayout(header_frame)
         header_layout.setContentsMargins(0, 0, 0, 0)
-        header_layout.setSpacing(0)
+        header_layout.setSpacing(5)
         
         title = QLabel("💰 Expenses Management")
         title.setStyleSheet(f"""
@@ -313,7 +311,7 @@ class ExpensesPage(QWidget):
             }}
         """)
         action_layout = QHBoxLayout(action_bar)
-        action_layout.setSpacing(0)
+        action_layout.setSpacing(10)
         
         # Date Filter Section
         date_label = QLabel("Filter by Date:")
@@ -398,7 +396,7 @@ class ExpensesPage(QWidget):
         stats_frame = QFrame()
         stats_frame.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         stats_layout = QHBoxLayout(stats_frame)
-        stats_layout.setSpacing(0)
+        stats_layout.setSpacing(12)
         
         self.total_expenses_label = self._create_stat_card("Total Expenses", "₹0.00", self.colors['danger'])
         self.expense_count_label = self._create_stat_card("Number of Expenses", "0", self.colors['accent_primary'])
@@ -425,8 +423,8 @@ class ExpensesPage(QWidget):
             }}
         """)
         table_layout = QVBoxLayout(table_frame)
-        table_layout.setContentsMargins(0, 0, 0, 0)
-        table_layout.setSpacing(0)
+        table_layout.setContentsMargins(10, 10, 10, 10)
+        table_layout.setSpacing(8)
 
         # Table title with clean styling
         table_title = QLabel("📋 Expense Records")

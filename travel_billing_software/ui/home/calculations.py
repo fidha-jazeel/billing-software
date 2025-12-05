@@ -70,7 +70,7 @@ class CalculationsWidget(QFrame):
         )
         
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setContentsMargins(10, 10, 10, 10)
         
         # Title
         title = QLabel(
@@ -80,7 +80,7 @@ class CalculationsWidget(QFrame):
         
         # Grid layout for calculations
         calc_grid = QGridLayout()
-        calc_grid.setSpacing(0)
+        calc_grid.setSpacing(20)
         
         # Styles
         label_style = f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 15px;"
