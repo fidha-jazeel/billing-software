@@ -47,14 +47,15 @@ class TableConfigurator:
                 padding: 12px 8px;
                 border: 1px solid #777777;
                 border-bottom: 1px solid #777777;
-                font-weight: bold;
-                font-size: 13px;
+                font-weight: 600;
+                font-size: 15px;
                 text-align: left;
             }
             QHeaderView::section:hover {
                 background-color: #222222;
             }
         """)
+        header.setMinimumHeight(35)
         header.setDefaultAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         
         # Make header sticky and non-movable

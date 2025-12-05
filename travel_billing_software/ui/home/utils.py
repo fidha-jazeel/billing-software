@@ -112,7 +112,7 @@ class PDFOperations:
                 },
                 "customer": {
                     "name": invoice_data.get("customer_name", ""),
-                    "address": invoice_data.get("customer_address", ""),
+                    "email": invoice_data.get("customer_email", ""),
                     "contact": invoice_data.get("customer_phone", "")
                 },
                 "items": invoice_data.get("pdf_items", []),

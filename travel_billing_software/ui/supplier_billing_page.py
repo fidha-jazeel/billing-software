@@ -343,8 +343,8 @@ class SupplierBillingPage(QWidget):
                 border: none;
                 border-right: 1px solid #444444;
                 border-bottom: 1px solid #444444;
-                font-weight: bold;
-                font-size: 13px;
+                font-weight: 600;
+                font-size: 15px;
                 text-align: center;
             }}
             QTableWidget::item {{
@@ -359,6 +359,7 @@ class SupplierBillingPage(QWidget):
         
         # Configure table
         header = self.items_table.horizontalHeader()
+        header.setMinimumHeight(35)
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.Fixed)
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.Fixed)

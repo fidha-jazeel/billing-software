@@ -158,7 +158,7 @@ class HomePage(QWidget):
         welcome_heading.setStyleSheet(
             f"QLabel {{ "
             f"color: {self.colors['accent_cyan']}; "
-            f"font-size: 24px; font-weight: bold; "
+            f"font-size: 26px; font-weight: bold; "
             f"font-family: 'Segoe UI', Arial, sans-serif; "
             f"margin-bottom: 10px; "
             f"}}"
@@ -215,10 +215,8 @@ class HomePage(QWidget):
         self.invoice_date = self.invoice_form.invoice_date
         self.customer_name = self.invoice_form.customer_name
         self.contact_number = self.invoice_form.contact_number
-        self.customer_address = self.invoice_form.customer_address
-        self.lbl_subtotal = self.calculations.lbl_subtotal
-        self.txt_discount = self.calculations.txt_discount
-        self.lbl_tax = self.calculations.lbl_tax
+        self.customer_email = self.invoice_form.customer_email
+        self.payment_mode = self.calculations.payment_mode
         self.lbl_total = self.calculations.lbl_total
         self.txt_received = self.calculations.txt_received
         self.lbl_balance = self.calculations.lbl_balance
@@ -233,7 +231,7 @@ class HomePage(QWidget):
             f"QPushButton {{ "
             f"background-color: {self.colors['warning']}; "
             f"color: white; border: none; border-radius: 5px; "
-            f"padding: 10px 20px; font-weight: bold; "
+            f"padding: 12px 22px; font-weight: bold; font-size: 14px; "
             f"}} "
             f"QPushButton:hover {{ background-color: #f59e0b; }}"
         )
@@ -248,7 +246,7 @@ class HomePage(QWidget):
             f"QPushButton {{ "
             f"background-color: {self.colors['success']}; "
             f"color: white; border: none; border-radius: 5px; "
-            f"padding: 10px 20px; font-weight: bold; "
+            f"padding: 12px 22px; font-weight: bold; font-size: 14px; "
             f"}} "
             f"QPushButton:hover {{ background-color: {self.colors['accent_cyan']}; }}"
         )
@@ -261,7 +259,7 @@ class HomePage(QWidget):
             f"QPushButton {{ "
             f"background-color: {self.colors['danger']}; "
             f"color: white; border: none; border-radius: 5px; "
-            f"padding: 10px 20px; font-weight: bold; "
+            f"padding: 12px 22px; font-weight: bold; font-size: 14px; "
             f"}} "
             f"QPushButton:hover {{ background-color: {self.colors['accent_gold']}; }}"
         )
@@ -274,7 +272,7 @@ class HomePage(QWidget):
             "QPushButton { "
             "background-color: #9b9bff; color: white; "
             "border: none; border-radius: 5px; "
-            "padding: 10px 20px; font-weight: bold; "
+            "padding: 12px 22px; font-weight: bold; font-size: 14px; "
             "} "
             "QPushButton:hover { background-color: #b5b5ff; }"
         )
@@ -287,7 +285,7 @@ class HomePage(QWidget):
             "QPushButton { "
             "background-color: #20C997; color: white; "
             "border: none; border-radius: 5px; "
-            "padding: 10px 20px; font-weight: bold; "
+            "padding: 12px 22px; font-weight: bold; font-size: 14px; "
             "} "
             "QPushButton:hover { background-color: #38D9A9; }"
         )
@@ -363,12 +361,12 @@ class HomePage(QWidget):
     def _update_calculations(self):
         """Update invoice calculations based on table data."""
         try:
-            # Calculate subtotal from all items
+            # Calculate total from all items
             items = self.items_table.get_all_items()
-            subtotal = sum(item.get("selling_price", 0) for item in items)
+            total = sum(item.get("selling_price", 0) for item in items)
             
             # Update calculations widget
-            self.calculations.update_subtotal(subtotal)
+            self.calculations.update_total(total)
             
         except Exception as e:
             log_error(

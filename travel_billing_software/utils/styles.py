@@ -191,8 +191,8 @@ def get_table_style():
             padding: 8px;
             border: 1px solid {COLORS['border_primary']};
             border-bottom: 2px solid {COLORS['accent_primary']};
-            font-weight: bold;
-            font-size: {base_size}px;
+            font-weight: 600;
+            font-size: 15px;
         }}
     """
 

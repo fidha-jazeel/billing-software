@@ -460,13 +460,14 @@ class SupplierPage(QWidget):
                 padding: 12px 8px;
                 border: none;
                 border-right: 1px solid {self.colors['primary_bg']};
-                font-weight: bold;
-                font-size: 13px;
+                font-weight: 600;
+                font-size: 15px;
             }}
             QHeaderView::section:hover {{
                 background-color: {self.colors['accent_secondary']};
             }}
         """)
+        header.setMinimumHeight(35)
         
         # Set column widths
         column_widths = {
@@ -1156,6 +1157,18 @@ class SupplierPage(QWidget):
         transactions_table = QTableWidget(0, 4)
         transactions_table.setHorizontalHeaderLabels(["Date", "Type", "Amount", "Description"])
         transactions_table.horizontalHeader().setStretchLastSection(True)
+        transactions_table.horizontalHeader().setStyleSheet(f"""
+            QHeaderView::section {{
+                background-color: {self.colors['accent_primary']};
+                color: white;
+                padding: 12px 8px;
+                border: none;
+                border-right: 1px solid {self.colors['primary_bg']};
+                font-weight: 600;
+                font-size: 15px;
+            }}
+        """)
+        transactions_table.horizontalHeader().setMinimumHeight(35)
         transactions_table.setAlternatingRowColors(True)
         transactions_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         transactions_table.setMinimumHeight(200)

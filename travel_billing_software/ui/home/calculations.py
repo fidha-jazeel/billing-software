@@ -1,9 +1,9 @@
 """
 Calculations Widget Module
-Handles invoice calculations: subtotal, discount, tax, balance.
+Handles invoice calculations: total, paid, balance.
 """
 from PyQt6.QtWidgets import (
-    QFrame, QVBoxLayout, QGridLayout, QLabel, QLineEdit
+    QFrame, QVBoxLayout, QGridLayout, QLabel, QLineEdit, QComboBox
 )
 from PyQt6.QtCore import pyqtSignal
 from travel_billing_software.utils.logger import log_info, log_error, log_warning
@@ -14,10 +14,10 @@ class CalculationsWidget(QFrame):
     Widget for invoice financial calculations.
     
     Features:
-    - Real-time subtotal calculation
-    - Discount input and application
-    - Tax calculation (currently 0% but extensible)
-    - Balance calculation (Total - Received)
+    - Payment mode selection
+    - Total display
+    - Paid amount input
+    - Balance calculation (Total - Paid)
     - Visual feedback for payment status
     
     Signals:
@@ -43,9 +43,6 @@ class CalculationsWidget(QFrame):
         self.get_currency_symbol = get_currency_symbol
         
         # Current values
-        self._subtotal = 0.0
-        self._discount = 0.0
-        self._tax = 0.0
         self._total = 0.0
         self._received = 0.0
         self._balance = 0.0
@@ -77,120 +74,121 @@ class CalculationsWidget(QFrame):
         
         # Title
         title = QLabel(
-            "<b style='color:#a78bfa; font-size:16px;'>💰 Invoice Calculation</b>"
+            "<b style='color:#a78bfa; font-size:18px;'>💰 Invoice Calculation</b>"
         )
         main_layout.addWidget(title)
         
         # Grid layout for calculations
         calc_grid = QGridLayout()
-        calc_grid.setSpacing(15)
+        calc_grid.setSpacing(20)
         
         # Styles
-        label_style = f"color: {self.colors['text_primary']}; font-weight: bold;"
+        label_style = f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 15px;"
+        
+        combobox_style = (
+            f"QComboBox {{ "
+            f"background-color: {self.colors['primary_bg']}; "
+            f"color: {self.colors['text_secondary']}; "
+            f"border: 1px solid {self.colors['border_primary']}; "
+            f"border-radius: 5px; "
+            f"padding: 10px; "
+            f"font-size: 15px; "
+            f"min-height: 30px; "
+            f"}} "
+            f"QComboBox:focus {{ "
+            f"border: 1px solid {self.colors['border_focus']}; "
+            f"}} "
+            f"QComboBox::drop-down {{ "
+            f"border: none; "
+            f"background-color: {self.colors['accent_primary']}; "
+            f"width: 25px; "
+            f"}} "
+            f"QComboBox QAbstractItemView {{ "
+            f"background-color: {self.colors['secondary_bg']}; "
+            f"color: {self.colors['text_secondary']}; "
+            f"selection-background-color: {self.colors['accent_primary']}; "
+            f"border: 1px solid {self.colors['border_primary']}; "
+            f"font-size: 15px; "
+            f"}}"
+        )
         
         value_style = (
             f"color: {self.colors['accent_secondary']}; font-weight: bold; "
+            f"font-size: 15px; "
             f"background-color: {self.colors['primary_bg']}; "
-            f"padding: 8px; border-radius: 5px;"
+            f"padding: 10px; border-radius: 5px;"
         )
         
         input_style = (
             f"QLineEdit {{ "
             f"background-color: {self.colors['primary_bg']}; "
-            f"color: {self.colors['accent_secondary']}; "
-            f"border: 1px solid {self.colors['accent_secondary']}; "
-            f"padding: 8px; font-weight: bold; "
+            f"color: {self.colors['success']}; "
+            f"border: 1px solid {self.colors['success']}; "
+            f"padding: 10px; font-weight: bold; font-size: 15px; "
             f"}}"
         )
         
-        # Left column - Subtotal, Discount, Tax
-        subtotal_lbl = QLabel("Subtotal:")
-        subtotal_lbl.setStyleSheet(label_style)
-        calc_grid.addWidget(subtotal_lbl, 0, 0)
+        # Row 0: Payment Mode
+        payment_mode_lbl = QLabel("Payment Mode:")
+        payment_mode_lbl.setStyleSheet(label_style)
+        calc_grid.addWidget(payment_mode_lbl, 0, 0)
         
-        self.lbl_subtotal = QLabel(f"{self.get_currency_symbol()}0.00")
-        self.lbl_subtotal.setStyleSheet(value_style)
-        calc_grid.addWidget(self.lbl_subtotal, 0, 1)
-        
-        discount_lbl = QLabel("Discount:")
-        discount_lbl.setStyleSheet(label_style)
-        calc_grid.addWidget(discount_lbl, 1, 0)
-        
-        self.txt_discount = QLineEdit()
-        self.txt_discount.setPlaceholderText("0.00")
-        self.txt_discount.setText("0.00")
-        self.txt_discount.setStyleSheet(input_style)
-        self.txt_discount.textChanged.connect(self._on_discount_changed)
-        calc_grid.addWidget(self.txt_discount, 1, 1)
-        
-        tax_lbl = QLabel("Tax:")
-        tax_lbl.setStyleSheet(label_style)
-        calc_grid.addWidget(tax_lbl, 2, 0)
-        
-        self.lbl_tax = QLabel(f"{self.get_currency_symbol()}0.00")
-        self.lbl_tax.setStyleSheet(value_style)
-        calc_grid.addWidget(self.lbl_tax, 2, 1)
+        self.payment_mode = QComboBox()
+        self.payment_mode.addItems(["Cash", "Bank Transfer", "Card", "Google Pay", "Other"])
+        self.payment_mode.setStyleSheet(combobox_style)
+        self.payment_mode.setMinimumWidth(200)
+        calc_grid.addWidget(self.payment_mode, 0, 1)
         
         # Spacer column
-        calc_grid.setColumnMinimumWidth(2, 60)
+        calc_grid.setColumnMinimumWidth(2, 80)
         
-        # Right column - Total, Received, Balance
+        # Row 0 (right): Total
         total_lbl = QLabel("Total:")
         total_lbl.setStyleSheet(label_style)
-        calc_grid.addWidget(total_lbl, 0, 5)
+        calc_grid.addWidget(total_lbl, 0, 3)
         
         total_style = (
             f"color: {self.colors['accent_gold']}; font-weight: bold; "
+            f"font-size: 16px; "
             f"background-color: {self.colors['primary_bg']}; "
-            f"padding: 8px; border: 2px solid {self.colors['accent_gold']};"
+            f"padding: 12px; border: 2px solid {self.colors['accent_gold']}; "
+            f"border-radius: 5px;"
         )
         self.lbl_total = QLabel(f"{self.get_currency_symbol()}0.00")
         self.lbl_total.setStyleSheet(total_style)
-        calc_grid.addWidget(self.lbl_total, 0, 6)
+        self.lbl_total.setMinimumWidth(200)
+        calc_grid.addWidget(self.lbl_total, 0, 4)
         
-        received_lbl = QLabel("Received:")
-        received_lbl.setStyleSheet(label_style)
-        calc_grid.addWidget(received_lbl, 1, 5)
+        # Row 1 (right): Paid
+        paid_lbl = QLabel("Paid:")
+        paid_lbl.setStyleSheet(label_style)
+        calc_grid.addWidget(paid_lbl, 1, 3)
         
-        received_input_style = (
-            f"QLineEdit {{ "
-            f"background-color: {self.colors['primary_bg']}; "
-            f"color: {self.colors['success']}; "
-            f"border: 1px solid {self.colors['success']}; "
-            f"padding: 8px; font-weight: bold; "
-            f"}}"
-        )
         self.txt_received = QLineEdit()
         self.txt_received.setPlaceholderText("0.00")
-        self.txt_received.setStyleSheet(received_input_style)
+        self.txt_received.setStyleSheet(input_style)
         self.txt_received.textChanged.connect(self._on_received_changed)
-        calc_grid.addWidget(self.txt_received, 1, 6)
+        self.txt_received.setMinimumWidth(200)
+        calc_grid.addWidget(self.txt_received, 1, 4)
         
+        # Row 2 (right): Balance
         balance_lbl = QLabel("Balance:")
         balance_lbl.setStyleSheet(label_style)
-        calc_grid.addWidget(balance_lbl, 2, 5)
+        calc_grid.addWidget(balance_lbl, 2, 3)
         
         balance_style = (
             f"color: {self.colors['danger']}; font-weight: bold; "
+            f"font-size: 16px; "
             f"background-color: {self.colors['primary_bg']}; "
-            f"padding: 8px; border: 1px solid {self.colors['danger']};"
+            f"padding: 12px; border: 2px solid {self.colors['danger']}; "
+            f"border-radius: 5px;"
         )
         self.lbl_balance = QLabel(f"{self.get_currency_symbol()}0.00")
         self.lbl_balance.setStyleSheet(balance_style)
-        calc_grid.addWidget(self.lbl_balance, 2, 6)
+        self.lbl_balance.setMinimumWidth(200)
+        calc_grid.addWidget(self.lbl_balance, 2, 4)
         
         main_layout.addLayout(calc_grid)
-    
-    def _on_discount_changed(self):
-        """Handle discount input change."""
-        try:
-            self.calculate_totals()
-        except Exception as e:
-            log_error(
-                "Error handling discount change",
-                exception=e,
-                logger_name="calculations_errors"
-            )
     
     def _on_received_changed(self):
         """Handle received amount input change."""
@@ -203,65 +201,23 @@ class CalculationsWidget(QFrame):
                 logger_name="calculations_errors"
             )
     
-    def update_subtotal(self, subtotal: float):
+    def update_total(self, total: float):
         """
-        Update subtotal and recalculate totals.
+        Update total from items table.
         
         Args:
-            subtotal: New subtotal amount
+            total: New total amount
         """
         try:
-            self._subtotal = subtotal
-            self.lbl_subtotal.setText(f"{self.get_currency_symbol()}{subtotal:.2f}")
-            self.calculate_totals()
-            
-            log_info(f"Subtotal updated: {subtotal:.2f}", "calculations")
-            
-        except Exception as e:
-            log_error(
-                f"Error updating subtotal: {subtotal}",
-                exception=e,
-                logger_name="calculations_errors"
-            )
-    
-    def calculate_totals(self):
-        """Calculate discount, tax, and total."""
-        try:
-            # Parse discount
-            discount_text = self.txt_discount.text().replace('₹', '').replace(',', '').strip()
-            self._discount = float(discount_text) if discount_text else 0.0
-            
-            # Tax calculation (currently 0%)
-            self._tax = 0.0
-            
-            # Total
-            self._total = self._subtotal - self._discount + self._tax
-            
-            # Update labels
-            self.lbl_tax.setText(f"{self.get_currency_symbol()}{self._tax:.2f}")
-            self.lbl_total.setText(f"{self.get_currency_symbol()}{self._total:.2f}")
-            
-            # Recalculate balance
+            self._total = total
+            self.lbl_total.setText(f"{self.get_currency_symbol()}{total:.2f}")
             self.calculate_balance()
             
-            log_info(
-                f"Totals calculated: subtotal={self._subtotal:.2f}, "
-                f"discount={self._discount:.2f}, tax={self._tax:.2f}, "
-                f"total={self._total:.2f}",
-                "calculations"
-            )
-            
-        except ValueError as e:
-            log_warning(
-                f"Invalid discount value: {self.txt_discount.text()}",
-                exception=e,
-                logger_name="calculations"
-            )
-            self.txt_discount.setText("0.00")
+            log_info(f"Total updated: {total:.2f}", "calculations")
             
         except Exception as e:
             log_error(
-                "Error calculating totals",
+                f"Error updating total: {total}",
                 exception=e,
                 logger_name="calculations_errors"
             )
@@ -281,8 +237,10 @@ class CalculationsWidget(QFrame):
                 # Outstanding balance (red)
                 self.lbl_balance.setStyleSheet(
                     f"color: {self.colors['danger']}; font-weight: bold; "
+                    f"font-size: 16px; "
                     f"background-color: {self.colors['primary_bg']}; "
-                    f"padding: 8px; border: 1px solid {self.colors['danger']};"
+                    f"padding: 12px; border: 2px solid {self.colors['danger']}; "
+                    f"border-radius: 5px;"
                 )
                 self.lbl_balance.setText(f"{self.get_currency_symbol()}{self._balance:.2f}")
                 
@@ -290,8 +248,10 @@ class CalculationsWidget(QFrame):
                 # Overpaid (green)
                 self.lbl_balance.setStyleSheet(
                     f"color: {self.colors['success']}; font-weight: bold; "
+                    f"font-size: 16px; "
                     f"background-color: {self.colors['primary_bg']}; "
-                    f"padding: 8px; border: 1px solid {self.colors['success']};"
+                    f"padding: 12px; border: 2px solid {self.colors['success']}; "
+                    f"border-radius: 5px;"
                 )
                 self.lbl_balance.setText(
                     f"{self.get_currency_symbol()}{abs(self._balance):.2f} (Overpaid)"
@@ -301,8 +261,10 @@ class CalculationsWidget(QFrame):
                 # Fully paid (green)
                 self.lbl_balance.setStyleSheet(
                     f"color: {self.colors['success']}; font-weight: bold; "
+                    f"font-size: 16px; "
                     f"background-color: {self.colors['primary_bg']}; "
-                    f"padding: 8px; border: 1px solid {self.colors['success']};"
+                    f"padding: 12px; border: 2px solid {self.colors['success']}; "
+                    f"border-radius: 5px;"
                 )
                 self.lbl_balance.setText(f"{self.get_currency_symbol()}0.00 (Paid)")
             
@@ -332,16 +294,14 @@ class CalculationsWidget(QFrame):
         Get all financial calculations.
         
         Returns:
-            Dictionary with subtotal, discount, tax, total, paid, balance
+            Dictionary with total, paid, balance, payment_mode
         """
         try:
             return {
-                "subtotal": self._subtotal,
-                "discount": self._discount,
-                "tax": self._tax,
                 "grand_total": self._total,
                 "paid_amount": self._received,
-                "balance_due": self._balance
+                "balance_due": self._balance,
+                "payment_mode": self.payment_mode.currentText()
             }
         except Exception as e:
             log_error(
@@ -350,30 +310,23 @@ class CalculationsWidget(QFrame):
                 logger_name="calculations_errors"
             )
             return {
-                "subtotal": 0.0,
-                "discount": 0.0,
-                "tax": 0.0,
                 "grand_total": 0.0,
                 "paid_amount": 0.0,
-                "balance_due": 0.0
+                "balance_due": 0.0,
+                "payment_mode": "Cash"
             }
     
     def reset_calculations(self):
         """Reset all calculations to zero."""
         try:
-            self._subtotal = 0.0
-            self._discount = 0.0
-            self._tax = 0.0
             self._total = 0.0
             self._received = 0.0
             self._balance = 0.0
             
-            self.lbl_subtotal.setText(f"{self.get_currency_symbol()}0.00")
-            self.txt_discount.setText("0.00")
-            self.lbl_tax.setText(f"{self.get_currency_symbol()}0.00")
             self.lbl_total.setText(f"{self.get_currency_symbol()}0.00")
             self.txt_received.clear()
             self.lbl_balance.setText(f"{self.get_currency_symbol()}0.00")
+            self.payment_mode.setCurrentIndex(0)
             
             log_info("Calculations reset", "calculations")
             
@@ -384,10 +337,10 @@ class CalculationsWidget(QFrame):
                 logger_name="calculations_errors"
             )
     
-    def get_discount_widget(self):
-        """Get discount input widget for tab order."""
-        return self.txt_discount
-    
     def get_received_widget(self):
         """Get received input widget for tab order."""
         return self.txt_received
+    
+    def get_payment_mode_widget(self):
+        # Get payment mode widget for tab order
+        return self.payment_mode

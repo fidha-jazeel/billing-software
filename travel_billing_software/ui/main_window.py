@@ -230,10 +230,8 @@ class DashboardImproved(QMainWindow):
         self.invoice_date = home_page.invoice_date
         self.customer_name = home_page.customer_name
         self.contact_number = home_page.contact_number
-        self.customer_address = home_page.customer_address
-        self.lbl_subtotal = home_page.lbl_subtotal
-        self.txt_discount = home_page.txt_discount
-        self.lbl_tax = home_page.lbl_tax
+        self.customer_email = home_page.customer_email
+        self.payment_mode = home_page.payment_mode
         self.lbl_total = home_page.lbl_total
         self.txt_received = home_page.txt_received
         self.lbl_balance = home_page.lbl_balance
@@ -431,6 +429,18 @@ class DashboardImproved(QMainWindow):
         # Set column widths to stretch and fill full width
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.Stretch)  # All columns stretch to fill width
+        header.setStyleSheet(f"""
+            QHeaderView::section {{
+                background-color: {COLORS['secondary_bg']};
+                color: {COLORS['text_primary']};
+                padding: 8px;
+                border: 1px solid {COLORS['border_primary']};
+                border-bottom: 2px solid {COLORS['accent_primary']};
+                font-weight: 600;
+                font-size: 15px;
+            }}
+        """)
+        header.setMinimumHeight(35)
         
         # Set minimum height for table (adjust based on rows)
         self.table.setMinimumHeight(300)
@@ -1135,11 +1145,9 @@ class DashboardImproved(QMainWindow):
                 "invoice_date": self.invoice_date.date().toString("dd/MM/yyyy"),
                 "customer_name": self.customer_name.text(),
                 "contact_number": self.contact_number.text(),
-                "customer_address": self.customer_address.text(),
+                "customer_email": self.customer_email.text(),
+                "payment_mode": self.payment_mode.currentText(),
                 "items": [],
-                "subtotal": self.lbl_subtotal.text(),
-                "discount": self.txt_discount.text(),
-                "tax": self.lbl_tax.text(),
                 "total": self.lbl_total.text(),
                 "received": self.txt_received.text(),
                 "balance": self.lbl_balance.text()
@@ -1303,7 +1311,7 @@ class DashboardImproved(QMainWindow):
                 },
                 "customer": {
                     "name": self.customer_name.text(),
-                    "address": self.customer_address.text(),
+                    "email": self.customer_email.text(),
                     "contact": self.contact_number.text(),
                 },
                 "items": items,

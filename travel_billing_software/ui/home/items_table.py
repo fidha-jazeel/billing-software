@@ -84,7 +84,7 @@ class ItemsTableWidget(QFrame):
         # Header
         header_layout = QHBoxLayout()
         
-        table_title = QLabel("<b style='color:#a78bfa; font-size:14px;'>🧾 Billed Items</b>")
+        table_title = QLabel("<b style='color:#a78bfa; font-size:16px;'>🧾 Billed Items</b>")
         header_layout.addWidget(table_title)
         header_layout.addStretch()
         
@@ -93,7 +93,7 @@ class ItemsTableWidget(QFrame):
             f"QPushButton {{ "
             f"background-color: {self.colors['accent_primary']}; "
             f"color: white; border: none; border-radius: 5px; "
-            f"padding: 8px 16px; font-weight: bold; font-size: 12px; "
+            f"padding: 10px 18px; font-weight: bold; font-size: 14px; "
             f"}} "
             f"QPushButton:hover {{ "
             f"background-color: {self.colors['accent_secondary']}; "
@@ -115,6 +115,11 @@ class ItemsTableWidget(QFrame):
         self.table.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.table.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        # Set larger header font size
+        self.table.horizontalHeader().setStyleSheet(
+            "QHeaderView::section { font-size: 15px; font-weight: 600; }"
+        )
+        self.table.horizontalHeader().setMinimumHeight(35)
         self.table.setMinimumHeight(200)
         
         layout.addWidget(self.table)
