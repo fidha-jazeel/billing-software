@@ -304,6 +304,8 @@ class ExpensesPage(QWidget):
         
         # Action Bar
         action_bar = QFrame()
+        from PyQt6.QtWidgets import QSizePolicy
+        action_bar.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         action_bar.setStyleSheet(f"""
             QFrame {{
                 background-color: {self.colors['secondary_bg']};
@@ -395,6 +397,7 @@ class ExpensesPage(QWidget):
         
         # Statistics Cards
         stats_frame = QFrame()
+        stats_frame.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         stats_layout = QHBoxLayout(stats_frame)
         stats_layout.setSpacing(20)
         
@@ -410,42 +413,50 @@ class ExpensesPage(QWidget):
         
         layout.addWidget(stats_frame)
         
-        # Expenses Table
+        # Expenses Table - Full Width Expanding
         table_frame = QFrame()
+        table_frame.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         table_frame.setStyleSheet(f"""
             QFrame {{
-                background-color: #121212;
+                background-color: #1A1A1A;
                 border-radius: 10px;
-                border: 1.2px solid #FFFFFF;
-                padding: 20px;
+                border: 1.2px solid #333333;
+                padding: 0px;
+                margin: 0px;
             }}
         """)
         table_layout = QVBoxLayout(table_frame)
+        table_layout.setContentsMargins(20, 20, 20, 20)
         table_layout.setSpacing(15)
         
+        # Table title with clean styling
         table_title = QLabel("📋 Expense Records")
         table_title.setStyleSheet(f"""
             QLabel {{
                 color: #FFFFFF;
-                font-size: 16px;
+                font-size: 18px;
                 font-weight: bold;
+                padding: 10px 0px;
+                background-color: transparent;
+                border: none;
             }}
         """)
+        table_title.setAlignment(Qt.AlignmentFlag.AlignLeft)
         table_layout.addWidget(table_title)
         
-        # Create table
+        # Create table with 11 columns
         self.expenses_table = QTableWidget(0, 11)
-        self.expenses_table.setHorizontalHeaderLabels([
-            "Date", "Category", "Description", "Vendor", "Amount", 
-            "Payment Method", "Reference", "Person Responsible", "Created Date", "Actions", "ID"
-        ])
+        self.expenses_table.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         
         # Configure table
         self._configure_table()
         
-        table_layout.addWidget(self.expenses_table)
+        # Add table to layout with stretch factor for full expansion
+        table_layout.addWidget(self.expenses_table, 1)
         
-        layout.addWidget(table_frame)
+        # Add table frame to main layout with stretch factor
+        layout.addWidget(table_frame, 1)
+        layout.setStretch(layout.count() - 1, 1)
         
         scroll.setWidget(content)
         main_layout.addWidget(scroll)
@@ -492,88 +503,99 @@ class ExpensesPage(QWidget):
     
     def _configure_table(self):
         """Configure table appearance and behavior."""
+        # Set column headers
+        self.expenses_table.setHorizontalHeaderLabels([
+            "Date", "Category", "Description", "Vendor", "Amount",
+            "Payment Method", "Reference", "Added By", "Created Date", "Actions", "ID"
+        ])
+        
         # Enable sorting
         self.expenses_table.setSortingEnabled(True)
         
-        # Configure header
+        # Configure header for full-width expansion
         header = self.expenses_table.horizontalHeader()
-        header.setStyleSheet(f"""
-            QHeaderView::section {{
-                background-color: #161616;
+        header.setVisible(True)
+        header.setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
+        header.setMinimumHeight(45)
+        header.setMaximumHeight(45)
+        
+        header.setStyleSheet("""
+            QHeaderView::section {
+                background-color: #202020;
                 color: #FFFFFF;
-                padding: 12px 8px;
-                border: 1.2px solid #FFFFFF;
-                border-right: 1.2px solid #FFFFFF;
                 font-weight: bold;
                 font-size: 13px;
-                min-height: 50px;
-            }}
-            QHeaderView::section:hover {{
-                background-color: #1E1E1E;
-            }}
+                border: 1px solid #444444;
+                padding: 6px;
+                text-align: center;
+                min-height: 45px;
+            }
+            QHeaderView::section:hover {
+                background-color: #2A2A2A;
+            }
         """)
         
-        # Set column widths
-        column_widths = {
-            0: 110,   # Date
-            1: 180,   # Category
-            2: 200,   # Description
-            3: 150,   # Vendor
-            4: 120,   # Amount
-            5: 140,   # Payment Method
-            6: 120,   # Reference
-            7: 150,   # Person Responsible
-            8: 140,   # Created Date
-            9: 180,   # Actions
-            10: 0     # ID (hidden)
+        # Set minimum column widths and resize modes for responsive layout
+        from PyQt6.QtWidgets import QHeaderView
+        
+        column_config = {
+            0: (100, QHeaderView.ResizeMode.Interactive),    # Date
+            1: (150, QHeaderView.ResizeMode.Stretch),        # Category
+            2: (200, QHeaderView.ResizeMode.Stretch),        # Description
+            3: (130, QHeaderView.ResizeMode.Stretch),        # Vendor
+            4: (110, QHeaderView.ResizeMode.Interactive),    # Amount
+            5: (140, QHeaderView.ResizeMode.Interactive),    # Payment Method
+            6: (110, QHeaderView.ResizeMode.Interactive),    # Reference
+            7: (140, QHeaderView.ResizeMode.Stretch),        # Added By
+            8: (130, QHeaderView.ResizeMode.Interactive),    # Created Date
+            9: (150, QHeaderView.ResizeMode.Interactive),    # Actions
+            10: (0, None)                                     # ID (hidden)
         }
         
-        for col, width in column_widths.items():
-            if width == 0:
+        for col, (min_width, resize_mode) in column_config.items():
+            if min_width == 0:
                 self.expenses_table.setColumnHidden(col, True)
             else:
-                self.expenses_table.setColumnWidth(col, width)
+                self.expenses_table.setColumnWidth(col, min_width)
+                if resize_mode:
+                    header.setSectionResizeMode(col, resize_mode)
         
         header.setStretchLastSection(False)
         header.setSectionsMovable(False)
+        header.setSectionsClickable(True)
         
         # Configure vertical header
         self.expenses_table.verticalHeader().setVisible(True)
         self.expenses_table.verticalHeader().setDefaultSectionSize(50)
-        self.expenses_table.verticalHeader().setStyleSheet(f"""
-            QHeaderView::section {{
-                background-color: #161616;
-                color: #FFFFFF;
-                border: 1.2px solid #FFFFFF;
-                padding: 5px;
-                font-weight: bold;
-            }}
-        """)
         
-        # Table styling
+        # Table styling - Clean dark theme with no white rows
         self.expenses_table.setAlternatingRowColors(True)
         self.expenses_table.setStyleSheet(self.get_table_style() + f"""
             QTableWidget {{
-                background-color: #121212;
-                gridline-color: #FFFFFF;
+                background-color: #1E1E1E;
+                gridline-color: #444444;
                 font-size: 13px;
-                selection-background-color: #1E1E1E;
+                selection-background-color: #2A2A2A;
                 selection-color: #FFFFFF;
-                border: 1.2px solid #FFFFFF;
                 color: #FFFFFF;
+                border: 1.2px solid #FFFFFF;
             }}
             QTableWidget::item {{
                 padding: 8px 10px;
-                border: 1px solid #FFFFFF;
+                border: none;
                 background-color: #1E1E1E;
                 color: #FFFFFF;
             }}
             QTableWidget::item:alternate {{
                 background-color: #161616;
+                color: #FFFFFF;
             }}
             QTableWidget::item:selected {{
-                background-color: #2D2D2D;
+                background-color: #2A2A2A;
                 color: #FFFFFF;
+            }}
+            QTableWidget::item:hover {{
+                background-color: #252525;
             }}
         """)
         
@@ -810,43 +832,77 @@ class ExpensesPage(QWidget):
     
     def _view_expense(self, expense):
         """View expense details in a dialog."""
+        from PyQt6.QtWidgets import QSizePolicy, QScrollArea
+        
         dialog = QDialog(self)
         dialog.setWindowTitle("Expense Details")
         dialog.setModal(True)
-        dialog.setMinimumWidth(600)
+        dialog.setMinimumSize(750, 700)
+        dialog.resize(800, 750)
+        dialog.setStyleSheet("""
+            QDialog {
+                background-color: #1A1A1A;
+            }
+        """)
         
-        layout = QVBoxLayout(dialog)
-        layout.setSpacing(20)
-        layout.setContentsMargins(30, 30, 30, 30)
+        # Main layout for dialog
+        main_layout = QVBoxLayout(dialog)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
         
-        # Title
+        # Scroll area for content
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background-color: #1A1A1A;
+            }
+        """)
+        
+        # Content widget inside scroll area
+        content_widget = QWidget()
+        content_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        
+        layout = QVBoxLayout(content_widget)
+        layout.setSpacing(15)
+        layout.setContentsMargins(20, 20, 20, 20)
+        
+        # Title with high contrast
         title = QLabel(f"💰 {expense.get('category', 'N/A')}")
-        title.setStyleSheet(f"""
-            QLabel {{
-                color: {self.colors['accent_primary']};
-                font-size: 22px;
-                font-weight: bold;
-            }}
+        title.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        title.setStyleSheet("""
+            QLabel {
+                color: #B86BFF;
+                font-size: 20px;
+                font-weight: 600;
+                background-color: transparent;
+                padding: 10px 0px;
+            }
         """)
         layout.addWidget(title)
         
-        # Amount highlight
+        # Amount highlight box with high visibility
         amount_label = QLabel(f"₹{expense.get('amount', 0.0):,.2f}")
-        amount_label.setStyleSheet(f"""
-            QLabel {{
-                color: {self.colors['danger']};
-                font-size: 32px;
+        amount_label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        amount_label.setMinimumHeight(60)
+        amount_label.setStyleSheet("""
+            QLabel {
+                color: #E60000;
+                font-size: 26px;
                 font-weight: bold;
-                background-color: #fee;
-                padding: 15px;
-                border-radius: 8px;
-                border-left: 5px solid {self.colors['danger']};
-            }}
+                background-color: #FFE5E5;
+                padding: 20px;
+                border-radius: 10px;
+                border: 2px solid #FF9999;
+            }
         """)
         amount_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(amount_label)
         
-        # Details
+        # Format date
         date_str = expense.get('date', '')
         if date_str:
             try:
@@ -857,37 +913,112 @@ class ExpensesPage(QWidget):
         else:
             formatted_date = 'N/A'
         
-        details_text = f"""
-        <table style='width:100%; border-collapse: collapse;'>
-            <tr><td style='padding:8px; font-weight:bold; width:40%;'>Date:</td><td style='padding:8px;'>{formatted_date}</td></tr>
-            <tr style='background-color:#f5f5f5;'><td style='padding:8px; font-weight:bold;'>Category:</td><td style='padding:8px;'>{expense.get('category', 'N/A')}</td></tr>
-            <tr><td style='padding:8px; font-weight:bold;'>Payment Method:</td><td style='padding:8px;'>{expense.get('payment_method', 'N/A')}</td></tr>
-            <tr style='background-color:#f5f5f5;'><td style='padding:8px; font-weight:bold;'>Paid To (Vendor):</td><td style='padding:8px;'>{expense.get('vendor', 'N/A')}</td></tr>
-            <tr><td style='padding:8px; font-weight:bold;'>Person Responsible:</td><td style='padding:8px;'>{expense.get('responsible_person', 'N/A')}</td></tr>
-            <tr style='background-color:#f5f5f5;'><td style='padding:8px; font-weight:bold;'>Reference Number:</td><td style='padding:8px;'>{expense.get('reference', 'N/A')}</td></tr>
-            <tr><td style='padding:8px; font-weight:bold;'>Description:</td><td style='padding:8px;'>{expense.get('description', 'N/A')}</td></tr>
-            <tr style='background-color:#f5f5f5;'><td style='padding:8px; font-weight:bold;'>Created Date:</td><td style='padding:8px;'>{expense.get('created_date', 'N/A')}</td></tr>
-            <tr><td style='padding:8px; font-weight:bold;'>Modified Date:</td><td style='padding:8px;'>{expense.get('modified_date', 'N/A')}</td></tr>
-        </table>
-        """
-        
-        details_label = QLabel(details_text)
-        details_label.setStyleSheet("""
-            QLabel {
-                background-color: white;
-                border: 1px solid #e0e0e0;
-                border-radius: 8px;
-                padding: 15px;
+        # Details frame with clear styling and full width
+        details_frame = QFrame()
+        details_frame.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        details_frame.setStyleSheet("""
+            QFrame {
+                background-color: #2A2A2A;
+                border-radius: 10px;
+                border: 1px solid #444444;
             }
         """)
-        details_label.setWordWrap(True)
-        layout.addWidget(details_label)
+        details_layout = QVBoxLayout(details_frame)
+        details_layout.setSpacing(12)
+        details_layout.setContentsMargins(20, 20, 20, 20)
         
-        # Close button
+        # Create detail fields with clear labels and values
+        details_data = [
+            ("Date", formatted_date),
+            ("Category", expense.get('category', 'N/A')),
+            ("Payment Method", expense.get('payment_method', 'N/A')),
+            ("Paid To (Vendor)", expense.get('vendor', 'N/A')),
+            ("Person Responsible", expense.get('responsible_person', 'N/A')),
+            ("Reference Number", expense.get('reference', 'N/A')),
+            ("Description", expense.get('description', 'N/A')),
+            ("Created Date", expense.get('created_date', 'N/A')),
+            ("Modified Date", expense.get('modified_date', 'N/A'))
+        ]
+        
+        for label_text, value_text in details_data:
+            # Field container with full width expansion
+            field_container = QFrame()
+            field_container.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+            field_layout = QVBoxLayout(field_container)
+            field_layout.setContentsMargins(0, 0, 0, 0)
+            field_layout.setSpacing(6)
+            
+            # Label with high contrast
+            label = QLabel(label_text)
+            label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+            label.setStyleSheet("""
+                QLabel {
+                    color: #FFFFFF;
+                    font-weight: bold;
+                    font-size: 13px;
+                    background-color: transparent;
+                }
+            """)
+            field_layout.addWidget(label)
+            
+            # Value field with clear background and full width
+            value = QLabel(str(value_text))
+            value.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+            value.setMinimumHeight(40)
+            value.setMaximumWidth(16777215)
+            value.setStyleSheet("""
+                QLabel {
+                    color: #000000;
+                    font-size: 13px;
+                    background-color: #F4F4F4;
+                    padding: 10px 15px;
+                    border-radius: 6px;
+                    border: 1px solid #CCCCCC;
+                }
+            """)
+            value.setWordWrap(True)
+            field_layout.addWidget(value)
+            
+            details_layout.addWidget(field_container)
+        
+        layout.addWidget(details_frame)
+        
+        # Close button with clear styling
         close_btn = QPushButton("✖ Close")
-        close_btn.setStyleSheet(self.get_button_style('cancel'))
+        close_btn.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        close_btn.setMinimumWidth(200)
+        close_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #B86BFF;
+                color: #FFFFFF;
+                border: none;
+                padding: 12px 30px;
+                border-radius: 6px;
+                font-size: 14px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #A050FF;
+            }
+            QPushButton:pressed {
+                background-color: #9030EF;
+            }
+        """)
+        close_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         close_btn.clicked.connect(dialog.accept)
-        layout.addWidget(close_btn)
+        
+        # Center the close button
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()
+        button_layout.addWidget(close_btn)
+        button_layout.addStretch()
+        layout.addLayout(button_layout)
+        
+        # Set content widget to scroll area
+        scroll.setWidget(content_widget)
+        
+        # Add scroll area to main layout
+        main_layout.addWidget(scroll)
         
         dialog.exec()
     

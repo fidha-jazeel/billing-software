@@ -60,20 +60,20 @@ class ReportsPage(QWidget):
         
         # Configure header
         header = table.horizontalHeader()
-        header.setStyleSheet(f"""
-            QHeaderView::section {{
-                background-color: {self.colors['accent_primary']};
-                color: white;
+        header.setStyleSheet("""
+            QHeaderView::section {
+                background-color: #000000;
+                color: #FFFFFF;
                 padding: 12px 8px;
-                border: none;
-                border-right: 1px solid {self.colors['primary_bg']};
+                border: 1px solid #777777;
+                border-bottom: 1px solid #777777;
                 font-weight: bold;
                 font-size: 13px;
                 text-align: left;
-            }}
-            QHeaderView::section:hover {{
-                background-color: {self.colors['accent_secondary']};
-            }}
+            }
+            QHeaderView::section:hover {
+                background-color: #222222;
+            }
         """)
         header.setDefaultAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         
@@ -97,23 +97,44 @@ class ReportsPage(QWidget):
         # Configure vertical header
         table.verticalHeader().setVisible(True)
         table.verticalHeader().setDefaultSectionSize(45)  # Row height
+        table.verticalHeader().setStyleSheet("""
+            QHeaderView::section {
+                background-color: #000000;
+                color: #FFFFFF;
+                border: 1px solid #777777;
+            }
+        """)
         
         # Alternating row colors for better readability
         table.setAlternatingRowColors(True)
-        table.setStyleSheet(self.get_table_style() + f"""
-            QTableWidget {{
-                gridline-color: #e0e0e0;
+        table.setStyleSheet(self.get_table_style() + """
+            QTableWidget {
+                background-color: #000000;
+                gridline-color: #777777;
                 font-size: 13px;
-                selection-background-color: {self.colors['accent_primary']};
-                selection-color: white;
-            }}
-            QTableWidget::item {{
+                selection-background-color: #222222;
+                selection-color: #FFFFFF;
+                color: #FFFFFF;
+                border: 1px solid #777777;
+            }
+            QTableWidget::item {
                 padding: 8px 10px;
-                border: none;
-            }}
-            QTableWidget::item:alternate {{
-                background-color: #f9f9f9;
-            }}
+                border: 1px solid #777777;
+                background-color: #000000;
+                color: #FFFFFF;
+            }
+            QTableWidget::item:alternate {
+                background-color: #111111;
+                color: #FFFFFF;
+            }
+            QTableWidget::item:hover {
+                background-color: #222222;
+                color: #FFFFFF;
+            }
+            QTableWidget::item:selected {
+                background-color: #222222;
+                color: #FFFFFF;
+            }
         """)
     
     def _init_ui(self):
@@ -305,34 +326,34 @@ class ReportsPage(QWidget):
     def _create_payment_summary_section(self) -> QFrame:
         """Create payment summary section showing total cash and bank received."""
         summary_frame = QFrame()
-        summary_frame.setStyleSheet(f"""
-            QFrame {{
-                background-color: {self.colors['secondary_bg']};
-                border-radius: 10px;
-                border: 2px solid {self.colors['accent_primary']};
+        summary_frame.setStyleSheet("""
+            QFrame {
+                background-color: #000000;
+                border-radius: 8px;
+                border: 2px solid #777777;
                 padding: 15px;
-            }}
+            }
         """)
         summary_layout = QHBoxLayout(summary_frame)
-        summary_layout.setContentsMargins(20, 15, 20, 15)
-        summary_layout.setSpacing(30)
+        summary_layout.setContentsMargins(15, 15, 15, 15)
+        summary_layout.setSpacing(20)
         
         # Total Cash Received Box
         cash_box = QFrame()
-        cash_box.setStyleSheet(f"""
-            QFrame {{
-                background-color: {self.colors['primary_bg']};
+        cash_box.setStyleSheet("""
+            QFrame {
+                background-color: #0F0F0F;
                 border-radius: 8px;
-                border: 2px solid {self.colors['success']};
+                border: 2px solid #777777;
                 padding: 15px;
-            }}
+            }
         """)
         cash_layout = QVBoxLayout(cash_box)
-        cash_layout.setSpacing(8)
+        cash_layout.setSpacing(6)
         
         cash_title = QLabel("💵 Total Cash Received")
-        cash_title.setStyleSheet(f"""
-            color: {self.colors['success']};
+        cash_title.setStyleSheet("""
+            color: #FFFFFF;
             font-size: 14px;
             font-weight: bold;
         """)
@@ -340,8 +361,8 @@ class ReportsPage(QWidget):
         cash_layout.addWidget(cash_title)
         
         self.lbl_total_cash = QLabel("₹0.00")
-        self.lbl_total_cash.setStyleSheet(f"""
-            color: {self.colors['accent_gold']};
+        self.lbl_total_cash.setStyleSheet("""
+            color: #FFFFFF;
             font-size: 24px;
             font-weight: bold;
         """)
@@ -352,20 +373,20 @@ class ReportsPage(QWidget):
         
         # Total Bank Received Box
         bank_box = QFrame()
-        bank_box.setStyleSheet(f"""
-            QFrame {{
-                background-color: {self.colors['primary_bg']};
+        bank_box.setStyleSheet("""
+            QFrame {
+                background-color: #0F0F0F;
                 border-radius: 8px;
-                border: 2px solid {self.colors['accent_cyan']};
+                border: 2px solid #777777;
                 padding: 15px;
-            }}
+            }
         """)
         bank_layout = QVBoxLayout(bank_box)
-        bank_layout.setSpacing(8)
+        bank_layout.setSpacing(6)
         
         bank_title = QLabel("🏦 Total Bank Received")
-        bank_title.setStyleSheet(f"""
-            color: {self.colors['accent_cyan']};
+        bank_title.setStyleSheet("""
+            color: #FFFFFF;
             font-size: 14px;
             font-weight: bold;
         """)
@@ -373,8 +394,8 @@ class ReportsPage(QWidget):
         bank_layout.addWidget(bank_title)
         
         self.lbl_total_bank = QLabel("₹0.00")
-        self.lbl_total_bank.setStyleSheet(f"""
-            color: {self.colors['accent_gold']};
+        self.lbl_total_bank.setStyleSheet("""
+            color: #FFFFFF;
             font-size: 24px;
             font-weight: bold;
         """)
@@ -455,28 +476,34 @@ class ReportsPage(QWidget):
     def _create_common_filters(self) -> QFrame:
         """Create common filter section for reports with enhanced styling."""
         filter_frame = QFrame()
-        filter_frame.setStyleSheet(f"""
-            QFrame {{
-                background-color: {self.colors['secondary_bg']};
-                border-radius: 10px;
-                border: 1px solid #e0e0e0;
-                padding: 20px;
-            }}
+        filter_frame.setStyleSheet("""
+            QFrame {
+                background-color: #0F0F0F;
+                border-radius: 8px;
+                border: 2px solid #777777;
+                padding: 0px;
+                margin: 0px;
+            }
         """)
         
         filter_layout = QVBoxLayout(filter_frame)
-        filter_layout.setSpacing(15)
-        filter_layout.setContentsMargins(20, 20, 20, 20)
+        filter_layout.setSpacing(10)
+        filter_layout.setContentsMargins(14, 14, 14, 14)
         
-        # Title
+        # Title with white border
         filter_title = QLabel("🔍 Filter Options")
-        filter_title.setStyleSheet(f"""
-            QLabel {{
-                color: {self.colors['accent_primary']};
-                font-size: 15px;
+        filter_title.setStyleSheet("""
+            QLabel {
+                color: #FFFFFF;
+                font-size: 14px;
                 font-weight: bold;
                 letter-spacing: 0.5px;
-            }}
+                padding: 8px;
+                margin: 0px 0px 10px 0px;
+                border: 1px solid #777777;
+                border-radius: 4px;
+                background-color: #1A1A1A;
+            }
         """)
         filter_layout.addWidget(filter_title)
         
@@ -485,86 +512,328 @@ class ReportsPage(QWidget):
         date_row.setSpacing(10)
         
         from_label = QLabel("From:")
-        from_label.setStyleSheet(self.get_label_style())
+        from_label.setStyleSheet("color: #FFFFFF; font-weight: bold;")
         date_row.addWidget(from_label)
         
         self.filter_from_date = QDateEdit()
         self.filter_from_date.setCalendarPopup(True)
         self.filter_from_date.setDate(QDate.currentDate().addMonths(-1))
-        self.filter_from_date.setStyleSheet(self.get_input_style())
+        self.filter_from_date.setStyleSheet("""
+            QDateEdit {
+                background-color: #1A1A1A;
+                color: #FFFFFF;
+                border: none;
+                border-radius: 4px;
+                padding: 8px;
+            }
+            QDateEdit::drop-down {
+                border: none;
+                background-color: #1A1A1A;
+            }
+        """)
         date_row.addWidget(self.filter_from_date)
         
         to_label = QLabel("To:")
-        to_label.setStyleSheet(self.get_label_style())
+        to_label.setStyleSheet("color: #FFFFFF; font-weight: bold;")
         date_row.addWidget(to_label)
         
         self.filter_to_date = QDateEdit()
         self.filter_to_date.setCalendarPopup(True)
         self.filter_to_date.setDate(QDate.currentDate())
-        self.filter_to_date.setStyleSheet(self.get_input_style())
+        self.filter_to_date.setStyleSheet("""
+            QDateEdit {
+                background-color: #1A1A1A;
+                color: #FFFFFF;
+                border: none;
+                border-radius: 4px;
+                padding: 8px;
+            }
+            QDateEdit::drop-down {
+                border: none;
+                background-color: #1A1A1A;
+            }
+        """)
         date_row.addWidget(self.filter_to_date)
         
         filter_layout.addLayout(date_row)
         
-        # Contact Number
+        # Contact Number - Two separate bordered boxes
         contact_row = QHBoxLayout()
+        contact_row.setSpacing(10)
+        
+        contact_label_box = QFrame()
+        contact_label_box.setStyleSheet("""
+            QFrame {
+                background-color: #121212;
+                border: 1px solid #777777;
+                border-radius: 5px;
+                padding: 6px 10px;
+            }
+        """)
+        contact_label_layout = QHBoxLayout(contact_label_box)
+        contact_label_layout.setContentsMargins(0, 0, 0, 0)
         contact_label = QLabel("Contact:")
-        contact_label.setStyleSheet(self.get_label_style())
-        contact_row.addWidget(contact_label)
+        contact_label.setStyleSheet("color: #FFFFFF; font-weight: bold; background: transparent; border: none;")
+        contact_label_layout.addWidget(contact_label)
+        contact_row.addWidget(contact_label_box)
+        
+        contact_input_box = QFrame()
+        contact_input_box.setStyleSheet("""
+            QFrame {
+                background-color: #000000;
+                border: 1px solid #777777;
+                border-radius: 5px;
+                padding: 6px 10px;
+            }
+        """)
+        contact_input_layout = QHBoxLayout(contact_input_box)
+        contact_input_layout.setContentsMargins(0, 0, 0, 0)
         
         self.filter_contact = QLineEdit()
         self.filter_contact.setPlaceholderText("Search by contact number...")
-        self.filter_contact.setStyleSheet(self.get_input_style())
-        contact_row.addWidget(self.filter_contact)
+        self.filter_contact.setStyleSheet("""
+            QLineEdit {
+                background-color: transparent;
+                color: #FFFFFF;
+                border: none;
+                padding: 2px;
+            }
+            QLineEdit::placeholder {
+                color: #CCCCCC;
+            }
+            QLineEdit:focus {
+                outline: none;
+                border: none;
+            }
+        """)
+        contact_input_layout.addWidget(self.filter_contact)
+        contact_row.addWidget(contact_input_box, 1)
         
         filter_layout.addLayout(contact_row)
         
-        # Passenger Name
+        # Passenger Name - Two separate bordered boxes
         passenger_row = QHBoxLayout()
+        passenger_row.setSpacing(10)
+        
+        passenger_label_box = QFrame()
+        passenger_label_box.setStyleSheet("""
+            QFrame {
+                background-color: #121212;
+                border: 1px solid #777777;
+                border-radius: 5px;
+                padding: 6px 10px;
+            }
+        """)
+        passenger_label_layout = QHBoxLayout(passenger_label_box)
+        passenger_label_layout.setContentsMargins(0, 0, 0, 0)
         passenger_label = QLabel("Passenger:")
-        passenger_label.setStyleSheet(self.get_label_style())
-        passenger_row.addWidget(passenger_label)
+        passenger_label.setStyleSheet("color: #FFFFFF; font-weight: bold; background: transparent; border: none;")
+        passenger_label_layout.addWidget(passenger_label)
+        passenger_row.addWidget(passenger_label_box)
+        
+        passenger_input_box = QFrame()
+        passenger_input_box.setStyleSheet("""
+            QFrame {
+                background-color: #000000;
+                border: 1px solid #777777;
+                border-radius: 5px;
+                padding: 6px 10px;
+            }
+        """)
+        passenger_input_layout = QHBoxLayout(passenger_input_box)
+        passenger_input_layout.setContentsMargins(0, 0, 0, 0)
         
         self.filter_passenger = QLineEdit()
         self.filter_passenger.setPlaceholderText("Search by passenger name...")
-        self.filter_passenger.setStyleSheet(self.get_input_style())
-        passenger_row.addWidget(self.filter_passenger)
+        self.filter_passenger.setStyleSheet("""
+            QLineEdit {
+                background-color: transparent;
+                color: #FFFFFF;
+                border: none;
+                padding: 2px;
+            }
+            QLineEdit::placeholder {
+                color: #CCCCCC;
+            }
+            QLineEdit:focus {
+                outline: none;
+                border: none;
+            }
+        """)
+        passenger_input_layout.addWidget(self.filter_passenger)
+        passenger_row.addWidget(passenger_input_box, 1)
         
         filter_layout.addLayout(passenger_row)
         
-        # Sector and Supplier
+        # Sector and Supplier Row
         sector_supplier_row = QHBoxLayout()
+        sector_supplier_row.setSpacing(10)
         
+        # Sector - Two separate bordered boxes
+        sector_label_box = QFrame()
+        sector_label_box.setStyleSheet("""
+            QFrame {
+                background-color: #121212;
+                border: 1px solid #777777;
+                border-radius: 5px;
+                padding: 6px 10px;
+            }
+        """)
+        sector_label_layout = QHBoxLayout(sector_label_box)
+        sector_label_layout.setContentsMargins(0, 0, 0, 0)
         sector_label = QLabel("Sector:")
-        sector_label.setStyleSheet(self.get_label_style())
-        sector_supplier_row.addWidget(sector_label)
+        sector_label.setStyleSheet("color: #FFFFFF; font-weight: bold; background: transparent; border: none;")
+        sector_label_layout.addWidget(sector_label)
+        sector_supplier_row.addWidget(sector_label_box)
+        
+        sector_input_box = QFrame()
+        sector_input_box.setStyleSheet("""
+            QFrame {
+                background-color: #000000;
+                border: 1px solid #777777;
+                border-radius: 5px;
+                padding: 6px 10px;
+            }
+        """)
+        sector_input_layout = QHBoxLayout(sector_input_box)
+        sector_input_layout.setContentsMargins(0, 0, 0, 0)
         
         self.filter_sector = QLineEdit()
         self.filter_sector.setPlaceholderText("Sector...")
-        self.filter_sector.setStyleSheet(self.get_input_style())
-        sector_supplier_row.addWidget(self.filter_sector)
+        self.filter_sector.setStyleSheet("""
+            QLineEdit {
+                background-color: transparent;
+                color: #FFFFFF;
+                border: none;
+                padding: 2px;
+            }
+            QLineEdit::placeholder {
+                color: #CCCCCC;
+            }
+            QLineEdit:focus {
+                outline: none;
+                border: none;
+            }
+        """)
+        sector_input_layout.addWidget(self.filter_sector)
+        sector_supplier_row.addWidget(sector_input_box, 1)
         
+        # Supplier - Two separate bordered boxes
+        supplier_label_box = QFrame()
+        supplier_label_box.setStyleSheet("""
+            QFrame {
+                background-color: #121212;
+                border: 1px solid #777777;
+                border-radius: 5px;
+                padding: 6px 10px;
+            }
+        """)
+        supplier_label_layout = QHBoxLayout(supplier_label_box)
+        supplier_label_layout.setContentsMargins(0, 0, 0, 0)
         supplier_label = QLabel("Supplier:")
-        supplier_label.setStyleSheet(self.get_label_style())
-        sector_supplier_row.addWidget(supplier_label)
+        supplier_label.setStyleSheet("color: #FFFFFF; font-weight: bold; background: transparent; border: none;")
+        supplier_label_layout.addWidget(supplier_label)
+        sector_supplier_row.addWidget(supplier_label_box)
+        
+        supplier_input_box = QFrame()
+        supplier_input_box.setStyleSheet("""
+            QFrame {
+                background-color: #000000;
+                border: 1px solid #777777;
+                border-radius: 5px;
+                padding: 6px 10px;
+            }
+        """)
+        supplier_input_layout = QHBoxLayout(supplier_input_box)
+        supplier_input_layout.setContentsMargins(0, 0, 0, 0)
         
         self.filter_supplier = QComboBox()
         self.filter_supplier.addItems(["All", "IndiGo", "Air India", "SpiceJet", "Vistara", "AirAsia", "Other"])
-        self.filter_supplier.setStyleSheet(self.get_input_style())
-        sector_supplier_row.addWidget(self.filter_supplier)
+        self.filter_supplier.setStyleSheet("""
+            QComboBox {
+                background-color: transparent;
+                color: #FFFFFF;
+                border: none;
+                padding: 2px;
+            }
+            QComboBox::drop-down {
+                border: none;
+                background-color: transparent;
+            }
+            QComboBox QAbstractItemView {
+                background-color: #1A1A1A;
+                color: #FFFFFF;
+                selection-background-color: #333333;
+                border: 1px solid #777777;
+            }
+            QComboBox:focus {
+                outline: none;
+                border: none;
+            }
+        """)
+        supplier_input_layout.addWidget(self.filter_supplier)
+        sector_supplier_row.addWidget(supplier_input_box, 1)
         
         filter_layout.addLayout(sector_supplier_row)
         
-        # Booking Type
+        # Booking Type - Two separate bordered boxes
         type_row = QHBoxLayout()
+        type_row.setSpacing(10)
+        
+        type_label_box = QFrame()
+        type_label_box.setStyleSheet("""
+            QFrame {
+                background-color: #121212;
+                border: 1px solid #777777;
+                border-radius: 5px;
+                padding: 6px 10px;
+            }
+        """)
+        type_label_layout = QHBoxLayout(type_label_box)
+        type_label_layout.setContentsMargins(0, 0, 0, 0)
         type_label = QLabel("Type:")
-        type_label.setStyleSheet(self.get_label_style())
-        type_row.addWidget(type_label)
+        type_label.setStyleSheet("color: #FFFFFF; font-weight: bold; background: transparent; border: none;")
+        type_label_layout.addWidget(type_label)
+        type_row.addWidget(type_label_box)
+        
+        type_input_box = QFrame()
+        type_input_box.setStyleSheet("""
+            QFrame {
+                background-color: #000000;
+                border: 1px solid #777777;
+                border-radius: 5px;
+                padding: 6px 10px;
+            }
+        """)
+        type_input_layout = QHBoxLayout(type_input_box)
+        type_input_layout.setContentsMargins(0, 0, 0, 0)
         
         self.filter_type = QComboBox()
         self.filter_type.addItems(["All", "Flight", "Hotel", "Visa", "Tour Package", "Insurance", "Other"])
-        self.filter_type.setStyleSheet(self.get_input_style())
-        type_row.addWidget(self.filter_type)
+        self.filter_type.setStyleSheet("""
+            QComboBox {
+                background-color: transparent;
+                color: #FFFFFF;
+                border: none;
+                padding: 2px;
+            }
+            QComboBox::drop-down {
+                border: none;
+                background-color: transparent;
+            }
+            QComboBox QAbstractItemView {
+                background-color: #1A1A1A;
+                color: #FFFFFF;
+                selection-background-color: #333333;
+                border: 1px solid #777777;
+            }
+            QComboBox:focus {
+                outline: none;
+                border: none;
+            }
+        """)
+        type_input_layout.addWidget(self.filter_type)
+        type_row.addWidget(type_input_box, 1)
         
         filter_layout.addLayout(type_row)
         
@@ -732,7 +1001,7 @@ class ReportsPage(QWidget):
         content = QWidget()
         layout = QVBoxLayout(content)
         layout.setContentsMargins(25, 25, 25, 25)
-        layout.setSpacing(20)
+        layout.setSpacing(12)
         
         # Header
         header = self._create_report_header(
@@ -877,8 +1146,8 @@ class ReportsPage(QWidget):
         
         content = QWidget()
         layout = QVBoxLayout(content)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(15)
+        layout.setContentsMargins(25, 25, 25, 25)
+        layout.setSpacing(12)
         
         # Header
         header = QLabel("📉 Purchase Report")
@@ -1003,8 +1272,8 @@ class ReportsPage(QWidget):
         
         content = QWidget()
         layout = QVBoxLayout(content)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(15)
+        layout.setContentsMargins(25, 25, 25, 25)
+        layout.setSpacing(12)
         
         # Header
         header = QLabel("📋 All Transactions")
@@ -1152,8 +1421,8 @@ class ReportsPage(QWidget):
         
         content = QWidget()
         layout = QVBoxLayout(content)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(15)
+        layout.setContentsMargins(25, 25, 25, 25)
+        layout.setSpacing(12)
         
         # Header
         header = QLabel("📅 Day Book")
@@ -1308,8 +1577,8 @@ class ReportsPage(QWidget):
         
         content = QWidget()
         layout = QVBoxLayout(content)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(15)
+        layout.setContentsMargins(25, 25, 25, 25)
+        layout.setSpacing(12)
         
         # Header
         header = QLabel("💰 Profit and Loss Statement")
@@ -1452,8 +1721,8 @@ class ReportsPage(QWidget):
         
         content = QWidget()
         layout = QVBoxLayout(content)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(15)
+        layout.setContentsMargins(25, 25, 25, 25)
+        layout.setSpacing(12)
         
         # Header
         header = QLabel("📊 Bill Wise Profit Analysis")
@@ -1593,12 +1862,12 @@ class ReportsPage(QWidget):
     def _create_summary_cards(self, titles) -> QFrame:
         """Create summary cards frame with enhanced styling."""
         frame = QFrame()
-        frame.setStyleSheet(f"""
-            QFrame {{
+        frame.setStyleSheet("""
+            QFrame {
                 background-color: transparent;
                 border: none;
                 padding: 10px 0px;
-            }}
+            }
         """)
         
         layout = QHBoxLayout(frame)
@@ -1606,36 +1875,34 @@ class ReportsPage(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         
         cards = []
-        colors_list = [self.colors['success'], self.colors['accent_gold'], self.colors['accent_primary']]
         
         for idx, title in enumerate(titles):
             card = QFrame()
-            accent_color = colors_list[idx % len(colors_list)]
-            card.setStyleSheet(f"""
-                QFrame {{
-                    background-color: {self.colors['secondary_bg']};
-                    border-radius: 10px;
-                    border-left: 5px solid {accent_color};
-                    padding: 20px 25px;
-                }}
+            card.setStyleSheet("""
+                QFrame {
+                    background-color: #000000;
+                    border-radius: 8px;
+                    border: 2px solid #777777;
+                    padding: 18px;
+                }
             """)
             card_layout = QVBoxLayout(card)
-            card_layout.setSpacing(8)
+            card_layout.setSpacing(6)
             card_layout.setContentsMargins(0, 0, 0, 0)
             
             title_label = QLabel(title)
-            title_label.setStyleSheet(f"""
-                color: {self.colors['text_secondary']}; 
-                font-size: 13px; 
-                font-weight: 500;
+            title_label.setStyleSheet("""
+                color: #FFFFFF;
+                font-size: 13px;
+                font-weight: bold;
                 letter-spacing: 0.5px;
             """)
             card_layout.addWidget(title_label)
             
             value_label = QLabel("₹0.00")
-            value_label.setStyleSheet(f"""
-                color: {accent_color}; 
-                font-size: 24px; 
+            value_label.setStyleSheet("""
+                color: #FFFFFF;
+                font-size: 24px;
                 font-weight: bold;
                 letter-spacing: 0.5px;
             """)
@@ -1709,8 +1976,8 @@ class ReportsPage(QWidget):
         
         content = QWidget()
         layout = QVBoxLayout(content)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(15)
+        layout.setContentsMargins(25, 25, 25, 25)
+        layout.setSpacing(12)
         
         # Header
         header = QLabel("💵 Cash Transactions Report")
@@ -1753,16 +2020,16 @@ class ReportsPage(QWidget):
         self.cash_transactions_table.setHorizontalHeaderLabels([
             "Date", "Invoice #", "Customer (Payer)", "Contact", "Cash Received", "Cash Paid", "Balance", "Status"
         ])
-        # Configure with optimal column widths
+        # Configure with equal column widths
         self._configure_table(self.cash_transactions_table, {
-            0: 100,  # Date
-            1: 140,  # Invoice #
+            0: 'stretch',  # Date
+            1: 'stretch',  # Invoice #
             2: 'stretch',  # Customer (Payer)
-            3: 120,  # Contact
-            4: 130,  # Cash Received
-            5: 120,  # Cash Paid
-            6: 120,  # Balance
-            7: 110   # Status
+            3: 'stretch',  # Contact
+            4: 'stretch',  # Cash Received
+            5: 'stretch',  # Cash Paid
+            6: 'stretch',  # Balance
+            7: 'stretch'   # Status
         })
         self.cash_transactions_table.setMinimumHeight(500)
         layout.addWidget(self.cash_transactions_table)
@@ -1878,8 +2145,8 @@ class ReportsPage(QWidget):
         
         content = QWidget()
         layout = QVBoxLayout(content)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(15)
+        layout.setContentsMargins(25, 25, 25, 25)
+        layout.setSpacing(12)
         
         # Header
         header = QLabel("⚖️ Balance Report")
