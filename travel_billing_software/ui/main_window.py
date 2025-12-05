@@ -34,14 +34,12 @@ from travel_billing_software.ui.home import HomePage
 from travel_billing_software.ui.ai_features import AIFeaturesPage
 from travel_billing_software.ui.expenses_page import ExpensesPage
 from travel_billing_software.ui.supplier_billing_page import SupplierBillingPage
+from travel_billing_software.ui.payments_page import PaymentsPage
+from travel_billing_software.ui.supplier_page import SupplierPage
 
 # Import database manager
-try:
-    from travel_billing_software.database import DatabaseManager, get_db_instance
-    DB_ENABLED = True
-except ImportError:
-    DB_ENABLED = False
-    print("⚠️  Database module not available. Using JSON-only mode.")
+from travel_billing_software.database.db_manager import get_db_instance
+DB_ENABLED = True
 
 
 class DashboardImproved(QMainWindow):
@@ -111,7 +109,9 @@ class DashboardImproved(QMainWindow):
         for page_id, label, icon in [
             ('home', '🏠 Home', 'home'),
             ('reports', '📊 Reports', 'reports'),
+            ('payments', '💵 Payments', 'payments'),
             ('expenses', '💰 Expenses', 'expenses'),
+            ('suppliers', '🏭 Suppliers', 'suppliers'),
             ('supplier_billing', '📋 Supplier Billing', 'supplier_billing'),
             ('ai', '🤖 AI Features', 'ai'),
             ('settings', '⚙ Settings', 'settings'),
@@ -131,7 +131,9 @@ class DashboardImproved(QMainWindow):
         # Create pages
         self.home_page = self._create_home_page()
         self.reports_page = self._create_reports_page()
+        self.payments_page = self._create_payments_page()
         self.expenses_page = self._create_expenses_page()
+        self.suppliers_page = self._create_suppliers_page()
         self.supplier_billing_page = self._create_supplier_billing_page()
         self.ai_page = self._create_ai_page()
         self.settings_page = self._create_settings_page()
@@ -139,7 +141,9 @@ class DashboardImproved(QMainWindow):
 
         self.content_stack.addWidget(self.home_page)
         self.content_stack.addWidget(self.reports_page)
+        self.content_stack.addWidget(self.payments_page)
         self.content_stack.addWidget(self.expenses_page)
+        self.content_stack.addWidget(self.suppliers_page)
         self.content_stack.addWidget(self.supplier_billing_page)
         self.content_stack.addWidget(self.ai_page)
         self.content_stack.addWidget(self.settings_page)
@@ -197,8 +201,12 @@ class DashboardImproved(QMainWindow):
             self.content_stack.setCurrentWidget(self.home_page)
         elif page_id == 'reports':
             self.content_stack.setCurrentWidget(self.reports_page)
+        elif page_id == 'payments':
+            self.content_stack.setCurrentWidget(self.payments_page)
         elif page_id == 'expenses':
             self.content_stack.setCurrentWidget(self.expenses_page)
+        elif page_id == 'suppliers':
+            self.content_stack.setCurrentWidget(self.suppliers_page)
         elif page_id == 'supplier_billing':
             self.content_stack.setCurrentWidget(self.supplier_billing_page)
         elif page_id == 'ai':
@@ -1165,13 +1173,7 @@ class DashboardImproved(QMainWindow):
                 invoice_data["items"].append(item)
             
             # Save to JSON file
-            filename = f"invoices/invoice_{invoice_data['invoice_number']}.json"
-            os.makedirs("invoices", exist_ok=True)
-            
-            with open(filename, 'w') as f:
-                json.dump(invoice_data, f, indent=4)
-            
-            print(f"✓ Invoice saved to JSON: {filename}")
+            # REMOVED: JSON file saving - now using database only
             
             # Save to database if available
             if self.db:
@@ -1230,11 +1232,7 @@ class DashboardImproved(QMainWindow):
             
             # Show confirmation
             from PyQt6.QtWidgets import QMessageBox
-            msg = f"Invoice saved successfully!\n\n"
-            msg += f"📁 JSON File: {filename}\n"
-            if self.db:
-                msg += f"🗄️  Database: ✓ Saved"
-            QMessageBox.information(self, "Success", msg)
+            print(f"✅ Invoice {invoice_data['invoice_number']} saved successfully")
             
         except Exception as e:
             print(f"✗ Error saving invoice: {e}")
@@ -1405,11 +1403,13 @@ class DashboardImproved(QMainWindow):
                 QMessageBox.warning(self, "Warning", "Please save the invoice first before sharing.")
                 return
             
-            # Check if invoice JSON file exists
-            invoice_file = f"invoices/invoice_{invoice_num}.json"
-            if not os.path.exists(invoice_file):
-                QMessageBox.warning(self, "Warning", "Invoice not found. Please save the invoice first.")
+            # Check if invoice exists in database
+            if not self.db:
+                QMessageBox.warning(self, "Warning", "Database not available.")
                 return
+                
+            # Note: Email sharing feature can be implemented here
+            # Using SMTP, SendGrid, AWS SES, or Mailgun
             
             # Get customer name for email suggestion
             customer_name = self.customer_name.text() if hasattr(self, 'customer_name') else ""
@@ -1787,9 +1787,17 @@ class DashboardImproved(QMainWindow):
         """Create the Expenses Management page."""
         return ExpensesPage(COLORS, get_table_style, get_button_style, get_input_style, self)
     
+    def _create_suppliers_page(self) -> QWidget:
+        """Create the Suppliers Management page."""
+        return SupplierPage(COLORS, get_table_style, get_button_style, get_input_style, self)
+    
     def _create_supplier_billing_page(self) -> QWidget:
         """Create the Supplier Billing page."""
         return SupplierBillingPage(COLORS, get_input_style, get_button_style, get_combobox_style, self)
+    
+    def _create_payments_page(self) -> QWidget:
+        """Create the Payments Management page."""
+        return PaymentsPage(COLORS, get_table_style, get_button_style, get_input_style, self)
         
     def _create_ai_page(self) -> QWidget:
         """Create the AI Features page."""

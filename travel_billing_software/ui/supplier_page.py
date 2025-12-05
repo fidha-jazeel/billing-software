@@ -3,7 +3,6 @@ Supplier Management Page Module
 Comprehensive supplier management with CRUD operations, search, and export functionality.
 """
 import os
-import json
 from datetime import datetime
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                              QFrame, QScrollArea, QTableWidget, QPushButton,
@@ -13,6 +12,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QGroupBox, QSpinBox)
 from PyQt6.QtCore import Qt, QDate
 from PyQt6.QtGui import QColor, QFont
+from travel_billing_software.database.db_manager import get_db_instance
 
 
 class SupplierDialog(QDialog):
@@ -192,37 +192,28 @@ class SupplierDialog(QDialog):
             QMessageBox.warning(self, "Validation Error", "Phone number is required!")
             return None
         
-        return {
-            'id': self.supplier_data.get('id') if self.supplier_data else str(datetime.now().timestamp()),
+        data = {
             'name': name,
-            'contact_person': self.contact_person_input.text().strip(),
             'phone': phone,
             'email': self.email_input.text().strip(),
             'company': self.company_input.text().strip(),
             'address': self.address_input.toPlainText().strip(),
             'gst': self.gst_input.text().strip(),
+            'contact_person': self.contact_person_input.text().strip(),
             'pan': self.pan_input.text().strip(),
             'payment_terms': self.payment_terms.currentText(),
             'bank_name': self.bank_name_input.text().strip(),
             'account_number': self.account_number_input.text().strip(),
             'ifsc': self.ifsc_input.text().strip(),
             'notes': self.notes_input.toPlainText().strip(),
-            'created_date': self.supplier_data.get('created_date') if self.supplier_data else datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            'modified_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            'financial': self.supplier_data.get('financial', {
-                'total_payable': 0.0,
-                'amount_paid': 0.0,
-                'amount_pending': 0.0,
-                'amount_received': 0.0,
-                'transactions': []
-            }) if self.supplier_data else {
-                'total_payable': 0.0,
-                'amount_paid': 0.0,
-                'amount_pending': 0.0,
-                'amount_received': 0.0,
-                'transactions': []
-            }
+            'opening_balance': 0.0
         }
+        
+        # Add ID only if editing existing supplier
+        if self.supplier_data and 'id' in self.supplier_data:
+            data['id'] = self.supplier_data['id']
+        
+        return data
 
 
 class SupplierPage(QWidget):
@@ -236,13 +227,8 @@ class SupplierPage(QWidget):
         self.get_input_style = get_input_style
         self.parent_window = parent
         
-        # Data file path
-        self.data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'suppliers')
-        os.makedirs(self.data_dir, exist_ok=True)
-        self.data_file = os.path.join(self.data_dir, 'suppliers.json')
-        
-        # Invoices directory for financial calculations
-        self.invoices_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'invoices')
+        # Database connection
+        self.db = get_db_instance()
         
         self.suppliers = []
         self._load_suppliers()
@@ -535,26 +521,32 @@ class SupplierPage(QWidget):
         self.suppliers_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
     
     def _load_suppliers(self):
-        """Load suppliers from JSON file."""
-        if os.path.exists(self.data_file):
-            try:
-                with open(self.data_file, 'r', encoding='utf-8') as f:
-                    self.suppliers = json.load(f)
-            except Exception as e:
-                QMessageBox.critical(self, "Error", f"Failed to load suppliers:\n{str(e)}")
-                self.suppliers = []
-        else:
+        """Load suppliers from database."""
+        try:
+            contacts = self.db.get_contacts('SUPPLIER')
+            # Convert database format to expected format
+            self.suppliers = []
+            for contact in contacts:
+                supplier = {
+                    'id': contact['id'],
+                    'name': contact['name'],
+                    'contact_person': contact.get('company_name', ''),  # Using company_name as contact_person
+                    'phone': contact.get('phone', ''),
+                    'email': contact.get('email', ''),
+                    'company': contact.get('company_name', ''),
+                    'address': contact.get('address', ''),
+                    'gst': contact.get('gstin', ''),
+                    'opening_balance': float(contact.get('opening_balance', 0)),
+                    'financial': {'amount_pending': 0.0, 'amount_paid': 0.0, 'amount_received': 0.0}
+                }
+                self.suppliers.append(supplier)
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to load suppliers:\n{str(e)}")
             self.suppliers = []
     
     def _save_suppliers(self):
-        """Save suppliers to JSON file."""
-        try:
-            with open(self.data_file, 'w', encoding='utf-8') as f:
-                json.dump(self.suppliers, f, indent=4, ensure_ascii=False)
-            return True
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to save suppliers:\n{str(e)}")
-            return False
+        """Suppliers are saved directly to database."""
+        return True  # No-op, kept for compatibility
     
     def _populate_table(self, suppliers_list=None):
         """Populate table with suppliers including financial data."""
@@ -750,10 +742,25 @@ class SupplierPage(QWidget):
         if dialog.exec() == QDialog.DialogCode.Accepted:
             supplier_data = dialog.get_supplier_data()
             if supplier_data:
-                self.suppliers.append(supplier_data)
-                if self._save_suppliers():
-                    QMessageBox.information(self, "Success", f"Supplier '{supplier_data['name']}' added successfully!")
+                # Add to database
+                contact_id = self.db.add_contact(
+                    'SUPPLIER',
+                    supplier_data['name'],
+                    company_name=supplier_data.get('company', ''),
+                    phone=supplier_data.get('phone', ''),
+                    email=supplier_data.get('email', ''),
+                    address=supplier_data.get('address', ''),
+                    gstin=supplier_data.get('gst', ''),
+                    opening_balance=supplier_data.get('opening_balance', 0)
+                )
+                
+                if contact_id > 0:
+                    # Silent save - no popup
+                    self._load_suppliers()
+                    self._calculate_all_supplier_financials()
                     self._populate_table()
+                else:
+                    QMessageBox.critical(self, "Error", "Failed to add supplier")
     
     def _edit_supplier(self, supplier):
         """Open dialog to edit supplier."""
@@ -763,15 +770,25 @@ class SupplierPage(QWidget):
         if dialog.exec() == QDialog.DialogCode.Accepted:
             updated_data = dialog.get_supplier_data()
             if updated_data:
-                # Find and update supplier
-                for i, s in enumerate(self.suppliers):
-                    if s['id'] == supplier['id']:
-                        self.suppliers[i] = updated_data
-                        break
+                # Update in database
+                success = self.db.update_contact(
+                    supplier['id'],
+                    name=updated_data['name'],
+                    company_name=updated_data.get('company', ''),
+                    phone=updated_data.get('phone', ''),
+                    email=updated_data.get('email', ''),
+                    address=updated_data.get('address', ''),
+                    gstin=updated_data.get('gst', ''),
+                    opening_balance=updated_data.get('opening_balance', 0)
+                )
                 
-                if self._save_suppliers():
-                    QMessageBox.information(self, "Success", f"Supplier '{updated_data['name']}' updated successfully!")
+                if success:
+                    # Silent update - no popup
+                    self._load_suppliers()
+                    self._calculate_all_supplier_financials()
                     self._populate_table()
+                else:
+                    QMessageBox.critical(self, "Error", "Failed to update supplier")
     
     def _delete_supplier(self, supplier):
         """Delete supplier after confirmation."""
@@ -784,12 +801,16 @@ class SupplierPage(QWidget):
         )
         
         if reply == QMessageBox.StandardButton.Yes:
-            # Remove supplier
-            self.suppliers = [s for s in self.suppliers if s['id'] != supplier['id']]
+            # Delete from database
+            success = self.db.delete_contact(supplier['id'])
             
-            if self._save_suppliers():
-                QMessageBox.information(self, "Success", f"Supplier '{supplier['name']}' deleted successfully!")
+            if success:
+                # Silent delete - no popup
+                self._load_suppliers()
+                self._calculate_all_supplier_financials()
                 self._populate_table()
+            else:
+                QMessageBox.critical(self, "Error", "Failed to delete supplier")
     
     def _view_supplier(self, supplier):
         """View supplier details in a dialog."""
@@ -959,55 +980,28 @@ class SupplierPage(QWidget):
                 QMessageBox.critical(self, "Export Error", f"Failed to export suppliers:\n{str(e)}")
     
     def _calculate_all_supplier_financials(self):
-        """Calculate financial data for all suppliers from invoices."""
-        if not os.path.exists(self.invoices_dir):
-            return
-        
-        # Reset all supplier financials
+        """Calculate financial data for all suppliers from database."""
+        # Get supplier balances from database
         for supplier in self.suppliers:
-            if 'financial' not in supplier:
-                supplier['financial'] = {
-                    'total_payable': 0.0,
-                    'amount_paid': 0.0,
-                    'amount_pending': 0.0,
-                    'amount_received': 0.0,
-                    'transactions': []
-                }
-            else:
-                # Keep manual transactions, reset calculated values
-                supplier['financial']['total_payable'] = 0.0
-                supplier['financial']['amount_pending'] = 0.0
-        
-        # Calculate from invoices
-        for filename in os.listdir(self.invoices_dir):
-            if filename.endswith('.json'):
+            if 'id' in supplier:
                 try:
-                    with open(os.path.join(self.invoices_dir, filename), 'r', encoding='utf-8') as f:
-                        invoice = json.load(f)
-                    
-                    # Process each item in the invoice
-                    for item in invoice.get('items', []):
-                        supplier_name = item.get('supplier', '').strip()
-                        supplier_amount = item.get('supplier_amount', 0.0)
-                        
-                        if supplier_name and supplier_amount > 0:
-                            # Find matching supplier
-                            for supplier in self.suppliers:
-                                if supplier['name'].lower() == supplier_name.lower():
-                                    supplier['financial']['total_payable'] += supplier_amount
-                                    break
+                    balance_info = self.db.get_supplier_balance(supplier['id'])
+                    supplier['financial'] = {
+                        'total_payable': balance_info.get('total_payable', 0.0),
+                        'amount_paid': balance_info.get('total_paid', 0.0),
+                        'amount_pending': balance_info.get('balance', 0.0),
+                        'amount_received': 0.0,
+                        'transactions': []
+                    }
                 except Exception as e:
-                    print(f"Error processing invoice {filename}: {e}")
-        
-        # Calculate pending amounts
-        for supplier in self.suppliers:
-            financial = supplier['financial']
-            total_payable = financial['total_payable']
-            amount_paid = financial['amount_paid']
-            financial['amount_pending'] = max(0, total_payable - amount_paid)
-        
-        # Save updated financials
-        self._save_suppliers()
+                    print(f"Error calculating financials for supplier {supplier.get('name')}: {e}")
+                    supplier['financial'] = {
+                        'total_payable': 0.0,
+                        'amount_paid': 0.0,
+                        'amount_pending': 0.0,
+                        'amount_received': 0.0,
+                        'transactions': []
+                    }
     
     def _manage_supplier_finances(self, supplier):
         """Open dialog to manage supplier financial transactions."""

@@ -4,7 +4,6 @@ Contains invoice creation, item management, and invoice operations.
 Optimized for high-speed data entry.
 """
 import os
-import json
 from datetime import datetime
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel,
                              QFrame, QScrollArea, QTableWidget, QPushButton, QLineEdit,
@@ -18,6 +17,8 @@ from PyQt6.QtGui import QKeySequence
 from utils.invoice_generator import generate_invoice_pdf
 from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
 from travel_billing_software.utils.styles import get_label_style
+from travel_billing_software.database.db_manager import get_db_instance
+from travel_billing_software.utils.logger import get_logger, log_info, log_error
 
 class PassportDetailsDialog(QDialog):
     """Dialog for entering passenger passport details."""
@@ -28,7 +29,7 @@ class PassportDetailsDialog(QDialog):
         self.passport_data = {}
         self.setWindowTitle(f"Passport Details - {passenger_name}")
         self.setMinimumWidth(700)
-        self.setMinimumHeight(650)
+        self.setMinimumHeight(500)  # Reduced from 650 for smaller screens
         self._init_ui()
     
     def _init_ui(self):
@@ -258,6 +259,9 @@ class HomePage(QWidget):
         self.dashboard = dashboard_ref
         self.show_dialog_window = False
         
+        # Initialize database
+        self.db = get_db_instance()
+        
         # Dictionary to store passport data for each row (key: passenger_name)
         self.passport_data_store = {}
         
@@ -265,56 +269,62 @@ class HomePage(QWidget):
         # Format: {"contact_number": [{passenger_data}, {passenger_data}, ...]}
         self.passenger_history = {}
         
-        # Load passenger history from saved invoices
+        # Load passenger history from database
         self._load_passenger_history()
         
         self._init_ui()
         self._setup_speed_features() # Initialize speed features
     
     def _load_passenger_history(self):
-        """Load passenger history from all saved invoice JSON files."""
+        """Load passenger history from database invoices."""
         try:
-            invoices_dir = "invoices"
-            if not os.path.exists(invoices_dir):
-                return
+            # Get all invoices from database
+            invoices = self.db.get_all_invoices()
             
-            for filename in os.listdir(invoices_dir):
-                if filename.endswith(".json"):
-                    filepath = os.path.join(invoices_dir, filename)
-                    try:
-                        with open(filepath, 'r') as f:
-                            invoice_data = json.load(f)
-                        
-                        contact = invoice_data.get("contact_number", "").strip()
-                        if contact and "items" in invoice_data:
-                            if contact not in self.passenger_history:
-                                self.passenger_history[contact] = []
-                            
-                            for item in invoice_data["items"]:
-                                # Store complete passenger data
-                                passenger_data = {
-                                    "passenger_name": item.get("passenger_name", ""),
-                                    "pnr": item.get("pnr", ""),
-                                    "sector": item.get("sector", ""),
-                                    "supplier": item.get("supplier", ""),
-                                    "passport_number": item.get("passport_number", ""),
-                                    "qty": item.get("qty", 1),
-                                    "supplier_amount": item.get("supplier_amount", 0),
-                                    "amount": item.get("amount", 0),
-                                    "passport_details": item.get("passport_details", None)
-                                }
-                                
-                                # Avoid duplicates based on passenger name
-                                if not any(p["passenger_name"] == passenger_data["passenger_name"] 
-                                          for p in self.passenger_history[contact]):
-                                    self.passenger_history[contact].append(passenger_data)
-                    except Exception as e:
-                        print(f"Error loading invoice {filename}: {e}")
-                        continue
-            
-            print(f"Loaded passenger history for {len(self.passenger_history)} contact numbers")
+            for invoice in invoices:
+                contact = invoice.get("customer_phone", "").strip()
+                if not contact:
+                    continue
+                    
+                # Get invoice items
+                items = self.db.get_invoice_items(invoice['id'])
+                
+                if contact not in self.passenger_history:
+                    self.passenger_history[contact] = []
+                
+                for item in items:
+                    # Store complete passenger data
+                    passenger_data = {
+                        "passenger_name": item.get("passenger_name", ""),
+                        "pnr": item.get("pnr", ""),
+                        "sector": item.get("sector", ""),
+                        "supplier": item.get("supplier", ""),
+                        "passport_number": item.get("passport_number", ""),
+                    }
+                    
+                    # Avoid duplicates
+                    if passenger_data not in self.passenger_history[contact]:
+                        self.passenger_history[contact].append(passenger_data)
+        
         except Exception as e:
             print(f"Error loading passenger history: {e}")
+                    #                 "qty": item.get("qty", 1),
+                    #                 "supplier_amount": item.get("supplier_amount", 0),
+                    #                 "amount": item.get("amount", 0),
+                    #                 "passport_details": item.get("passport_details", None)
+                    #             }
+                                
+                    #             # Avoid duplicates based on passenger name
+                    #             if not any(p["passenger_name"] == passenger_data["passenger_name"] 
+                    #                       for p in self.passenger_history[contact]):
+                    #                 self.passenger_history[contact].append(passenger_data)
+                    # except Exception as e:
+                    #     print(f"Error loading invoice {filename}: {e}")
+                    #     continue
+            
+        #     print(f"Loaded passenger history for {len(self.passenger_history)} contact numbers")
+        # except Exception as e:
+        #     print(f"Error loading passenger history: {e}")
 
     def _init_ui(self):
         """Initialize the UI components."""
@@ -946,47 +956,6 @@ class HomePage(QWidget):
         """Check if passport data exists for a given passenger."""
         return passenger_name in self.passport_data_store
     
-    def _update_passenger_history(self, invoice_data):
-        """Update passenger history with data from saved invoice."""
-        try:
-            contact = invoice_data.get("contact_number", "").strip()
-            if not contact:
-                return
-            
-            if contact not in self.passenger_history:
-                self.passenger_history[contact] = []
-            
-            for item in invoice_data["items"]:
-                passenger_data = {
-                    "passenger_name": item.get("passenger_name", ""),
-                    "pnr": item.get("pnr", ""),
-                    "sector": item.get("sector", ""),
-                    "supplier": item.get("supplier", ""),
-                    "passport_number": item.get("passport_number", ""),
-                    "qty": item.get("qty", 1),
-                    "supplier_amount": item.get("supplier_amount", 0),
-                    "amount": item.get("amount", 0),
-                    "passport_details": item.get("passport_details", None)
-                }
-                
-                # Update or add passenger data (avoid duplicates)
-                existing_idx = None
-                for idx, p in enumerate(self.passenger_history[contact]):
-                    if p["passenger_name"] == passenger_data["passenger_name"]:
-                        existing_idx = idx
-                        break
-                
-                if existing_idx is not None:
-                    # Update existing passenger data
-                    self.passenger_history[contact][existing_idx] = passenger_data
-                else:
-                    # Add new passenger
-                    self.passenger_history[contact].append(passenger_data)
-            
-            print(f"Updated passenger history for contact {contact}: {len(self.passenger_history[contact])} passengers")
-        except Exception as e:
-            print(f"Error updating passenger history: {e}")
-        
     # ==========================================
     # LOGIC FUNCTIONS (Calculations, Saving, etc.)
     # ==========================================
@@ -1087,98 +1056,124 @@ class HomePage(QWidget):
             self.customer_name.setFocus()
 
     def save_invoice(self):
-        # ... [Logic remains same as previous save_invoice] ...
-        # I am collapsing this for brevity, but you must keep the original logic
-        # Just ensure you use self.txt_received.text() etc.
+        """Save invoice to database."""
         try:
+            # Collect invoice data
             invoice_data = {
                 "invoice_number": self.invoice_number.text(),
-                "invoice_date": self.invoice_date.date().toString("dd/MM/yyyy"),
+                "invoice_date": self.invoice_date.date().toString("yyyy-MM-dd"),
                 "customer_name": self.customer_name.text(),
-                "contact_number": self.contact_number.text(),
+                "customer_phone": self.contact_number.text(),
                 "customer_address": self.customer_address.text(),
-                "type": self.invoice_type.currentText(),
+                "invoice_type": self.invoice_type.currentText(),
                 "items": [],
-                "subtotal": self.lbl_subtotal.text(),
-                "discount": self.txt_discount.text(),
-                "tax": self.lbl_tax.text(),
-                "total": self.lbl_total.text(),
-                "received": self.txt_received.text(),
-                "balance": self.lbl_balance.text()
+                "subtotal": 0.0,
+                "discount": 0.0,
+                "tax": 0.0,
+                "grand_total": 0.0,
+                "paid_amount": 0.0,
+                "balance_due": 0.0,
+                "payment_method": "Cash"
             }
             
+            # Parse amounts
+            try:
+                invoice_data["subtotal"] = float(self.lbl_subtotal.text().replace('₹', '').replace(',', '').strip() or 0)
+                invoice_data["discount"] = float(self.txt_discount.text().replace('₹', '').replace(',', '').strip() or 0)
+                invoice_data["tax"] = float(self.lbl_tax.text().replace('₹', '').replace(',', '').strip() or 0)
+                invoice_data["grand_total"] = float(self.lbl_total.text().replace('₹', '').replace(',', '').strip() or 0)
+                invoice_data["paid_amount"] = float(self.txt_received.text().replace('₹', '').replace(',', '').strip() or 0)
+                balance_text = self.lbl_balance.text().replace('₹', '').replace(',', '').split('(')[0].strip()
+                invoice_data["balance_due"] = float(balance_text or 0)
+            except ValueError as e:
+                QMessageBox.warning(self, "Invalid Amount", f"Please enter valid amounts: {e}")
+                return
+            
+            # Collect items
             for r in range(self.table.rowCount()):
-                # Extract widget data safely...
-                passenger = self.table.cellWidget(r, 0).text()
-                pnr = self.table.cellWidget(r, 1).text()
-                sector = self.table.cellWidget(r, 2).text()
-                supplier = self.table.cellWidget(r, 3).currentText()
-                passport_no = self.table.cellWidget(r, 4).text()
+                passenger = self.table.cellWidget(r, 0).text().strip()
+                pnr = self.table.cellWidget(r, 1).text().strip()
+                sector = self.table.cellWidget(r, 2).text().strip()
+                supplier = self.table.cellWidget(r, 3).currentText().strip()
+                passport_no = self.table.cellWidget(r, 4).text().strip()
                 qty = self.table.cellWidget(r, 5).value()
-                supplier_amount = self.table.cellWidget(r, 6).value()
-                customer_amount = self.table.cellWidget(r, 7).value()
-
+                cost_price = self.table.cellWidget(r, 6).value()
+                selling_price = self.table.cellWidget(r, 7).value()
 
                 item = {
-                    "passenger_name": passenger, "pnr": pnr, "sector": sector,
-                    "supplier": supplier, "passport_number": passport_no, "qty": qty, "supplier_amount": supplier_amount, "amount": customer_amount
+                    "passenger_name": passenger,
+                    "pnr": pnr,
+                    "sector": sector,
+                    "supplier": supplier,
+                    "passport_number": passport_no,
+                    "qty": qty,
+                    "cost_price": cost_price,
+                    "selling_price": selling_price,
+                    "service_type": "Flight"  # Default, update if you add service type column
                 }
                 
-                # Add passport data if available for this passenger
+                # Add passport details if available
                 if passenger in self.passport_data_store:
                     item["passport_details"] = self.passport_data_store[passenger]
                 
                 invoice_data["items"].append(item)
             
-            filename = f"invoices/invoice_{invoice_data['invoice_number']}.json"
-            os.makedirs("invoices", exist_ok=True)
-            with open(filename, 'w') as f: json.dump(invoice_data, f, indent=4)
+            # Validate invoice has items
+            if not invoice_data["items"]:
+                QMessageBox.warning(self, "No Items", "Please add at least one item to the invoice.")
+                return
             
-            # Update passenger history for this contact number
-            self._update_passenger_history(invoice_data)
+            # Save to database
+            invoice_id = self.db.save_invoice(invoice_data)
             
-            # Save to DB if available
-            if hasattr(self.dashboard, 'db') and self.dashboard.db:
-                self._save_to_db(invoice_data) # Helper method call
-
-            msg = f"Invoice saved successfully!\n📁 {filename}"
-            QMessageBox.information(self, "Success", msg)
+            # Check if save was successful
+            if invoice_id > 0:
+                # Update passenger history
+                self._update_passenger_history_db(invoice_data)
+                
+                # Log success
+                log_info(f"Invoice saved: {invoice_data['invoice_number']}, items={len(invoice_data['items'])}", 'billing_app')
+            else:
+                # Log failure
+                log_error(f"Invoice save failed: {invoice_data['invoice_number']}", logger_name='billing_errors')
+                
+                # Show error to user
+                QMessageBox.critical(self, "Error", 
+                    f"Failed to save invoice {invoice_data['invoice_number']}\n\n"
+                    "Possible issues:\n"
+                    "- Duplicate invoice number\n"
+                    "- Invalid data format\n"
+                    "- Database constraint violation\n\n"
+                    "Please check console for detailed error message.")
             
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to save:\n{str(e)}")
+            log_error(f"Invoice save error: {invoice_data.get('invoice_number', 'UNKNOWN')}", exception=e, logger_name='billing_errors')
+            QMessageBox.critical(self, "Error", f"Failed to save invoice:\n{str(e)}")
 
-    def _save_to_db(self, invoice_data):
-        # Helper to keep save_invoice clean
+    def _update_passenger_history_db(self, invoice_data):
+        """Update passenger history in memory after saving invoice."""
         try:
-            db_data = invoice_data.copy()
-            # Clean currency symbols
-            for k in ['subtotal', 'tax', 'total', 'received']:
-                db_data[k] = float(db_data[k].replace('₹', '').replace(',', '').strip() or 0)
+            contact = invoice_data.get("customer_phone", "").strip()
+            if not contact:
+                return
+                
+            if contact not in self.passenger_history:
+                self.passenger_history[contact] = []
             
-            disc = db_data.get('discount', '0').replace('₹', '').replace(',', '').strip()
-            db_data['discount'] = float(disc or 0)
-            
-            bal = db_data['balance'].replace('₹', '').replace(',', '').split('(')[0].strip()
-            db_data['balance'] = float(bal or 0)
-            
-            if db_data['balance'] == 0: db_data['status'] = 'Paid'
-            elif db_data['balance'] < 0: db_data['status'] = 'Overpaid'
-            else: db_data['status'] = 'Pending'
-            
-            db_data['items'] = []
-            for item in invoice_data['items']:
-                amt = item['amount'].replace('₹', '').replace(',', '').strip()
-                db_item = {
-                    'item': item['passenger_name'], 'ticket': item['pnr'],
-                    'sector': item['sector'], 'supplier': item['supplier'],
-                    'qty': float(item['qty']),'supplier_amount': float(item['supplier_amount']),
-                    'customer_amount': float(item['customer_amount'])
+            for item in invoice_data["items"]:
+                passenger_data = {
+                    "passenger_name": item.get("passenger_name", ""),
+                    "pnr": item.get("pnr", ""),
+                    "sector": item.get("sector", ""),
+                    "supplier": item.get("supplier", ""),
+                    "passport_number": item.get("passport_number", ""),
                 }
-                db_data['items'].append(db_item)
-            
-            self.dashboard.db.save_invoice(db_data)
+                
+                # Avoid duplicates
+                if passenger_data not in self.passenger_history[contact]:
+                    self.passenger_history[contact].append(passenger_data)
         except Exception as e:
-            print(f"DB Error: {e}")
+            print(f"Error updating passenger history: {e}")
 
     def save_pdf(self):
         # ... [Same as previous save_pdf] ...

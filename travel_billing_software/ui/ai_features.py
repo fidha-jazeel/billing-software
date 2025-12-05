@@ -4,13 +4,51 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QLineEdit, QScrollArea, QFrame, QTextEdit, QMessageBox
 )
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QThread, pyqtSignal
 
 try:
     # Backend agent that talks to the billing.db
     from travel_billing_software.utils.sql_react_agent import get_agent_report
 except ImportError:
     get_agent_report = None
+
+
+class AIWorkerThread(QThread):
+    """Background thread for AI processing to prevent UI freezing."""
+    finished = pyqtSignal(str)  # Emits the result
+    error = pyqtSignal(str)     # Emits error message
+    
+    def __init__(self, question: str):
+        super().__init__()
+        self.question = question
+    
+    def run(self):
+        """Run AI processing in background."""
+        try:
+            if get_agent_report is None:
+                self.error.emit("AI is not configured. Check sql_react_agent.py and GOOGLE_API_KEY.")
+                return
+            
+            result = get_agent_report(self.question)
+            
+            # Parse result
+            text = ""
+            if isinstance(result, str):
+                text = result
+            elif isinstance(result, dict):
+                if "output" in result:
+                    text = result["output"]
+                elif "answer" in result:
+                    text = result["answer"]
+                else:
+                    text = str(result)
+            else:
+                text = str(result)
+            
+            self.finished.emit(text)
+            
+        except Exception as e:
+            self.error.emit(f"AI Error: {str(e)}")
 
 
 class AIFeaturesPage(QWidget):
@@ -36,6 +74,8 @@ class AIFeaturesPage(QWidget):
         self.get_input_style = get_input_style
         self.get_label_style = get_label_style
         self.get_scrollarea_style = get_scrollarea_style
+        
+        self.worker_thread = None  # Track active AI thread
 
         self._init_ui()
 
@@ -243,7 +283,7 @@ class AIFeaturesPage(QWidget):
         )
 
     def ask_ai(self, question: str):
-        """Call the SQL + LLM agent and display result."""
+        """Call the SQL + LLM agent in background thread."""
         if get_agent_report is None:
             QMessageBox.critical(
                 self,
@@ -252,39 +292,42 @@ class AIFeaturesPage(QWidget):
                 "Please check sql_react_agent.py and your GOOGLE_API_KEY.",
             )
             return
+        
+        # Prevent multiple simultaneous requests
+        if self.worker_thread and self.worker_thread.isRunning():
+            QMessageBox.information(
+                self,
+                "AI Busy",
+                "AI is still processing your previous question.\nPlease wait..."
+            )
+            return
 
         try:
-            self.answer_box.setPlainText("Thinking...\nPlease wait a moment.")
+            # Show loading state
+            self.answer_box.setPlainText("🤖 AI is thinking...\n\nPlease wait, this may take 10-15 seconds.\nYou can continue using other parts of the software.")
             self.ask_button.setEnabled(False)
-
-            result = get_agent_report(question)
-
-            # LangChain agents may return different shapes. Handle a few common ones.
-            text = ""
-            if isinstance(result, str):
-                text = result
-            elif isinstance(result, dict):
-                # Try typical keys
-                if "output" in result:
-                    text = result["output"]
-                elif "answer" in result:
-                    text = result["answer"]
-                else:
-                    text = str(result)
-            else:
-                text = str(result)
-
-            self.answer_box.setPlainText(text)
+            self.ask_button.setText("Processing...")
+            
+            # Create and start worker thread
+            self.worker_thread = AIWorkerThread(question)
+            self.worker_thread.finished.connect(self._on_ai_success)
+            self.worker_thread.error.connect(self._on_ai_error)
+            self.worker_thread.start()
 
         except Exception as e:
-            self.answer_box.setPlainText(
-                "Sorry, I could not generate insights.\n\n"
-                f"Technical error: {e}"
-            )
-            QMessageBox.critical(
-                self,
-                "AI Error",
-                f"Something went wrong while calling the AI:\n{e}",
-            )
-        finally:
-            self.ask_button.setEnabled(True)
+            self._on_ai_error(f"Failed to start AI: {str(e)}")
+    
+    def _on_ai_success(self, result: str):
+        """Handle successful AI response."""
+        self.answer_box.setPlainText(result)
+        self.ask_button.setEnabled(True)
+        self.ask_button.setText("Ask AI")
+    
+    def _on_ai_error(self, error_msg: str):
+        """Handle AI error."""
+        self.answer_box.setPlainText(
+            f"❌ Error:\n\n{error_msg}\n\n"
+            "Please try again or contact support if the issue persists."
+        )
+        self.ask_button.setEnabled(True)
+        self.ask_button.setText("Ask AI")

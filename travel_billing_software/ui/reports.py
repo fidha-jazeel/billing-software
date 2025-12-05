@@ -4,7 +4,6 @@ Vyapar-style Reports with sidebar navigation and dynamic content panels.
 Contains comprehensive travel billing reports with filters and export options.
 """
 import os
-import json
 from datetime import datetime
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                              QFrame, QScrollArea, QTableWidget, QPushButton,
@@ -13,6 +12,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QStackedWidget, QListWidget, QListWidgetItem)
 from PyQt6.QtCore import Qt, QDate
 from PyQt6.QtGui import QColor, QFont
+from travel_billing_software.database.db_manager import get_db_instance
 
 
 class ReportsPage(QWidget):
@@ -42,6 +42,9 @@ class ReportsPage(QWidget):
         self.get_input_style = get_input_style
         self.get_label_style = get_label_style
         self.dashboard = dashboard_ref
+        
+        # Initialize database
+        self.db = get_db_instance()
         
         # Store all invoices data for filtering
         self.all_invoices = []
@@ -297,28 +300,56 @@ class ReportsPage(QWidget):
             self._populate_balance_report()
     
     def _load_all_invoices(self):
-        """Load all invoices from files."""
+        """Load all invoices from database."""
         self.all_invoices = []
         
         try:
-            invoices_dir = self.invoice_config.get('save_directory', 'invoices')
-            if not os.path.exists(invoices_dir):
-                return
+            # Get all invoices from database
+            db_invoices = self.db.get_all_invoices()
             
-            invoice_files = [f for f in os.listdir(invoices_dir) if f.endswith('.json')]
-            
-            for filename in invoice_files:
-                filepath = os.path.join(invoices_dir, filename)
-                try:
-                    with open(filepath, 'r', encoding='utf-8') as f:
-                        data = json.load(f)
-                        data['_filepath'] = filepath
-                        self.all_invoices.append(data)
-                except Exception as e:
-                    print(f"Error loading {filename}: {e}")
-        
+            # Convert database format to match expected structure
+            for inv in db_invoices:
+                # Get invoice items
+                items = self.db.get_invoice_items(inv['id'])
+                
+                # Format items for reports
+                formatted_items = []
+                for item in items:
+                    formatted_items.append({
+                        'passenger_name': item.get('passenger_name', ''),
+                        'supplier': item.get('supplier', ''),
+                        'sector': item.get('sector', ''),
+                        'pnr': item.get('pnr', ''),
+                        'qty': item.get('qty', 1),
+                        'supplier_amount': item.get('cost_price', 0.0),
+                        'selling_price': item.get('selling_price', 0.0)
+                    })
+                
+                # Format invoice data
+                invoice_data = {
+                    'invoice_number': inv.get('invoice_number', ''),
+                    'invoice_date': inv.get('invoice_date', ''),
+                    'date': inv.get('invoice_date', ''),
+                    'customer_name': inv.get('customer_name', ''),
+                    'contact_name': inv.get('customer_name', ''),
+                    'contact_number': inv.get('customer_phone', ''),
+                    'total': inv.get('grand_total', 0),
+                    'total_amount': inv.get('grand_total', 0),
+                    'paid_amount': inv.get('paid_amount', 0),
+                    'balance': f"₹{inv.get('balance_due', 0):,.2f}",
+                    'items': formatted_items,
+                    'payment_method': inv.get('payment_method', 'Cash'),
+                    'type': 'Sale'
+                }
+                
+                # Add passenger info if available
+                if inv.get('passenger_names'):
+                    invoice_data['passenger_names'] = inv['passenger_names']
+                    
+                self.all_invoices.append(invoice_data)
+                
         except Exception as e:
-            print(f"Error loading invoices: {e}")
+            print(f"Error loading invoices from database: {e}")
     
     def _create_common_filters(self) -> QFrame:
         """Create common filter section for reports with enhanced styling."""
