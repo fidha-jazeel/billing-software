@@ -591,3 +591,39 @@ class InvoiceFormWidget(QFrame):
     def get_invoice_type(self) -> str:
         """Get invoice type."""
         return self.invoice_type.currentText().strip()
+    
+    def refresh_type_dropdown(self):
+        """Refresh the Type dropdown with latest items from database."""
+        if not self.db:
+            return
+        
+        try:
+            # Store current selection
+            current_type = self.invoice_type.currentText()
+            
+            # Clear and reload
+            self.invoice_type.clear()
+            self.invoice_type.addItem("")  # Empty option for no selection
+            
+            # Load types from database
+            types = self.db.get_dropdown_items('type')
+            if types:
+                self.invoice_type.addItems(types)
+            
+            # Restore selection if still valid
+            if current_type:  # Only restore if not empty
+                idx = self.invoice_type.findText(current_type)
+                if idx >= 0:
+                    self.invoice_type.setCurrentIndex(idx)
+                else:
+                    self.invoice_type.setCurrentIndex(0)  # Default to empty
+            else:
+                self.invoice_type.setCurrentIndex(0)  # Keep empty
+                
+            log_info("Type dropdown refreshed successfully", "invoice_form")
+        except Exception as e:
+            log_error(
+                "Failed to refresh type dropdown",
+                exception=e,
+                logger_name="invoice_form_errors"
+            )

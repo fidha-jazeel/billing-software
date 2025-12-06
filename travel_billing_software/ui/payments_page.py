@@ -219,7 +219,14 @@ class PaymentsPage(QWidget):
             "Invoice #", "Date", "Customer", "Total", "Paid", "Balance", "Action"
         ])
         self.unpaid_table.setStyleSheet(self.get_table_style())
-        self.unpaid_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.unpaid_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+        self.unpaid_table.setColumnWidth(0, 150)  # Invoice #
+        self.unpaid_table.setColumnWidth(1, 100)  # Date
+        self.unpaid_table.setColumnWidth(2, 200)  # Customer
+        self.unpaid_table.setColumnWidth(3, 120)  # Total
+        self.unpaid_table.setColumnWidth(4, 120)  # Paid
+        self.unpaid_table.setColumnWidth(5, 120)  # Balance
+        self.unpaid_table.setColumnWidth(6, 150)  # Action
         self.unpaid_table.setMinimumHeight(400)
         main_layout.addWidget(self.unpaid_table)
         
@@ -229,7 +236,13 @@ class PaymentsPage(QWidget):
             "Date", "Payment #", "Customer", "Invoice #", "Amount", "Mode"
         ])
         self.history_table.setStyleSheet(self.get_table_style())
-        self.history_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.history_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+        self.history_table.setColumnWidth(0, 100)  # Date
+        self.history_table.setColumnWidth(1, 150)  # Payment #
+        self.history_table.setColumnWidth(2, 200)  # Customer
+        self.history_table.setColumnWidth(3, 150)  # Invoice #
+        self.history_table.setColumnWidth(4, 120)  # Amount
+        self.history_table.setColumnWidth(5, 100)  # Mode
         self.history_table.setMinimumHeight(400)
         self.history_table.hide()
         main_layout.addWidget(self.history_table)
@@ -354,13 +367,13 @@ class PaymentsPage(QWidget):
             self.unpaid_table.insertRow(row)
             
             # Invoice Number
-            self.unpaid_table.setItem(row, 0, QTableWidgetItem(inv.get('invoice_number', '')))
+            self.unpaid_table.setItem(row, 0, QTableWidgetItem(str(inv.get('invoice_number') or '')))
             
             # Date
-            self.unpaid_table.setItem(row, 1, QTableWidgetItem(inv.get('date', '')))
+            self.unpaid_table.setItem(row, 1, QTableWidgetItem(str(inv.get('date') or '')))
             
             # Customer
-            self.unpaid_table.setItem(row, 2, QTableWidgetItem(inv.get('customer_name', '')))
+            self.unpaid_table.setItem(row, 2, QTableWidgetItem(str(inv.get('customer_name') or '')))
             
             # Total
             total_item = QTableWidgetItem(f"₹{inv.get('total_amount', 0):,.2f}")
@@ -401,16 +414,16 @@ class PaymentsPage(QWidget):
             self.history_table.insertRow(row)
             
             # Date
-            self.history_table.setItem(row, 0, QTableWidgetItem(payment.get('date', '')))
+            self.history_table.setItem(row, 0, QTableWidgetItem(str(payment.get('date') or '')))
             
             # Payment Number
-            self.history_table.setItem(row, 1, QTableWidgetItem(payment.get('payment_number', '')))
+            self.history_table.setItem(row, 1, QTableWidgetItem(str(payment.get('payment_number') or '')))
             
             # Customer
-            self.history_table.setItem(row, 2, QTableWidgetItem(payment.get('customer_name', '')))
+            self.history_table.setItem(row, 2, QTableWidgetItem(str(payment.get('customer_name') or '')))
             
             # Invoice Number
-            self.history_table.setItem(row, 3, QTableWidgetItem(payment.get('invoice_number', 'N/A')))
+            self.history_table.setItem(row, 3, QTableWidgetItem(str(payment.get('invoice_number') or 'N/A')))
             
             # Amount
             amount_item = QTableWidgetItem(f"₹{payment.get('amount', 0):,.2f}")
@@ -418,7 +431,7 @@ class PaymentsPage(QWidget):
             self.history_table.setItem(row, 4, amount_item)
             
             # Mode
-            self.history_table.setItem(row, 5, QTableWidgetItem(payment.get('payment_mode', '')))
+            self.history_table.setItem(row, 5, QTableWidgetItem(str(payment.get('payment_mode') or '')))
     
     def _filter_data(self):
         """Filter data based on search input."""

@@ -498,22 +498,39 @@ class SupplierPage(QWidget):
         # Configure vertical header
         self.suppliers_table.verticalHeader().setVisible(True)
         self.suppliers_table.verticalHeader().setDefaultSectionSize(50)
+        self.suppliers_table.verticalHeader().setStyleSheet(f"""
+            QHeaderView::section {{
+                background-color: {self.colors['secondary_bg']};
+                color: {self.colors['text_primary']};
+                border: 1px solid #3a3a3a;
+                padding: 4px;
+            }}
+        """)
         
-        # Table styling
+        # Table styling - Dark theme compatible
         self.suppliers_table.setAlternatingRowColors(True)
         self.suppliers_table.setStyleSheet(self.get_table_style() + f"""
             QTableWidget {{
-                gridline-color: #e0e0e0;
+                background-color: {self.colors['secondary_bg']};
+                color: {self.colors['text_primary']};
+                gridline-color: #3a3a3a;
                 font-size: 13px;
                 selection-background-color: {self.colors['accent_primary']};
                 selection-color: white;
+                border: 1px solid #3a3a3a;
             }}
             QTableWidget::item {{
                 padding: 8px 10px;
                 border: none;
+                color: {self.colors['text_primary']};
+                background-color: {self.colors['secondary_bg']};
             }}
             QTableWidget::item:alternate {{
-                background-color: #f9f9f9;
+                background-color: {self.colors['primary_bg']};
+            }}
+            QTableWidget::item:selected {{
+                background-color: {self.colors['accent_primary']};
+                color: white;
             }}
         """)
         

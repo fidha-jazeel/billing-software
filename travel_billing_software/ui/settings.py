@@ -377,26 +377,8 @@ class SettingsPage(QWidget):
             # Refresh Home Page Type dropdown
             if hasattr(self.main_window, 'home_page'):
                 home_page = self.main_window.home_page
-                if hasattr(home_page, 'invoice_form') and hasattr(home_page.invoice_form, 'invoice_type'):
-                    current_type = home_page.invoice_form.invoice_type.currentText()
-                    home_page.invoice_form.invoice_type.clear()
-                    
-                    # Add empty option first (for no selection)
-                    home_page.invoice_form.invoice_type.addItem("")
-                    
-                    # Add all types from database
-                    types = self.db.get_dropdown_items('type')
-                    home_page.invoice_form.invoice_type.addItems(types)
-                    
-                    # Restore selection if still valid
-                    if current_type:  # Only restore if not empty
-                        idx = home_page.invoice_form.invoice_type.findText(current_type)
-                        if idx >= 0:
-                            home_page.invoice_form.invoice_type.setCurrentIndex(idx)
-                        else:
-                            home_page.invoice_form.invoice_type.setCurrentIndex(0)  # Default to empty
-                    else:
-                        home_page.invoice_form.invoice_type.setCurrentIndex(0)  # Keep empty
+                if hasattr(home_page, 'invoice_form') and hasattr(home_page.invoice_form, 'refresh_type_dropdown'):
+                    home_page.invoice_form.refresh_type_dropdown()
             
             # Refresh Reports Page Type filter
             if hasattr(self.main_window, 'reports_page'):

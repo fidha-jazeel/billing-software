@@ -220,7 +220,7 @@ class SupplierBillingPage(QWidget):
         """)
         self.phone_input = QLineEdit()
         self.phone_input.setPlaceholderText("Phone number")
-        self.phone_input.setReadOnly(True)
+        self.phone_input.setMaxLength(15)  # Allow up to 15 digits for international numbers
         self.phone_input.setStyleSheet(dark_input_style + """
             QLineEdit {
                 min-width: 180px;
