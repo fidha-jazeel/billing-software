@@ -520,7 +520,7 @@ class HomePage(QWidget):
                     self.invoice_form.invoice_date.date()
                 ),
                 "customer_name": self.invoice_form.get_customer_name(),
-                "customer_address": self.invoice_form.get_customer_address(),
+                "customer_address": "",  # Address field not implemented in invoice form
                 "customer_phone": self.invoice_form.get_contact_number(),
                 "pdf_items": pdf_items
             }

@@ -165,7 +165,6 @@ app/config/carriers.local.json
 app/config/*.local.json
 
 # Database
-*.db
 *.sqlite
 
 # Docker

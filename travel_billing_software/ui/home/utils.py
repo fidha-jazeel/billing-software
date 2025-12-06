@@ -219,17 +219,26 @@ class PDFOperations:
                 )
                 
                 # Scale to fit page
-                rect = printer.pageRect()
-                size = img.size()
-                size.scale(rect.size(), Qt.AspectRatioMode.KeepAspectRatio)
+                rect = printer.pageRect(QPrinter.Unit.DevicePixel)
+                img_size = img.size()
+                
+                # Calculate scaled size maintaining aspect ratio
+                target_width = rect.width()
+                target_height = rect.height()
+                
+                # Get scaled size that fits within page rect
+                scaled_size = img_size.scaled(
+                    int(target_width), int(target_height),
+                    Qt.AspectRatioMode.KeepAspectRatio
+                )
                 
                 # Draw centered
-                x = rect.x() + (rect.width() - size.width()) // 2
-                y = rect.y()
+                x = int(rect.x() + (rect.width() - scaled_size.width()) / 2)
+                y = int(rect.y())
                 
                 painter.drawImage(
                     x, y,
-                    img.scaled(size, Qt.AspectRatioMode.KeepAspectRatio,
+                    img.scaled(scaled_size, Qt.AspectRatioMode.KeepAspectRatio,
                               Qt.TransformationMode.SmoothTransformation)
                 )
                 
