@@ -81,6 +81,9 @@ class ReportsPage(QWidget):
         # Store all invoices for filtering
         self.all_invoices = []
         
+        # Store filter widgets for each report to ensure proper connections
+        self.filter_widgets = {}
+        
         # Initialize all 8 sub-page views
         self.sale_report = SaleReportView(colors, get_button_style, self._export_report)
         self.purchase_report = PurchaseReportView(colors, get_button_style, self._export_report)
@@ -90,6 +93,13 @@ class ReportsPage(QWidget):
         self.bill_wise_profit = BillWiseProfitView(colors, get_button_style, self._export_report)
         self.cash_transactions = CashTransactionsView(colors, get_button_style, self._export_report)
         self.balance_report = BalanceReportView(colors, get_button_style, self._export_report)
+        
+        # Set refresh callbacks for all reports
+        for report in [self.sale_report, self.purchase_report, self.all_transactions,
+                       self.day_book, self.profit_loss, self.bill_wise_profit,
+                       self.cash_transactions, self.balance_report]:
+            if hasattr(report, 'set_refresh_callback'):
+                report.set_refresh_callback(lambda: self.load_report_data())
         
         self._init_ui()
         log_info("ReportsPage initialized with modular architecture", 'billing_app')
@@ -115,17 +125,18 @@ class ReportsPage(QWidget):
         self._create_report_views()
         main_layout.addWidget(self.content_stack, 1)
         
-        # Load initial report data
-        self._refresh_current_report(0)
+        # Load initial report data using the reusable function
+        self.load_report_data()
     
     def showEvent(self, event):
-        """Override showEvent to refresh data when page is shown."""
+        """Override showEvent to auto-refresh data when page is shown."""
         super().showEvent(event)
-        # Refresh current report when page becomes visible
-        current_index = self.report_list.currentRow()
-        if current_index >= 0:
-            self._refresh_current_report(current_index)
-            log_info(f"Reports page shown - refreshing report {current_index}", 'billing_app')
+        # Auto-refresh current report when page becomes visible
+        try:
+            log_info("Reports page shown - auto-refreshing data", 'billing_app')
+            self.load_report_data()
+        except Exception as e:
+            log_error("Error in showEvent auto-refresh", exception=e, logger_name='billing_errors')
     
     def _create_sidebar(self) -> QWidget:
         """Create left sidebar with report categories."""
@@ -351,46 +362,92 @@ class ReportsPage(QWidget):
         """Handle report category selection from sidebar."""
         if index >= 0:
             self.content_stack.setCurrentIndex(index)
-            self._refresh_current_report(index)
+            # Auto-load data when switching reports
+            self.load_report_data()
             log_info(f"Switched to report index {index}", 'billing_app')
     
-    def _refresh_current_report(self, index: int):
-        """Refresh data for the currently selected report."""
+    def load_report_data(self, filters=None):
+        """
+        Central reusable function to load report data with optional filters.
+        
+        This function:
+        1. Loads all invoices from database
+        2. Applies filters if provided (otherwise uses current filter values)
+        3. Populates the current report view
+        4. Updates payment summary
+        5. Handles no-records scenarios
+        
+        Args:
+            filters: Optional dict of filter values. If None, reads from filter widgets.
+        """
         try:
-            # Load all invoices
+            current_index = self.content_stack.currentIndex()
+            log_info(f"Loading report data for index {current_index}", 'billing_app')
+            
+            # Load all invoices from database
             self.all_invoices = self.db_operations.load_all_invoices()
+            log_info(f"Loaded {len(self.all_invoices)} invoices from database", 'billing_app')
             
             # Apply filters
-            filtered = self.filters.apply_filters(self.all_invoices)
+            if filters is None:
+                # Use current filter widget values
+                filtered_invoices = self.filters.apply_filters(self.all_invoices)
+            else:
+                # Apply provided filter dict (future enhancement)
+                filtered_invoices = self.filters.apply_filters(self.all_invoices)
             
-            # Populate the appropriate report
-            if index == 0:
-                self.sale_report.populate(filtered)
-            elif index == 1:
-                self.purchase_report.populate(filtered)
-            elif index == 2:
-                self.all_transactions.populate(filtered)
-            elif index == 3:
-                self.day_book.populate(filtered)
-            elif index == 4:
-                self.profit_loss.populate(filtered)
-            elif index == 5:
-                self.bill_wise_profit.populate(filtered)
-            elif index == 6:
-                # Cash Transactions needs special handling - get cash payments from DB
-                cash_payments = self.db_operations.get_cash_payments()
-                self.cash_transactions.populate(invoices=filtered, cash_payments=cash_payments)
-            elif index == 7:
-                self.balance_report.populate(filtered)
+            log_info(
+                f"Filters applied: {len(filtered_invoices)} of {len(self.all_invoices)} invoices matched",
+                'billing_app'
+            )
+            
+            # Populate the current report
+            self._populate_report_by_index(current_index, filtered_invoices)
             
             # Update payment summary
             self._update_payment_summary()
             
-            log_info(f"Report refreshed successfully: index {index}", 'billing_app')
+            log_info(f"Report data loaded successfully for index {current_index}", 'billing_app')
             
         except Exception as e:
-            log_error(f"Error refreshing report at index {index}", exception=e, logger_name='billing_errors')
-            QMessageBox.critical(self, "Error", f"Failed to refresh report: {str(e)}")
+            log_error("Error in load_report_data", exception=e, logger_name='billing_errors')
+            QMessageBox.critical(
+                self,
+                "Data Load Error",
+                f"Failed to load report data:\n{str(e)}"
+            )
+    
+    def _populate_report_by_index(self, index: int, filtered_invoices: list):
+        """Populate specific report by index with filtered data."""
+        if index == 0:
+            self.sale_report.populate(filtered_invoices)
+        elif index == 1:
+            self.purchase_report.populate(filtered_invoices)
+        elif index == 2:
+            self.all_transactions.populate(filtered_invoices)
+        elif index == 3:
+            self.day_book.populate(filtered_invoices)
+        elif index == 4:
+            self.profit_loss.populate(filtered_invoices)
+        elif index == 5:
+            self.bill_wise_profit.populate(filtered_invoices)
+        elif index == 6:
+            # Cash Transactions needs special handling - get cash payments from DB
+            cash_payments = self.db_operations.get_cash_payments()
+            self.cash_transactions.populate(invoices=filtered_invoices, cash_payments=cash_payments)
+        elif index == 7:
+            self.balance_report.populate(filtered_invoices)
+    
+    def _refresh_current_report(self, index: int = None):
+        """
+        Refresh data for the currently selected report.
+        This is a convenience wrapper around load_report_data.
+        
+        Args:
+            index: Optional report index (unused, kept for compatibility)
+        """
+        log_info("Refreshing current report", 'billing_app')
+        self.load_report_data()
     
     def _update_payment_summary(self):
         """Calculate and update total cash and bank received from all invoices."""
@@ -410,34 +467,57 @@ class ReportsPage(QWidget):
             log_error("Error updating payment summary", exception=e, logger_name='billing_errors')
     
     def _handle_filter_change(self):
-        """Unified filter change handler that refreshes the current report."""
+        """
+        Handle Apply Filters button click.
+        Refreshes the current report with filtered data.
+        """
         try:
-            log_info("Handling filter change", 'billing_app')
-            current_index = self.content_stack.currentIndex()
-            self._refresh_current_report(current_index)
+            log_info("Apply Filters clicked - refreshing report with filter values", 'billing_app')
+            # Simply call load_report_data which will read current filter values
+            self.load_report_data()
+            log_info("Filters applied successfully", 'billing_app')
         except Exception as e:
-            log_error("Error handling filter change", exception=e, logger_name='billing_errors')
-            QMessageBox.critical(self, "Error", f"Failed to apply filter changes: {str(e)}")
+            log_error("Error applying filters", exception=e, logger_name='billing_errors')
+            QMessageBox.critical(
+                self,
+                "Filter Error",
+                f"Failed to apply filters:\n{str(e)}"
+            )
     
     def _clear_filters(self):
-        """Clear all filter values and show confirmation."""
+        """
+        Handle Clear Filters button click.
+        Resets all filter fields and reloads all data from database.
+        """
         try:
-            log_info("Clearing all filters", 'billing_app')
+            log_info("Clear Filters clicked - resetting all filters", 'billing_app')
+            
+            # Reset all filter input fields to initial state
             self.filters.clear_filters()
-            self._handle_filter_change()
-            QMessageBox.information(self, "Filters Cleared", "All filters have been reset to default values.")
-            log_info("Filters cleared successfully", 'billing_app')
+            
+            # Reload all data without filters (load_report_data will use cleared values)
+            self.load_report_data()
+            
+            log_info("Filters cleared and data reloaded successfully", 'billing_app')
+            
         except Exception as e:
             log_error("Error clearing filters", exception=e, logger_name='billing_errors')
-            QMessageBox.critical(self, "Error", f"Failed to clear filters: {str(e)}")
+            QMessageBox.critical(
+                self,
+                "Clear Error",
+                f"Failed to clear filters:\n{str(e)}"
+            )
     
     def _export_report(self, report_type: str, format: str):
-        """Export report to PDF or Excel."""
+        """Export report to PDF or Excel, then auto-refresh."""
         try:
             if format == 'excel':
                 current_view = self.content_stack.currentWidget()
                 table = current_view.get_table_widget()
                 ReportExporter.export_to_csv(table, report_type, self)
+                log_info(f"Exported {report_type} report to Excel successfully", 'billing_app')
+                # Auto-refresh after export
+                self.load_report_data()
             else:
                 QMessageBox.information(self, "Export PDF", "PDF export feature coming soon!")
         except Exception as e:

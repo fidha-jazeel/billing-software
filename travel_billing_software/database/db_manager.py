@@ -844,11 +844,14 @@ class DatabaseManager:
                 if passenger_id and item.get('passport_details'):
                     passport_data = item['passport_details']
                     if passport_data.get('passport_number'):
+                        # Extract passport_number and expiry_date, pass remaining as kwargs
+                        passport_kwargs = {k: v for k, v in passport_data.items() 
+                                         if k not in ('passport_number', 'expiry_date')}
                         self.add_passport_details(
                             passenger_id,
                             passport_data['passport_number'],
                             passport_data.get('expiry_date', ''),
-                            **passport_data
+                            **passport_kwargs
                         )
             
             # Record payment if received amount > 0

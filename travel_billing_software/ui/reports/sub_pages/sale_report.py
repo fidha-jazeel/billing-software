@@ -48,6 +48,7 @@ class SaleReportView(QWidget):
         self.colors = colors
         self.get_button_style = get_button_style
         self.export_callback = export_callback
+        self.refresh_callback = None  # Will be set by parent
         
         self._init_ui()
         log_info("SaleReportView initialized", 'billing_app')
@@ -93,6 +94,15 @@ class SaleReportView(QWidget):
         
         # Export buttons
         export_row = QHBoxLayout()
+        
+        # Add Refresh button on the left
+        refresh_btn = QPushButton("🔄 Refresh")
+        refresh_btn.setStyleSheet(self.get_button_style('primary'))
+        refresh_btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        refresh_btn.setToolTip("Reload report data from database")
+        refresh_btn.clicked.connect(self._on_refresh_clicked)
+        export_row.addWidget(refresh_btn)
+        
         export_row.addStretch()
         
         pdf_btn = QPushButton("📄 Export PDF")
@@ -148,6 +158,22 @@ class SaleReportView(QWidget):
         layout.removeWidget(self.filters_placeholder)
         self.filters_placeholder.deleteLater()
         layout.insertWidget(index, filters_widget)
+    
+    def set_refresh_callback(self, callback: callable):
+        """
+        Set the refresh callback function.
+        
+        Args:
+            callback: Function to call when refresh button is clicked
+        """
+        self.refresh_callback = callback
+    
+    def _on_refresh_clicked(self):
+        """Handle refresh button click."""
+        if self.refresh_callback:
+            self.refresh_callback()
+        else:
+            log_warning("Refresh callback not set", 'billing_app')
     
     def set_payment_summary_widget(self, payment_summary_widget: QWidget):
         """

@@ -236,8 +236,7 @@ class ItemsTableWidget(QFrame):
             supplier_amount.setMaximum(999999)
             supplier_amount.setValue(0)
             supplier_amount.setDecimals(2)
-            # we have changed this to dynamic like taking this from settings
-            supplier_amount.setPrefix("SAR ")
+            supplier_amount.setPrefix("₹ ")
             supplier_amount.setStyleSheet(spinbox_style)
             supplier_amount.valueChanged.connect(self.items_changed.emit)
             
