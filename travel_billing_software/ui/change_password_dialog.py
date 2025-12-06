@@ -40,27 +40,27 @@ class ChangePasswordDialog(QDialog):
         
         # Icon
         icon_label = QLabel("🔐")
-        icon_label.setAlignment(Qt.AlignCenter)
+        icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         icon_label.setFont(QFont("Segoe UI", 42))
         icon_label.setFixedSize(90, 90)
         icon_label.setStyleSheet("""
             background-color: #7c3aed;
             border-radius: 45px;
         """)
-        layout.addWidget(icon_label, alignment=Qt.AlignCenter)
+        layout.addWidget(icon_label, alignment=Qt.AlignmentFlag.AlignCenter)
         
         layout.addSpacing(10)
         
         # Title
         title_label = QLabel("Change Password")
-        title_label.setAlignment(Qt.AlignCenter)
+        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         title_label.setFont(QFont("Segoe UI", 22, QFont.Bold))
         title_label.setStyleSheet("color: #ffffff; background: transparent;")
         layout.addWidget(title_label)
         
         # Subtitle
         subtitle_label = QLabel("Enter your current password and new password")
-        subtitle_label.setAlignment(Qt.AlignCenter)
+        subtitle_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         subtitle_label.setFont(QFont("Segoe UI", 10))
         subtitle_label.setStyleSheet("color: #94a3b8; background: transparent;")
         subtitle_label.setWordWrap(True)

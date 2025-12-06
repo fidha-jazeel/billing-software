@@ -122,7 +122,19 @@ class SettingsPage(QWidget):
         
         self.combo_theme = QComboBox()
         self.combo_theme.addItems(["Purple", "Blue", "Green", "Orange", "Red"])
-        # Map current color to index logic here if needed
+        
+        # Set current accent color selection
+        current_theme_color = self.APP_SETTINGS.get('theme_color', '#7c3aed')
+        color_map_reverse = {
+            "#7c3aed": "Purple",
+            "#3b82f6": "Blue",
+            "#10b981": "Green",
+            "#f97316": "Orange",
+            "#ef4444": "Red"
+        }
+        current_accent_name = color_map_reverse.get(current_theme_color, "Purple")
+        self.combo_theme.setCurrentText(current_accent_name)
+        
         self.combo_theme.setStyleSheet(f"""
             QComboBox {{ background-color: #333; color: white; padding: 5px; border-radius: 5px; }}
         """)
@@ -436,41 +448,24 @@ class SettingsPage(QWidget):
             new_font_size = self.spin_font_size.value()
             self.config_manager.set_app_setting("font_size", new_font_size)
             
-            # 4. Apply Changes Globally
-            self.apply_global_styles(new_font_size)
+            # 4. Update Accent Color
+            accent_color_map = {
+                "Purple": "#7c3aed",
+                "Blue": "#3b82f6",
+                "Green": "#10b981",
+                "Orange": "#f97316",
+                "Red": "#ef4444"
+            }
+            selected_accent = self.combo_theme.currentText()
+            if selected_accent in accent_color_map:
+                theme_color = accent_color_map[selected_accent]
+                self.config_manager.set_app_setting("theme_color", theme_color)
 
-            QMessageBox.information(self, "Saved", "Settings saved successfully!\nUI updated.")
+            QMessageBox.information(
+                self, 
+                "Settings Saved", 
+                "Settings saved successfully!\n\nPlease restart the application for changes to take full effect."
+            )
 
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to save settings: {e}")
-
-    def apply_global_styles(self, font_size):
-        """
-        Dynamically update the application stylesheet.
-        This forces the font size to reflect 'everywhere'.
-        """
-        app = QApplication.instance()
-        if app:
-            # We construct a generic stylesheet that forces font size on common widgets
-            style = f"""
-                QWidget {{ font-size: {font_size}px; font-family: 'Segoe UI', Arial; }}
-                QLabel {{ font-size: {font_size}px; }}
-                QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox {{ 
-                    font-size: {font_size}px; min-height: {font_size + 10}px; 
-                }}
-                QPushButton {{ font-size: {font_size}px; }}
-                QTableWidget {{ font-size: {font_size}px; }}
-                QHeaderView::section {{ font-size: {font_size}px; }}
-            """
-            # Append to existing stylesheet if possible, or replace
-            # For this simple implementation, we assume we can append or set
-            # But usually, it's better to update the main window's style method.
-            
-            # If main_window reference exists, call its theme applicator
-            if self.main_window and hasattr(self.main_window, 'apply_dark_theme'):
-                # We need to hack the main window to accept a font size, 
-                # OR set a global variable that main window reads.
-                pass 
-            
-            # Direct application (Brute force method to ensure it works)
-            app.setStyleSheet(app.styleSheet() + style)
