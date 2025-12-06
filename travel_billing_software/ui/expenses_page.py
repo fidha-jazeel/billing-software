@@ -196,8 +196,8 @@ class ExpenseDialog(QDialog):
         self.category_input.setCurrentText(self.expense_data.get('category', ''))
         self.amount_input.setValue(self.expense_data.get('amount', 0.0))
         
-        payment_method = self.expense_data.get('payment_method', 'Cash')
-        index = self.payment_method.findText(payment_method)
+        payment_mode = self.expense_data.get('payment_mode', 'Cash')
+        index = self.payment_method.findText(payment_mode)
         if index >= 0:
             self.payment_method.setCurrentIndex(index)
         
@@ -210,7 +210,7 @@ class ExpenseDialog(QDialog):
         """Get expense data from form fields."""
         category = self.category_input.currentText().strip()
         amount = self.amount_input.value()
-        payment_method = self.payment_method.currentText()
+        payment_mode = self.payment_method.currentText()
         
         if not category:
             QMessageBox.warning(self, "Validation Error", "Expense category is required!")
@@ -225,7 +225,7 @@ class ExpenseDialog(QDialog):
             'date': self.date_input.date().toString("yyyy-MM-dd"),
             'category': category,
             'amount': amount,
-            'payment_method': payment_method,
+            'payment_mode': payment_mode,
             'vendor': self.vendor_input.text().strip(),
             'responsible_person': self.responsible_person.text().strip(),
             'reference': self.reference_input.text().strip(),
@@ -675,8 +675,8 @@ class ExpensesPage(QWidget):
             self.expenses_table.setItem(row, 4, amount_item)
             
             # Payment Method
-            payment_item = QTableWidgetItem(expense.get('payment_method', 'Cash'))
-            if expense.get('payment_method') == 'Cash':
+            payment_item = QTableWidgetItem(expense.get('payment_mode', 'Cash'))
+            if expense.get('payment_mode', '').upper() == 'CASH':
                 payment_item.setForeground(QColor(self.colors['success']))
             else:
                 payment_item.setForeground(QColor(self.colors['accent_secondary']))
@@ -960,7 +960,7 @@ class ExpensesPage(QWidget):
         details_data = [
             ("Date", formatted_date),
             ("Category", expense.get('category', 'N/A')),
-            ("Payment Method", expense.get('payment_method', 'N/A')),
+            ("Payment Method", expense.get('payment_mode', 'N/A')),
             ("Paid To (Vendor)", expense.get('vendor', 'N/A')),
             ("Person Responsible", expense.get('responsible_person', 'N/A')),
             ("Reference Number", expense.get('reference', 'N/A')),
@@ -1087,7 +1087,7 @@ class ExpensesPage(QWidget):
         total = sum(e.get('amount', 0.0) for e in expenses_list)
         count = len(expenses_list)
         avg = total / count if count > 0 else 0.0
-        cash_total = sum(e.get('amount', 0.0) for e in expenses_list if e.get('payment_method') == 'Cash')
+        cash_total = sum(e.get('amount', 0.0) for e in expenses_list if e.get('payment_mode', '').upper() == 'CASH')
         
         # Update stat cards
         for card in [self.total_expenses_label, self.expense_count_label, 
@@ -1135,7 +1135,7 @@ class ExpensesPage(QWidget):
                             expense.get('date', ''),
                             expense.get('category', ''),
                             expense.get('amount', 0.0),
-                            expense.get('payment_method', ''),
+                            expense.get('payment_mode', ''),
                             expense.get('vendor', ''),
                             expense.get('responsible_person', ''),
                             expense.get('reference', ''),

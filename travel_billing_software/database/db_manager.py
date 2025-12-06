@@ -887,8 +887,8 @@ class DatabaseManager:
                 else:
                     cur.execute("UPDATE invoices SET payment_status = 'PARTIAL' WHERE id = ?", (invoice_id,))
             else:
-                # No payment made, set status to PENDING
-                cur.execute("UPDATE invoices SET payment_status = 'PENDING' WHERE id = ?", (invoice_id,))
+                # No payment made, set status to UNPAID
+                cur.execute("UPDATE invoices SET payment_status = 'UNPAID' WHERE id = ?", (invoice_id,))
             
             # Commit transaction
             self.conn.commit()
@@ -1026,10 +1026,16 @@ class DatabaseManager:
             return []
     
     def update_invoice_status(self, invoice_id: int, status: str) -> bool:
-        """Update invoice status."""
+        """Update invoice payment status."""
         try:
+            # Validate status value
+            valid_statuses = ['PAID', 'PARTIAL', 'UNPAID']
+            if status not in valid_statuses:
+                print(f"✗ Invalid payment status: {status}. Must be one of {valid_statuses}")
+                return False
+            
             cur = self.conn.cursor()
-            cur.execute("UPDATE invoices SET status = ? WHERE id = ?", (status, invoice_id))
+            cur.execute("UPDATE invoices SET payment_status = ? WHERE id = ?", (status, invoice_id))
             self.conn.commit()
             return True
         except Exception as e:

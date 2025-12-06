@@ -218,16 +218,70 @@ class PaymentsPage(QWidget):
         self.unpaid_table.setHorizontalHeaderLabels([
             "Invoice #", "Date", "Customer", "Total", "Paid", "Balance", "Action"
         ])
-        self.unpaid_table.setStyleSheet(self.get_table_style())
-        self.unpaid_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
-        self.unpaid_table.setColumnWidth(0, 150)  # Invoice #
-        self.unpaid_table.setColumnWidth(1, 100)  # Date
-        self.unpaid_table.setColumnWidth(2, 200)  # Customer
-        self.unpaid_table.setColumnWidth(3, 120)  # Total
-        self.unpaid_table.setColumnWidth(4, 120)  # Paid
-        self.unpaid_table.setColumnWidth(5, 120)  # Balance
-        self.unpaid_table.setColumnWidth(6, 150)  # Action
-        self.unpaid_table.setMinimumHeight(400)
+        
+        # Enhanced table styling with better spacing and readability
+        self.unpaid_table.setStyleSheet(self.get_table_style() + f"""
+            QTableWidget {{
+                border: 1px solid {self.colors.get('border', '#3a3a3a')};
+                gridline-color: {self.colors.get('border', '#3a3a3a')};
+            }}
+            QTableWidget::item {{
+                padding: 12px 10px;
+                border-bottom: 1px solid {self.colors.get('border', '#3a3a3a')};
+            }}
+        """)
+        
+        # Configure header with better height and styling
+        header = self.unpaid_table.horizontalHeader()
+        header.setMinimumHeight(50)
+        header.setDefaultSectionSize(150)
+        
+        # Configure vertical header for row heights
+        v_header = self.unpaid_table.verticalHeader()
+        v_header.setDefaultSectionSize(55)  # Increased row height for better spacing
+        v_header.setVisible(False)
+        
+        # Configure column widths with optimal proportions
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Fixed)
+        self.unpaid_table.setColumnWidth(0, 200)  # Invoice # 
+        self.unpaid_table.setColumnWidth(1, 130)  # Date
+        self.unpaid_table.setColumnWidth(2, 180)  # Customer
+        self.unpaid_table.setColumnWidth(3, 130)  # Total
+        self.unpaid_table.setColumnWidth(4, 130)  # Paid
+        self.unpaid_table.setColumnWidth(5, 130)  # Balance
+        self.unpaid_table.setColumnWidth(6, 200)  # Action
+        
+        # Apply header styling with highlighted value columns using model-based approach
+        # We'll set this in the populate method for specific columns
+        header.setStyleSheet(f"""
+            QHeaderView::section {{
+                background-color: {self.colors['accent_primary']};
+                color: white;
+                padding: 15px 10px;
+                border: none;
+                border-right: 1px solid {self.colors.get('primary_bg', '#1a1a1a')};
+                font-weight: 600;
+                font-size: 14px;
+                text-align: left;
+            }}
+            QHeaderView::section:hover {{
+                background-color: {self.colors.get('accent_secondary', '#7B3FF2')};
+            }}
+        """)
+        
+        # Mark value columns for special styling (stored for later use)
+        self.unpaid_value_columns = [3, 4, 5]  # Total, Paid, Balance
+        self.value_column_header_bg = "#5a4d7a"  # Brighter purple for headers
+        
+        # Set last column to stretch for full width utilization
+        header.setSectionResizeMode(6, QHeaderView.ResizeMode.Stretch)
+        
+        # Table display settings
+        self.unpaid_table.setMinimumHeight(450)
+        self.unpaid_table.setSizeAdjustPolicy(QTableWidget.SizeAdjustPolicy.AdjustToContents)
+        self.unpaid_table.setShowGrid(True)
+        self.unpaid_table.setAlternatingRowColors(True)
+        self.unpaid_table.setWordWrap(False)
         main_layout.addWidget(self.unpaid_table)
         
         # Table for Payment History
@@ -235,19 +289,78 @@ class PaymentsPage(QWidget):
         self.history_table.setHorizontalHeaderLabels([
             "Date", "Payment #", "Customer", "Invoice #", "Amount", "Mode"
         ])
-        self.history_table.setStyleSheet(self.get_table_style())
-        self.history_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
-        self.history_table.setColumnWidth(0, 100)  # Date
-        self.history_table.setColumnWidth(1, 150)  # Payment #
-        self.history_table.setColumnWidth(2, 200)  # Customer
-        self.history_table.setColumnWidth(3, 150)  # Invoice #
-        self.history_table.setColumnWidth(4, 120)  # Amount
-        self.history_table.setColumnWidth(5, 100)  # Mode
-        self.history_table.setMinimumHeight(400)
+        
+        # Enhanced table styling with better spacing and readability
+        self.history_table.setStyleSheet(self.get_table_style() + f"""
+            QTableWidget {{
+                border: 1px solid {self.colors.get('border', '#3a3a3a')};
+                gridline-color: {self.colors.get('border', '#3a3a3a')};
+            }}
+            QTableWidget::item {{
+                padding: 12px 10px;
+                border-bottom: 1px solid {self.colors.get('border', '#3a3a3a')};
+            }}
+        """)
+        
+        # Configure header with better height and styling
+        history_header = self.history_table.horizontalHeader()
+        history_header.setMinimumHeight(50)
+        history_header.setDefaultSectionSize(150)
+        history_header.setStyleSheet(f"""
+            QHeaderView::section {{
+                background-color: {self.colors['accent_primary']};
+                color: white;
+                padding: 15px 10px;
+                border: none;
+                border-right: 1px solid {self.colors.get('primary_bg', '#1a1a1a')};
+                font-weight: 600;
+                font-size: 14px;
+                text-align: left;
+            }}
+            QHeaderView::section:hover {{
+                background-color: {self.colors.get('accent_secondary', '#7B3FF2')};
+            }}
+        """)
+        
+        # Configure vertical header for row heights
+        history_v_header = self.history_table.verticalHeader()
+        history_v_header.setDefaultSectionSize(55)  # Increased row height for better spacing
+        history_v_header.setVisible(False)
+        
+        # Configure column widths with optimal proportions
+        history_header.setSectionResizeMode(QHeaderView.ResizeMode.Fixed)
+        self.history_table.setColumnWidth(0, 130)  # Date
+        self.history_table.setColumnWidth(1, 200)  # Payment #
+        self.history_table.setColumnWidth(2, 180)  # Customer
+        self.history_table.setColumnWidth(3, 200)  # Invoice #
+        self.history_table.setColumnWidth(4, 130)  # Amount
+        self.history_table.setColumnWidth(5, 130)  # Mode
+        
+        # Set last column to stretch for full width utilization
+        history_header.setSectionResizeMode(5, QHeaderView.ResizeMode.Stretch)
+        
+        # Table display settings
+        self.history_table.setMinimumHeight(450)
+        self.history_table.setSizeAdjustPolicy(QTableWidget.SizeAdjustPolicy.AdjustToContents)
+        self.history_table.setShowGrid(True)
+        self.history_table.setAlternatingRowColors(True)
+        self.history_table.setWordWrap(False)
         self.history_table.hide()
         main_layout.addWidget(self.history_table)
         
         self.current_view = 'unpaid'
+        
+        # Apply header column highlighting after table setup
+        self._apply_header_column_colors()
+    
+    def _apply_header_column_colors(self):
+        """Apply background colors to value column headers."""
+        # Style the header items for value columns
+        for col_idx in self.unpaid_value_columns:
+            header_item = self.unpaid_table.horizontalHeaderItem(col_idx)
+            if header_item:
+                header_item.setBackground(QColor(self.value_column_header_bg))
+                header_item.setForeground(QColor("white"))
     
     def _create_stat_card(self, title, value, color):
         """Create a statistics card."""
@@ -355,6 +468,9 @@ class PaymentsPage(QWidget):
         
         search_text = self.search_input.text().lower()
         
+        # Define highlight color for value columns (darker shade for dark theme)
+        value_column_bg = "#2a2a3e"  # Subtle purple-tinted dark background
+        
         for inv in self.unpaid_invoices:
             # Filter by search
             if search_text:
@@ -375,17 +491,21 @@ class PaymentsPage(QWidget):
             # Customer
             self.unpaid_table.setItem(row, 2, QTableWidgetItem(str(inv.get('customer_name') or '')))
             
-            # Total
+            # Total (Highlighted column)
             total_item = QTableWidgetItem(f"₹{inv.get('total_amount', 0):,.2f}")
+            total_item.setBackground(QColor(value_column_bg))
+            total_item.setForeground(QColor("white"))
             self.unpaid_table.setItem(row, 3, total_item)
             
-            # Paid
+            # Paid (Highlighted column)
             paid_item = QTableWidgetItem(f"₹{inv.get('paid_amount', 0):,.2f}")
+            paid_item.setBackground(QColor(value_column_bg))
             paid_item.setForeground(QColor(self.colors['success']))
             self.unpaid_table.setItem(row, 4, paid_item)
             
-            # Balance
+            # Balance (Highlighted column)
             balance_item = QTableWidgetItem(f"₹{inv.get('balance', 0):,.2f}")
+            balance_item.setBackground(QColor(value_column_bg))
             balance_item.setForeground(QColor(self.colors['danger']))
             self.unpaid_table.setItem(row, 5, balance_item)
             

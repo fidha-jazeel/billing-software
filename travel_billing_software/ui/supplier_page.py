@@ -239,6 +239,25 @@ class SupplierPage(QWidget):
     
     def _init_ui(self):
         """Initialize the UI."""
+        
+        self.dark_theme = {
+            'bg_primary': '#121212',
+            'bg_secondary': '#1E1E1E',
+            'bg_tertiary': '#161616',
+            'bg_hover': '#3A3A3A',
+            'border': '#333333',
+            'text_primary': '#FFFFFF',
+            'text_secondary': '#EEEEEE',
+            'text_muted': '#AAAAAA',
+            'accent_blue': '#4A9EFF',
+            'accent_blue_hover': '#3A8EEF',
+            'accent_green': '#10B981',
+            'accent_red': '#FF4444',
+            'accent_purple': '#A78BFA',
+            'button_bg': '#2D2D2D',
+            'button_hover': '#3A3A3A'
+        }
+        
         # Main layout
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -451,29 +470,87 @@ class SupplierPage(QWidget):
         # Configure header FIRST before enabling sorting
         header = self.suppliers_table.horizontalHeader()
         header.setVisible(True)  # Ensure header is visible
+        # header.setStyleSheet(f"""
+        #     QHeaderView::section {{
+        #         background-color: {self.colors['accent_primary']};
+        #         color: white;
+        #         padding: 6px;
+        #         border: 1px solid {self.colors['primary_bg']};
+        #         font-weight: 600;
+        #         font-size: 13px;
+        #         text-align: left;
+        #     }}
+        #     QHeaderView::section:hover {{
+        #         background-color: {self.colors['accent_secondary']};
+        #     }}
+        # """)
+        # HARD RESET STYLE - Forces flat design and perfect alignment
+        # HARD RESET STYLE - Forces flat design and perfect alignment
         header.setStyleSheet(f"""
-            QHeaderView::section {{
-                background-color: {self.colors['accent_primary']};
-                color: white;
-                padding: 12px 8px;
-                border: 1px solid {self.colors['primary_bg']};
-                border-right: 1px solid {self.colors['primary_bg']};
-                font-weight: 600;
-                font-size: 14px;
-                text-align: left;
+            /* 1. RESET THE MAIN TABLE */
+            QTableWidget {{
+                background-color: #1E1E1E;
+                color: #FFFFFF;
+                border: 1px solid {self.dark_theme['border']};
+                border-radius: 4px;
+                gridline-color: #333333;
+                selection-background-color: {self.dark_theme['accent_blue']};
+                selection-color: #FFFFFF;
+                outline: none; /* Removes focus dotted line */
             }}
-            QHeaderView::section:hover {{
-                background-color: {self.colors['accent_secondary']};
+
+            /* 2. FORCE THE HEADER CONTAINER TO BE FLAT */
+            QHeaderView {{
+                background-color: #202020;
+                border: none;
+                border-bottom: 1px solid {self.dark_theme['border']};
+                margin: 0px;
+                padding: 0px;
+            }}
+
+            /* 3. STYLE THE INDIVIDUAL SECTIONS (COLUMNS) */
+            QHeaderView::section {{
+                background-color: #202020;
+                color: #FFFFFF;
+                padding: 4px;
+                border: none; /* KEY: Removes the box around every header */
+                border-right: 1px solid #333333; /* separator between columns */
+                margin: 0px;  /* KEY: Removes the gap causing misalignment */
+                border-radius: 0px; /* KEY: Removes rounded corners */
+                font-weight: bold;
+                font-size: 13px;
+                min-height: 40px;
+            }}
+
+            /* Remove border for the last header column to look cleaner */
+            QHeaderView::section:last {{
+                border-right: none;
+            }}
+
+            /* 4. ALIGN THE DATA CELLS TO MATCH HEADERS */
+            QTableWidget::item {{
+                padding-left: 5px; /* Adjust to match Header text alignment */
+                border-bottom: 1px solid #252525;
+            }}
+            
+            /* 5. FIX THE TOP-LEFT CORNER BUTTON */
+            QTableCornerButton::section {{
+                background-color: #202020;
+                border: none;
+                border-bottom: 1px solid {self.dark_theme['border']};
+                border-right: 1px solid {self.dark_theme['border']};
             }}
         """)
-        header.setMinimumHeight(100)
-        header.setMinimumWidth(100)
+        header.setMinimumHeight(60)
         header.setDefaultSectionSize(150)
         header.setStretchLastSection(False)
         header.setSectionsMovable(False)
         header.setDefaultAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         
-        # Set column widths with fixed resize mode for alignment
+        # Enable sorting AFTER header is configured
+        self.suppliers_table.setSortingEnabled(True)
+        
+        # Set column widths
         column_widths = {
             0: 180,   # Supplier Name
             1: 150,   # Contact Person
@@ -497,16 +574,12 @@ class SupplierPage(QWidget):
                 self.suppliers_table.setColumnWidth(col, width)
                 header.setSectionResizeMode(col, QHeaderView.ResizeMode.Fixed)
         
-        # Enable sorting AFTER header is configured
-        self.suppliers_table.setSortingEnabled(False)  # Disable during population
-        
         # Configure vertical header - hide row numbers
         self.suppliers_table.verticalHeader().setVisible(False)
-        self.suppliers_table.verticalHeader().setDefaultSectionSize(40)  # Set consistent row height
+        self.suppliers_table.verticalHeader().setDefaultSectionSize(55)
         
-        # Table styling - Dark theme compatible with proper grid lines
+        # Table styling - Dark theme compatible
         self.suppliers_table.setAlternatingRowColors(True)
-        self.suppliers_table.setShowGrid(True)  # Enable grid lines
         self.suppliers_table.setStyleSheet(self.get_table_style() + f"""
             QTableWidget {{
                 background-color: {self.colors['secondary_bg']};
@@ -518,12 +591,10 @@ class SupplierPage(QWidget):
                 border: 1px solid #3a3a3a;
             }}
             QTableWidget::item {{
-                padding: 5px 8px;
-                border-right: 1px solid #3a3a3a;
-                border-bottom: 1px solid #3a3a3a;
+                padding: 8px 10px;
+                border: none;
                 color: {self.colors['text_primary']};
                 background-color: {self.colors['secondary_bg']};
-                height: 40px;
             }}
             QTableWidget::item:alternate {{
                 background-color: {self.colors['primary_bg']};
@@ -537,7 +608,6 @@ class SupplierPage(QWidget):
         self.suppliers_table.setMinimumHeight(500)
         self.suppliers_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.suppliers_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
-        self.suppliers_table.setWordWrap(False)  # Prevent text wrapping that causes misalignment
     
     def _load_suppliers(self):
         """Load suppliers from database."""
@@ -668,20 +738,21 @@ class SupplierPage(QWidget):
         """Create action buttons for each row."""
         widget = QWidget()
         layout = QHBoxLayout(widget)
-        layout.setContentsMargins(5, 2, 5, 2)
-        layout.setSpacing(5)
+        layout.setContentsMargins(3, 3, 3, 3)
+        layout.setSpacing(4)
         
         # Financial Button
-        financial_btn = QPushButton("💰")
+        financial_btn = QPushButton("Pay")
         financial_btn.setToolTip("Manage Payments")
+        financial_btn.setFixedSize(45, 28)
         financial_btn.setStyleSheet("""
             QPushButton {
                 background-color: #10b981;
                 color: white;
                 border: none;
-                padding: 5px 10px;
                 border-radius: 4px;
                 font-weight: bold;
+                font-size: 11px;
             }
             QPushButton:hover {
                 background-color: #059669;
@@ -692,16 +763,17 @@ class SupplierPage(QWidget):
         layout.addWidget(financial_btn)
         
         # View Button
-        view_btn = QPushButton("👁️")
+        view_btn = QPushButton("View")
         view_btn.setToolTip("View Details")
+        view_btn.setFixedSize(45, 28)
         view_btn.setStyleSheet("""
             QPushButton {
                 background-color: #4a9eff;
                 color: white;
                 border: none;
-                padding: 5px 10px;
                 border-radius: 4px;
                 font-weight: bold;
+                font-size: 11px;
             }
             QPushButton:hover {
                 background-color: #3a8eef;
@@ -712,16 +784,17 @@ class SupplierPage(QWidget):
         layout.addWidget(view_btn)
         
         # Edit Button
-        edit_btn = QPushButton("✏️")
+        edit_btn = QPushButton("Edit")
         edit_btn.setToolTip("Edit Supplier")
+        edit_btn.setFixedSize(45, 28)
         edit_btn.setStyleSheet("""
             QPushButton {
                 background-color: #f5a623;
                 color: white;
                 border: none;
-                padding: 5px 10px;
                 border-radius: 4px;
                 font-weight: bold;
+                font-size: 11px;
             }
             QPushButton:hover {
                 background-color: #e59613;
@@ -732,16 +805,17 @@ class SupplierPage(QWidget):
         layout.addWidget(edit_btn)
         
         # Delete Button
-        delete_btn = QPushButton("🗑️")
+        delete_btn = QPushButton("Del")
         delete_btn.setToolTip("Delete Supplier")
+        delete_btn.setFixedSize(40, 28)
         delete_btn.setStyleSheet("""
             QPushButton {
                 background-color: #ff4444;
                 color: white;
                 border: none;
-                padding: 5px 10px;
                 border-radius: 4px;
                 font-weight: bold;
+                font-size: 11px;
             }
             QPushButton:hover {
                 background-color: #ee3333;
