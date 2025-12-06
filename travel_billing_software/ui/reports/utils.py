@@ -110,7 +110,7 @@ class ReportFilters:
     
     def create_filter_section(self, apply_callback: callable, clear_callback: callable) -> QFrame:
         """
-        Create comprehensive filter section with all controls.
+        Create comprehensive filter section with all controls (collapsible).
         
         Args:
             apply_callback: Function to call when Apply button clicked
@@ -134,7 +134,8 @@ class ReportFilters:
         filter_layout.setSpacing(10)
         filter_layout.setContentsMargins(14, 14, 14, 14)
         
-        # Title
+        # Title with toggle button
+        title_layout = QHBoxLayout()
         filter_title = QLabel("🔍 Filter Options")
         filter_title.setStyleSheet("""
             QLabel {
@@ -143,13 +144,48 @@ class ReportFilters:
                 font-weight: bold;
                 letter-spacing: 0.5px;
                 padding: 8px;
-                margin: 0px 0px 10px 0px;
-                border: 1px solid #777777;
-                border-radius: 4px;
-                background-color: #1A1A1A;
+                margin: 0px;
+                border: none;
+                background-color: transparent;
             }
         """)
-        filter_layout.addWidget(filter_title)
+        title_layout.addWidget(filter_title)
+        
+        toggle_btn = QPushButton("▼ Expand")
+        toggle_btn.setStyleSheet("""
+            QPushButton {
+                color: #FFFFFF;
+                background-color: #1A1A1A;
+                border: 1px solid #777777;
+                border-radius: 4px;
+                padding: 6px 12px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #2A2A2A;
+            }
+        """)
+        toggle_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        title_layout.addWidget(toggle_btn)
+        
+        title_container = QFrame()
+        title_container.setStyleSheet("""
+            QFrame {
+                background-color: #1A1A1A;
+                border: 1px solid #777777;
+                border-radius: 4px;
+                padding: 0px;
+                margin: 0px 0px 10px 0px;
+            }
+        """)
+        title_container.setLayout(title_layout)
+        filter_layout.addWidget(title_container)
+        
+        # Collapsible content widget
+        content_widget = QWidget()
+        content_layout = QVBoxLayout(content_widget)
+        content_layout.setSpacing(10)
+        content_layout.setContentsMargins(0, 0, 0, 0)
         
         # Date Range
         date_row = QHBoxLayout()
@@ -175,17 +211,17 @@ class ReportFilters:
         self.filter_to_date.setStyleSheet(self._get_dateedit_style())
         date_row.addWidget(self.filter_to_date)
         
-        filter_layout.addLayout(date_row)
+        content_layout.addLayout(date_row)
         
         # Contact Number
         contact_row = self._create_input_row("Contact:", "Search by contact number...")
         self.filter_contact = contact_row['input']
-        filter_layout.addLayout(contact_row['layout'])
+        content_layout.addLayout(contact_row['layout'])
         
         # Passenger Name
         passenger_row = self._create_input_row("Passenger:", "Search by passenger name...")
         self.filter_passenger = passenger_row['input']
-        filter_layout.addLayout(passenger_row['layout'])
+        content_layout.addLayout(passenger_row['layout'])
         
         # Sector and Supplier
         sector_supplier_row = QHBoxLayout()
@@ -202,7 +238,7 @@ class ReportFilters:
         self.filter_supplier = supplier_section['combo']
         sector_supplier_row.addLayout(supplier_section['layout'])
         
-        filter_layout.addLayout(sector_supplier_row)
+        content_layout.addLayout(sector_supplier_row)
         
         # Booking Type
         type_section = self._create_combo_row(
@@ -210,7 +246,7 @@ class ReportFilters:
             ["All", "Flight", "Hotel", "Visa", "Tour Package", "Insurance", "Other"]
         )
         self.filter_type = type_section['combo']
-        filter_layout.addLayout(type_section['layout'])
+        content_layout.addLayout(type_section['layout'])
         
         # Apply and Clear buttons
         btn_row = QHBoxLayout()
@@ -227,9 +263,21 @@ class ReportFilters:
         clear_btn.clicked.connect(clear_callback)
         btn_row.addWidget(clear_btn)
         
-        filter_layout.addLayout(btn_row)
+        content_layout.addLayout(btn_row)
         
-        log_info("Filter section created", 'billing_app')
+        # Initially hide content (collapsed state)
+        content_widget.setVisible(False)
+        filter_layout.addWidget(content_widget)
+        
+        # Connect toggle button
+        def toggle_filters():
+            is_visible = content_widget.isVisible()
+            content_widget.setVisible(not is_visible)
+            toggle_btn.setText("▲ Collapse" if not is_visible else "▼ Expand")
+        
+        toggle_btn.clicked.connect(toggle_filters)
+        
+        log_info("Filter section created (collapsible)", 'billing_app')
         return filter_frame
     
     def _create_input_row(self, label_text: str, placeholder: str) -> Dict[str, Any]:
@@ -673,14 +721,12 @@ def create_report_header(title: str, description: str, colors: dict) -> QWidget:
 def show_no_records_message(parent_widget: QWidget, report_name: str):
     """
     Show informative message when no records match filters.
+    (Dialog removed - now just logs the message)
     
     Args:
         parent_widget: Parent widget for dialog
         report_name: Name of the report
     """
-    QMessageBox.information(
-        parent_widget,
-        "No Records Found",
-        f"No records match the selected filter criteria in {report_name}.\n\n"
-        "Please try adjusting your filters and click 'Apply Filters' again."
-    )
+    from travel_billing_software.utils.logger import log_info
+    log_info(f"No records found for {report_name} with current filters", 'billing_app')
+    # Dialog removed - table will show empty state instead

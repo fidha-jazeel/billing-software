@@ -189,28 +189,28 @@ class BillWiseProfitView(QWidget):
                     
                     # Column 8: Sale Price
                     sale_item = QTableWidgetItem(f"₹{sale_price:,.2f}")
-                    sale_item.setForeground(QColor(self.colors['success']))
+                    sale_item.setForeground(QColor("#00FF00"))  # Green
                     self.bill_wise_profit_table.setItem(row, 8, sale_item)
                     
                     # Column 9: Cost Price
                     cost_item = QTableWidgetItem(f"₹{cost_price:,.2f}")
-                    cost_item.setForeground(QColor(self.colors['danger']))
+                    cost_item.setForeground(QColor("#FF0000"))  # Red
                     self.bill_wise_profit_table.setItem(row, 9, cost_item)
                     
                     # Column 10: Profit
                     profit_item = QTableWidgetItem(f"₹{profit:,.2f}")
                     if profit > 0:
-                        profit_item.setForeground(QColor(self.colors['success']))
+                        profit_item.setForeground(QColor("#00FF00"))  # Green
                     else:
-                        profit_item.setForeground(QColor(self.colors['danger']))
+                        profit_item.setForeground(QColor("#FF0000"))  # Red
                     self.bill_wise_profit_table.setItem(row, 10, profit_item)
                     
                     # Column 11: Margin %
                     margin_item = QTableWidgetItem(f"{margin:.2f}%")
                     if margin > 0:
-                        margin_item.setForeground(QColor(self.colors['accent_primary']))
+                        margin_item.setForeground(QColor("#FFFFFF"))  # White
                     else:
-                        margin_item.setForeground(QColor(self.colors['danger']))
+                        margin_item.setForeground(QColor("#FF0000"))  # Red
                     self.bill_wise_profit_table.setItem(row, 11, margin_item)
             
             # Update summary

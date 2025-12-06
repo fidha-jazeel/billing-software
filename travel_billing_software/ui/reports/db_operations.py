@@ -26,7 +26,7 @@ class ReportsDBOperations:
     
     def load_all_invoices(self) -> List[Dict[str, Any]]:
         """
-        Load all invoices with their items from database.
+        Load all invoices with their items and calculate paid amounts from payments_received table.
         
         Returns:
             List of invoice dictionaries with passengers and tickets
@@ -40,7 +40,29 @@ class ReportsDBOperations:
             
             result = []
             for inv in invoices:
+                # Calculate paid amount from payments_received table
+                payments = self.db.get_payments_by_contact(inv['contact_id'])
+                invoice_payments = [p for p in payments if p.get('invoice_id') == inv['id']]
+                paid_amount = sum(float(p.get('amount', 0)) for p in invoice_payments)
+                
+                # Get payment mode from latest payment
+                payment_mode = 'UNPAID'
+                if invoice_payments:
+                    latest_payment = invoice_payments[0]  # Already sorted DESC by date
+                    payment_mode = latest_payment.get('payment_mode', 'CASH')
+                
                 invoice_dict = self._format_invoice_record(inv)
+                invoice_dict['paid_amount'] = paid_amount
+                invoice_dict['balance'] = invoice_dict['total_amount'] - paid_amount
+                invoice_dict['payment_mode'] = payment_mode
+                
+                # Update payment status based on balance
+                if invoice_dict['balance'] <= 0:
+                    invoice_dict['payment_status'] = 'PAID'
+                elif paid_amount > 0:
+                    invoice_dict['payment_status'] = 'PARTIAL'
+                else:
+                    invoice_dict['payment_status'] = 'UNPAID'
                 
                 # Get invoice items (tickets) for this invoice
                 items = self.db.get_invoice_items(inv['id'])
@@ -58,16 +80,30 @@ class ReportsDBOperations:
                                 'contact_number': passenger_contact
                             })
                     
-                    # Add ticket/item info
+                    # Add ticket/item info with proper date handling
+                    travel_date_str = item.get('travel_date', '')
+                    try:
+                        if travel_date_str:
+                            date_obj = datetime.strptime(travel_date_str, '%Y-%m-%d')
+                            travel_date_formatted = date_obj.strftime('%d/%m/%Y')
+                        else:
+                            travel_date_formatted = ''
+                    except Exception:
+                        travel_date_formatted = travel_date_str
+                    
                     invoice_dict['tickets'].append({
                         'pnr': item.get('pnr_number', ''),
+                        'ticket_number': item.get('ticket_number', ''),
                         'supplier_name': item.get('supplier_name', ''),
                         'sector': item.get('sector', ''),
                         'booking_type': item.get('service_type_name', ''),
                         'quantity': int(item.get('quantity', 1)),
                         'supplier_amount': float(item.get('cost_price', 0)),
                         'total_amount': float(item.get('total_amount', 0)),
-                        'passport_number': item.get('passport_number', '')
+                        'passport_number': item.get('passport_number', ''),
+                        'passenger_name': passenger_name,
+                        'travel_date': travel_date_formatted,
+                        'unit_price': float(item.get('unit_price', 0))
                     })
                 
                 result.append(invoice_dict)
@@ -136,7 +172,7 @@ class ReportsDBOperations:
                 
                 if payment_mode == 'CASH':
                     total_cash += amount
-                elif payment_mode in ['BANK_TRANSFER', 'UPI', 'CARD', 'CHEQUE', 'ONLINE']:
+                else:  # BANK, UPI, CARD, CHEQUE - all count as bank
                     total_bank += amount
             
             log_info(
@@ -326,3 +362,70 @@ class ReportsDBOperations:
         
         log_info(f"Contact filter returned {len(filtered)} invoices", 'billing_app')
         return filtered
+    
+    def get_cash_payments(self) -> List[Dict[str, Any]]:
+        """
+        Fetch all cash payments from payments_received table.
+        
+        Returns:
+            List of payment records with invoice and customer details
+        """
+        try:
+            all_payments = self.db.get_all_payments_received()
+            
+            # Filter for CASH payments only
+            cash_payments = []
+            for payment in all_payments:
+                if payment.get('payment_mode', '').upper() == 'CASH':
+                    # Enrich with invoice and customer details
+                    invoice_id = payment.get('invoice_id')
+                    if invoice_id:
+                        try:
+                            # Get invoice details
+                            cur = self.db.conn.cursor()
+                            cur.execute("""
+                                SELECT i.invoice_number, i.invoice_date, i.total_amount,
+                                       c.name as customer_name, c.phone as customer_phone
+                                FROM invoices i
+                                LEFT JOIN contacts c ON i.contact_id = c.id
+                                WHERE i.id = ?
+                            """, (invoice_id,))
+                            inv_row = cur.fetchone()
+                            
+                            if inv_row:
+                                # Convert date format
+                                date_str = inv_row['invoice_date']
+                                try:
+                                    date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+                                    formatted_date = date_obj.strftime('%d/%m/%Y')
+                                except:
+                                    formatted_date = date_str
+                                
+                                payment_date = payment.get('date', '')
+                                try:
+                                    date_obj = datetime.strptime(payment_date, '%Y-%m-%d')
+                                    formatted_payment_date = date_obj.strftime('%d/%m/%Y')
+                                except:
+                                    formatted_payment_date = payment_date
+                                
+                                cash_payments.append({
+                                    'date': formatted_payment_date,
+                                    'invoice_number': inv_row['invoice_number'],
+                                    'invoice_date': formatted_date,
+                                    'customer_name': inv_row['customer_name'],
+                                    'customer_phone': inv_row['customer_phone'],
+                                    'amount': float(payment.get('amount', 0)),
+                                    'total_amount': float(inv_row['total_amount']),
+                                    'reference_number': payment.get('reference_number', ''),
+                                    'notes': payment.get('notes', '')
+                                })
+                        except Exception as e:
+                            log_warning(f"Error enriching payment {payment.get('id')}: {e}", 'billing_app')
+                            continue
+            
+            log_info(f"Loaded {len(cash_payments)} cash payments", 'billing_app')
+            return cash_payments
+            
+        except Exception as e:
+            log_error("Failed to load cash payments", exception=e, logger_name='billing_errors')
+            return []

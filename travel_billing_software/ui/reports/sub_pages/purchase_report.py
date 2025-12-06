@@ -194,7 +194,7 @@ class PurchaseReportView(QWidget):
                     total_purchases += supplier_amount
                     
                     amount_item = QTableWidgetItem(f"₹{supplier_amount:,.2f}")
-                    amount_item.setForeground(QColor(self.colors['accent_gold']))
+                    amount_item.setForeground(QColor("#FFFFFF"))  # White
                     self.purchase_table.setItem(row, 5, amount_item)
             
             # TODO: Update summary cards

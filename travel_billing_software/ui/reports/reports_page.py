@@ -118,10 +118,19 @@ class ReportsPage(QWidget):
         # Load initial report data
         self._refresh_current_report(0)
     
+    def showEvent(self, event):
+        """Override showEvent to refresh data when page is shown."""
+        super().showEvent(event)
+        # Refresh current report when page becomes visible
+        current_index = self.report_list.currentRow()
+        if current_index >= 0:
+            self._refresh_current_report(current_index)
+            log_info(f"Reports page shown - refreshing report {current_index}", 'billing_app')
+    
     def _create_sidebar(self) -> QWidget:
         """Create left sidebar with report categories."""
         sidebar_widget = QFrame()
-        sidebar_widget.setFixedWidth(280)
+        sidebar_widget.setFixedWidth(250)
         sidebar_widget.setStyleSheet(f"""
             QFrame {{
                 background-color: {self.colors['secondary_bg']};
@@ -142,6 +151,11 @@ class ReportsPage(QWidget):
         
         # Report list
         self.report_list = QListWidget()
+        
+        self.report_list.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.report_list.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        # --------------------------------
+        
         self.report_list.setStyleSheet(f"""
             QListWidget {{
                 background-color: {self.colors['secondary_bg']};
@@ -156,7 +170,7 @@ class ReportsPage(QWidget):
                 font-size: 13px;
             }}
             QListWidget::item:hover {{
-                background-color: {self.colors.get('hover', '#e8e8e8')};
+                background-color: {self.colors.get('hover', "#7e7c7c")};
             }}
             QListWidget::item:selected {{
                 background-color: {self.colors['accent_primary']};
@@ -188,7 +202,22 @@ class ReportsPage(QWidget):
         self.report_list.currentRowChanged.connect(self._on_report_selected)
         
         sidebar_layout.addWidget(self.report_list)
-        sidebar_layout.addStretch()
+        
+        # Turned off to avoid scrollbar in sidebar
+        # sidebar_layout.addStretch()
+        
+        # Footer info
+        footer = QLabel("💡 Select a report category")
+        footer.setStyleSheet(f"""
+            QLabel {{
+                color: {self.colors['text_secondary']};
+                font-size: 11px;
+                padding: 15px;
+                border-top: 1px solid #dcdcdc;
+            }}
+        """)
+        footer.setWordWrap(True)
+        sidebar_layout.addWidget(footer)
         
         return sidebar_widget
     
@@ -348,7 +377,9 @@ class ReportsPage(QWidget):
             elif index == 5:
                 self.bill_wise_profit.populate(filtered)
             elif index == 6:
-                self.cash_transactions.populate(filtered)
+                # Cash Transactions needs special handling - get cash payments from DB
+                cash_payments = self.db_operations.get_cash_payments()
+                self.cash_transactions.populate(invoices=filtered, cash_payments=cash_payments)
             elif index == 7:
                 self.balance_report.populate(filtered)
             

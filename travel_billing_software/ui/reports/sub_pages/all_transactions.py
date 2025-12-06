@@ -81,9 +81,9 @@ class AllTransactionsView(QWidget):
         layout.addLayout(export_row)
         
         # Table
-        self.transactions_table = QTableWidget(0, 8)
+        self.transactions_table = QTableWidget(0, 7)
         self.transactions_table.setHorizontalHeaderLabels([
-            "Invoice #", "Date", "Customer", "Contact", "Passenger", "Type", "Total", "Status"
+            "Invoice #", "Date", "Customer", "Contact", "Type", "Total", "Status"
         ])
         
         TableConfigurator.configure_table(self.transactions_table, {
@@ -91,10 +91,9 @@ class AllTransactionsView(QWidget):
             1: 100,  # Date
             2: 'stretch',  # Customer
             3: 120,  # Contact
-            4: 'stretch',  # Passenger
-            5: 100,  # Type
-            6: 120,  # Total
-            7: 110   # Status
+            4: 120,  # Type
+            5: 120,  # Total
+            6: 110   # Status
         })
         self.transactions_table.setMinimumHeight(500)
         layout.addWidget(self.transactions_table)
@@ -132,59 +131,50 @@ class AllTransactionsView(QWidget):
             transaction_count = 0
             
             for invoice in invoices:
-                tickets = invoice.get('tickets', [])
-                passengers = invoice.get('passengers', [])
+                row = self.transactions_table.rowCount()
+                self.transactions_table.insertRow(row)
                 
-                for ticket in tickets:
-                    row = self.transactions_table.rowCount()
-                    self.transactions_table.insertRow(row)
-                    
-                    # Invoice #
-                    self.transactions_table.setItem(row, 0, QTableWidgetItem(invoice.get('invoice_number', '')))
-                    
-                    # Date
-                    self.transactions_table.setItem(row, 1, QTableWidgetItem(invoice.get('invoice_date', '')))
-                    
-                    # Customer
-                    self.transactions_table.setItem(row, 2, QTableWidgetItem(invoice.get('customer_name', '')))
-                    
-                    # Contact
-                    self.transactions_table.setItem(row, 3, QTableWidgetItem(invoice.get('customer_phone', '')))
-                    
-                    # Passenger - try to get from passengers list
-                    passenger_name = ''
-                    if passengers:
-                        passenger_name = passengers[0].get('name', '')
-                    self.transactions_table.setItem(row, 4, QTableWidgetItem(passenger_name))
-                    
-                    # Type
-                    booking_type = ticket.get('booking_type', '')
-                    self.transactions_table.setItem(row, 5, QTableWidgetItem(booking_type))
-                    
-                    # Total
-                    amount = ticket.get('total_amount', 0.0)
-                    total_value += amount
-                    transaction_count += 1
-                    
-                    amount_item = QTableWidgetItem(f"₹{amount:,.2f}")
-                    amount_item.setForeground(QColor(self.colors['accent_gold']))
-                    self.transactions_table.setItem(row, 6, amount_item)
-                    
-                    # Status
-                    payment_status = invoice.get('payment_status', 'UNPAID')
-                    if payment_status == 'PAID':
-                        status = '✅ Paid'
-                        color = self.colors['success']
-                    elif payment_status == 'PARTIAL':
-                        status = '⏳ Partial'
-                        color = self.colors.get('warning', '#FFA500')
-                    else:
-                        status = '❌ Unpaid'
-                        color = self.colors['danger']
-                    
-                    status_item = QTableWidgetItem(status)
-                    status_item.setForeground(QColor(color))
-                    self.transactions_table.setItem(row, 7, status_item)
+                transaction_count += 1
+                total_value += invoice.get('total_amount', 0.0)
+                
+                # Invoice #
+                self.transactions_table.setItem(row, 0, QTableWidgetItem(invoice.get('invoice_number', '')))
+                
+                # Date
+                self.transactions_table.setItem(row, 1, QTableWidgetItem(invoice.get('invoice_date', '')))
+                
+                # Customer
+                self.transactions_table.setItem(row, 2, QTableWidgetItem(invoice.get('customer_name', '')))
+                
+                # Contact
+                self.transactions_table.setItem(row, 3, QTableWidgetItem(invoice.get('customer_phone', '')))
+                
+                # Type - Get from first ticket or default
+                tickets = invoice.get('tickets', [])
+                booking_type = tickets[0].get('booking_type', '') if tickets else 'N/A'
+                self.transactions_table.setItem(row, 4, QTableWidgetItem(booking_type))
+                
+                # Total
+                amount = invoice.get('total_amount', 0.0)
+                amount_item = QTableWidgetItem(f"₹{amount:,.2f}")
+                amount_item.setForeground(QColor("#FFFFFF"))
+                self.transactions_table.setItem(row, 5, amount_item)
+                
+                # Status
+                payment_status = invoice.get('payment_status', 'UNPAID')
+                if payment_status == 'PAID':
+                    status = '✅ Paid'
+                    color = "#00FF00"
+                elif payment_status == 'PARTIAL':
+                    status = '⏳ Partial'
+                    color = "#FFA500"
+                else:
+                    status = '❌ Unpaid'
+                    color = "#FF0000"
+                
+                status_item = QTableWidgetItem(status)
+                status_item.setForeground(QColor(color))
+                self.transactions_table.setItem(row, 6, status_item)
             
             # Update summary
             avg_transaction = total_value / transaction_count if transaction_count > 0 else 0.0

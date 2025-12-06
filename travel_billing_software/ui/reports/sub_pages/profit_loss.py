@@ -162,28 +162,28 @@ class ProfitLossView(QWidget):
                 
                 # Sales
                 sales_item = QTableWidgetItem(f"₹{sales:,.2f}")
-                sales_item.setForeground(QColor(self.colors['success']))
+                sales_item.setForeground(QColor("#00FF00"))  # Green
                 self.profit_loss_table.setItem(row, 3, sales_item)
                 
                 # Cost
                 cost_item = QTableWidgetItem(f"₹{cost:,.2f}")
-                cost_item.setForeground(QColor(self.colors['danger']))
+                cost_item.setForeground(QColor("#FF0000"))  # Red
                 self.profit_loss_table.setItem(row, 4, cost_item)
                 
                 # Profit
                 profit_item = QTableWidgetItem(f"₹{profit:,.2f}")
                 if profit > 0:
-                    profit_item.setForeground(QColor(self.colors['success']))
+                    profit_item.setForeground(QColor("#00FF00"))  # Green
                 else:
-                    profit_item.setForeground(QColor(self.colors['danger']))
+                    profit_item.setForeground(QColor("#FF0000"))  # Red
                 self.profit_loss_table.setItem(row, 5, profit_item)
                 
                 # Margin %
                 margin_item = QTableWidgetItem(f"{margin:.2f}%")
                 if margin > 0:
-                    margin_item.setForeground(QColor(self.colors['accent_primary']))
+                    margin_item.setForeground(QColor("#FFFFFF"))  # White
                 else:
-                    margin_item.setForeground(QColor(self.colors['danger']))
+                    margin_item.setForeground(QColor("#FF0000"))  # Red
                 self.profit_loss_table.setItem(row, 6, margin_item)
             
             # Update summary

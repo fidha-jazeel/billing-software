@@ -172,17 +172,18 @@ class DayBookView(QWidget):
                 
                 # Sales
                 sales_item = QTableWidgetItem(f"₹{data['sales']:,.2f}")
-                sales_item.setForeground(QColor(self.colors['success']))
+                sales_item.setForeground(QColor("#00FF00"))  # Green for sales
                 self.daybook_table.setItem(row, 2, sales_item)
                 
                 # Purchases
                 purchases_item = QTableWidgetItem(f"₹{data['purchases']:,.2f}")
-                purchases_item.setForeground(QColor(self.colors['danger']))
+                purchases_item.setForeground(QColor("#FF0000"))  # Red for purchases
                 self.daybook_table.setItem(row, 3, purchases_item)
                 
                 # Profit
+                profit_color = "#00FF00" if profit >= 0 else "#FF0000"
                 profit_item = QTableWidgetItem(f"₹{profit:,.2f}")
-                profit_item.setForeground(QColor(self.colors['accent_primary']))
+                profit_item.setForeground(QColor(profit_color))
                 self.daybook_table.setItem(row, 4, profit_item)
             
             # Update summary

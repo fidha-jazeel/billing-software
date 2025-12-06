@@ -37,7 +37,7 @@ class PassportDetailsDialog(QDialog):
         
         self.setWindowTitle(f"Passport Details - {passenger_name}")
         self.setMinimumWidth(700)
-        self.setMinimumHeight(500)
+        self.setMinimumHeight(700)
         
         try:
             self._init_ui()

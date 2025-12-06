@@ -227,6 +227,8 @@ class ItemsTableWidget(QFrame):
             qty.setValue(1)
             qty.setDecimals(0)
             qty.setStyleSheet(spinbox_style)
+            qty.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+            qty.wheelEvent = lambda event: event.ignore()
             qty.valueChanged.connect(self.items_changed.emit)
             
             supplier_amount = QDoubleSpinBox()
@@ -234,7 +236,8 @@ class ItemsTableWidget(QFrame):
             supplier_amount.setMaximum(999999)
             supplier_amount.setValue(0)
             supplier_amount.setDecimals(2)
-            supplier_amount.setPrefix("₹ ")
+            # we have changed this to dynamic like taking this from settings
+            supplier_amount.setPrefix("SAR ")
             supplier_amount.setStyleSheet(spinbox_style)
             supplier_amount.valueChanged.connect(self.items_changed.emit)
             
