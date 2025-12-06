@@ -237,4 +237,4 @@ class LoginPage(QWidget):
     def open_change_password(self):
         """Open change password dialog"""
         dialog = ChangePasswordDialog(self)
-        dialog.exec_()
+        dialog.exec()
