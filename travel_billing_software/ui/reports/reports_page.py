@@ -559,15 +559,24 @@ class ReportsPage(QWidget):
     def _export_report(self, report_type: str, format: str):
         """Export report to PDF or Excel, then auto-refresh."""
         try:
+            current_view = self.content_stack.currentWidget()
+            table = current_view.get_table_widget()
+            
             if format == 'excel':
-                current_view = self.content_stack.currentWidget()
-                table = current_view.get_table_widget()
-                ReportExporter.export_to_csv(table, report_type, self)
+                ReportExporter.export_to_excel(table, report_type, self)
                 log_info(f"Exported {report_type} report to Excel successfully", 'billing_app')
-                # Auto-refresh after export
-                self.load_report_data()
+            elif format == 'pdf':
+                ReportExporter.export_to_pdf(table, report_type, self)
+                log_info(f"Exported {report_type} report to PDF successfully", 'billing_app')
             else:
-                QMessageBox.information(self, "Export PDF", "PDF export feature coming soon!")
+                log_warning(f"Unknown export format: {format}", 'billing_app')
+                QMessageBox.warning(self, "Export Error", f"Unknown export format: {format}")
+                return
+            
+            # Auto-refresh after export
+            self.load_report_data()
+            
         except Exception as e:
             log_error(f"Failed to export {report_type} report", exception=e, logger_name='billing_errors')
             QMessageBox.critical(self, "Export Error", f"Failed to export report:\n{str(e)}")
+

@@ -326,52 +326,130 @@ class SupplierBillingPage(QWidget):
         # Items Table with Dark Theme
         self.items_table = QTableWidget(0, 4)
         self.items_table.setHorizontalHeaderLabels(["#", "Item Description", "Amount", "Actions"])
-        self.items_table.horizontalHeader().setVisible(True)
+        
+        # Configure table styling - matching expenses page
+        self.items_table.setAlternatingRowColors(True)
         self.items_table.setStyleSheet(f"""
             QTableWidget {{
-                background-color: {self.dark_theme['bg_secondary']};
-                color: {self.dark_theme['text_primary']};
+                background-color: #1E1E1E;
+                color: #FFFFFF;
                 border: 1px solid {self.dark_theme['border']};
                 border-radius: 5px;
-                gridline-color: {self.dark_theme['border']};
+                gridline-color: #444444;
                 font-size: 13px;
+                selection-background-color: #2A2A2A;
+                selection-color: #FFFFFF;
             }}
             QHeaderView::section {{
-                background-color: #1A1A1A;
-                color: #CCCCCC;
-                padding: 12px 8px;
-                border: none;
-                border-right: 1px solid #444444;
-                border-bottom: 1px solid #444444;
-                font-weight: 600;
-                font-size: 15px;
+                background-color: #202020;
+                color: #FFFFFF;
+                font-weight: bold;
+                font-size: 13px;
+                border: 1px solid #444444;
+                padding: 6px;
                 text-align: center;
+                min-height: 45px;
+            }}
+            QHeaderView::section:hover {{
+                background-color: #2A2A2A;
             }}
             QTableWidget::item {{
-                padding: 8px;
+                padding: 8px 10px;
                 border: none;
-                color: {self.dark_theme['text_primary']};
+                background-color: #1E1E1E;
+                color: #FFFFFF;
+            }}
+            QTableWidget::item:alternate {{
+                background-color: #161616;
+                color: #FFFFFF;
             }}
             QTableWidget::item:selected {{
-                background-color: {self.dark_theme['bg_hover']};
+                background-color: #2A2A2A;
+                color: #FFFFFF;
+            }}
+            QTableWidget::item:hover {{
+                background-color: #252525;
             }}
         """)
         
-        # Configure table
+        # Configure header
         header = self.items_table.horizontalHeader()
-        header.setMinimumHeight(35)
+        header.setVisible(True)
+        header.setMinimumHeight(45)
+        header.setMaximumHeight(100)
+        header.setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.Fixed)
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.Fixed)
         header.setSectionResizeMode(3, QHeaderView.ResizeMode.Fixed)
         
-        self.items_table.setColumnWidth(0, 50)   # #
+        self.items_table.setColumnWidth(0, 60)   # #
         self.items_table.setColumnWidth(2, 150)  # AMOUNT
-        self.items_table.setColumnWidth(3, 80)   # DELETE
+        self.items_table.setColumnWidth(3, 100)  # DELETE
         
+        # Hide vertical header (row numbers)
         self.items_table.verticalHeader().setVisible(False)
+        self.items_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.items_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.items_table.setMinimumHeight(250)
         self.items_table.setMaximumHeight(400)
+        
+        # HARD RESET STYLE - Forces flat design and perfect alignment
+        self.items_table.setStyleSheet(f"""
+            /* 1. RESET THE MAIN TABLE */
+            QTableWidget {{
+                background-color: #1E1E1E;
+                color: #FFFFFF;
+                border: 1px solid {self.dark_theme['border']};
+                border-radius: 4px;
+                gridline-color: #333333;
+                selection-background-color: {self.dark_theme['accent_blue']};
+                selection-color: #FFFFFF;
+                outline: none; /* Removes focus dotted line */
+            }}
+
+            /* 2. FORCE THE HEADER CONTAINER TO BE FLAT */
+            QHeaderView {{
+                background-color: #202020;
+                border: none;
+                border-bottom: 1px solid {self.dark_theme['border']};
+                margin: 0px;
+                padding: 0px;
+            }}
+
+            /* 3. STYLE THE INDIVIDUAL SECTIONS (COLUMNS) */
+            QHeaderView::section {{
+                background-color: #202020;
+                color: #FFFFFF;
+                padding: 4px;
+                border: none; /* KEY: Removes the box around every header */
+                border-right: 1px solid #333333; /* separator between columns */
+                margin: 0px;  /* KEY: Removes the gap causing misalignment */
+                border-radius: 0px; /* KEY: Removes rounded corners */
+                font-weight: bold;
+                font-size: 13px;
+                min-height: 40px;
+            }}
+
+            /* Remove border for the last header column to look cleaner */
+            QHeaderView::section:last {{
+                border-right: none;
+            }}
+
+            /* 4. ALIGN THE DATA CELLS TO MATCH HEADERS */
+            QTableWidget::item {{
+                padding-left: 5px; /* Adjust to match Header text alignment */
+                border-bottom: 1px solid #252525;
+            }}
+            
+            /* 5. FIX THE TOP-LEFT CORNER BUTTON */
+            QTableCornerButton::section {{
+                background-color: #202020;
+                border: none;
+                border-bottom: 1px solid {self.dark_theme['border']};
+                border-right: 1px solid {self.dark_theme['border']};
+            }}
+        """)
         
         table_section.addWidget(self.items_table)
         

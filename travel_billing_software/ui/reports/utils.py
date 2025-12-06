@@ -542,12 +542,12 @@ class ReportFilters:
 
 
 class ReportExporter:
-    """Handles exporting reports to various formats (CSV, PDF)."""
+    """Handles exporting reports to various formats (Excel, PDF)."""
     
     @staticmethod
-    def export_to_csv(table: QTableWidget, report_name: str, parent_widget: QWidget):
+    def export_to_excel(table: QTableWidget, report_name: str, parent_widget: QWidget):
         """
-        Export table data to CSV file.
+        Export table data to Excel (.xlsx) file with proper formatting.
         
         Args:
             table: QTableWidget containing report data
@@ -555,42 +555,294 @@ class ReportExporter:
             parent_widget: Parent widget for dialogs
         """
         try:
+            from openpyxl import Workbook
+            from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+            from openpyxl.utils import get_column_letter
+            
             filename, _ = QFileDialog.getSaveFileName(
                 parent_widget,
                 f"Export {report_name} Report",
-                f"{report_name.lower().replace(' ', '_')}_report.csv",
-                "CSV Files (*.csv);;All Files (*.*)"
+                f"{report_name.lower().replace(' ', '_')}_report.xlsx",
+                "Excel Files (*.xlsx);;All Files (*.*)"
             )
             
-            if filename:
-                with open(filename, 'w', encoding='utf-8') as f:
-                    # Headers
-                    headers = []
-                    for col in range(table.columnCount()):
-                        headers.append(table.horizontalHeaderItem(col).text())
-                    f.write(','.join(headers) + '\n')
-                    
-                    # Data
-                    for row in range(table.rowCount()):
-                        row_data = []
-                        for col in range(table.columnCount()):
-                            item = table.item(row, col)
-                            row_data.append(item.text() if item else '')
-                        f.write(','.join(row_data) + '\n')
+            if not filename:
+                return
+            
+            # Ensure .xlsx extension
+            if not filename.endswith('.xlsx'):
+                filename += '.xlsx'
+            
+            # Create workbook and worksheet
+            wb = Workbook()
+            ws = wb.active
+            ws.title = report_name[:31]  # Excel sheet name limit
+            
+            # Define styles
+            header_font = Font(name='Calibri', size=12, bold=True, color='FFFFFF')
+            header_fill = PatternFill(start_color='000000', end_color='000000', fill_type='solid')
+            header_alignment = Alignment(horizontal='left', vertical='center', wrap_text=True)
+            
+            data_font = Font(name='Calibri', size=11)
+            data_alignment = Alignment(horizontal='left', vertical='center', wrap_text=True)
+            
+            thin_border = Border(
+                left=Side(style='thin', color='CCCCCC'),
+                right=Side(style='thin', color='CCCCCC'),
+                top=Side(style='thin', color='CCCCCC'),
+                bottom=Side(style='thin', color='CCCCCC')
+            )
+            
+            # Write headers
+            headers = []
+            for col in range(table.columnCount()):
+                header_item = table.horizontalHeaderItem(col)
+                header_text = header_item.text() if header_item else f"Column {col + 1}"
+                headers.append(header_text)
                 
-                log_info(f"Report exported to {filename}", 'billing_app')
-                QMessageBox.information(
-                    parent_widget,
-                    "Success",
-                    f"Report exported successfully!\n{filename}"
-                )
+                cell = ws.cell(row=1, column=col + 1, value=header_text)
+                cell.font = header_font
+                cell.fill = header_fill
+                cell.alignment = header_alignment
+                cell.border = thin_border
+            
+            # Set header row height
+            ws.row_dimensions[1].height = 25
+            
+            # Write data rows
+            for row in range(table.rowCount()):
+                for col in range(table.columnCount()):
+                    item = table.item(row, col)
+                    cell_value = item.text() if item else ''
+                    
+                    # Try to convert to number for better Excel formatting
+                    if cell_value.startswith('₹'):
+                        # Remove currency symbol and commas for numeric values
+                        numeric_value = cell_value.replace('₹', '').replace(',', '').strip()
+                        try:
+                            cell_value = float(numeric_value)
+                        except ValueError:
+                            pass  # Keep as string if conversion fails
+                    
+                    cell = ws.cell(row=row + 2, column=col + 1, value=cell_value)
+                    cell.font = data_font
+                    cell.alignment = data_alignment
+                    cell.border = thin_border
+                    
+                    # Format currency cells
+                    if isinstance(cell_value, (int, float)):
+                        cell.number_format = '₹#,##0.00'
+            
+            # Auto-adjust column widths
+            for col in range(1, table.columnCount() + 1):
+                column_letter = get_column_letter(col)
+                max_length = 0
+                
+                # Check header length
+                header_length = len(str(headers[col - 1]))
+                max_length = max(max_length, header_length)
+                
+                # Check data length (sample first 100 rows for performance)
+                for row in range(2, min(102, ws.max_row + 1)):
+                    try:
+                        cell_value = ws.cell(row=row, column=col).value
+                        if cell_value:
+                            cell_length = len(str(cell_value))
+                            max_length = max(max_length, cell_length)
+                    except:
+                        pass
+                
+                # Set column width (with min and max limits)
+                adjusted_width = min(max(max_length + 2, 10), 50)
+                ws.column_dimensions[column_letter].width = adjusted_width
+            
+            # Freeze header row
+            ws.freeze_panes = 'A2'
+            
+            # Save workbook
+            wb.save(filename)
+            
+            log_info(f"Report exported to Excel: {filename}", 'billing_app')
+            QMessageBox.information(
+                parent_widget,
+                "Success",
+                f"Report exported successfully to Excel!\n\n{filename}"
+            )
         
-        except Exception as e:
-            log_error(f"Failed to export report to CSV", exception=e, logger_name='billing_errors')
+        except ImportError as e:
+            log_error(f"openpyxl not installed", exception=e, logger_name='billing_errors')
             QMessageBox.critical(
                 parent_widget,
                 "Export Error",
-                f"Failed to export report:\n{str(e)}"
+                "Excel export requires 'openpyxl' package.\nPlease install it: pip install openpyxl"
+            )
+        except Exception as e:
+            log_error(f"Failed to export report to Excel", exception=e, logger_name='billing_errors')
+            QMessageBox.critical(
+                parent_widget,
+                "Export Error",
+                f"Failed to export report to Excel:\n{str(e)}"
+            )
+    
+    @staticmethod
+    def export_to_pdf(table: QTableWidget, report_name: str, parent_widget: QWidget):
+        """
+        Export table data to PDF file with proper formatting.
+        
+        Args:
+            table: QTableWidget containing report data
+            report_name: Name of the report for filename
+            parent_widget: Parent widget for dialogs
+        """
+        try:
+            from reportlab.lib import colors
+            from reportlab.lib.pagesizes import A4, landscape
+            from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+            from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+            from reportlab.lib.units import inch
+            from reportlab.pdfgen import canvas
+            
+            filename, _ = QFileDialog.getSaveFileName(
+                parent_widget,
+                f"Export {report_name} Report",
+                f"{report_name.lower().replace(' ', '_')}_report.pdf",
+                "PDF Files (*.pdf);;All Files (*.*)"
+            )
+            
+            if not filename:
+                return
+            
+            # Ensure .pdf extension
+            if not filename.endswith('.pdf'):
+                filename += '.pdf'
+            
+            # Create PDF document (landscape for better table fit)
+            doc = SimpleDocTemplate(
+                filename,
+                pagesize=landscape(A4),
+                rightMargin=30,
+                leftMargin=30,
+                topMargin=30,
+                bottomMargin=30
+            )
+            
+            # Container for the 'Flowable' objects
+            elements = []
+            
+            # Define styles
+            styles = getSampleStyleSheet()
+            title_style = ParagraphStyle(
+                'CustomTitle',
+                parent=styles['Heading1'],
+                fontSize=18,
+                textColor=colors.HexColor('#000000'),
+                spaceAfter=12,
+                alignment=1  # Center alignment
+            )
+            
+            # Add title
+            title = Paragraph(f"<b>{report_name} Report</b>", title_style)
+            elements.append(title)
+            
+            # Add date
+            from datetime import datetime
+            date_str = datetime.now().strftime("%B %d, %Y %I:%M %p")
+            date_style = ParagraphStyle(
+                'DateStyle',
+                parent=styles['Normal'],
+                fontSize=10,
+                textColor=colors.HexColor('#666666'),
+                spaceAfter=20,
+                alignment=1  # Center alignment
+            )
+            date_para = Paragraph(f"Generated on: {date_str}", date_style)
+            elements.append(date_para)
+            elements.append(Spacer(1, 0.2 * inch))
+            
+            # Prepare table data
+            table_data = []
+            
+            # Headers
+            headers = []
+            for col in range(table.columnCount()):
+                header_item = table.horizontalHeaderItem(col)
+                header_text = header_item.text() if header_item else f"Column {col + 1}"
+                headers.append(header_text)
+            table_data.append(headers)
+            
+            # Data rows
+            for row in range(table.rowCount()):
+                row_data = []
+                for col in range(table.columnCount()):
+                    item = table.item(row, col)
+                    cell_value = item.text() if item else ''
+                    row_data.append(cell_value)
+                table_data.append(row_data)
+            
+            # Create table
+            if table_data:
+                # Calculate column widths dynamically
+                page_width = landscape(A4)[0] - 60  # Subtract margins
+                num_cols = len(table_data[0])
+                col_width = page_width / num_cols
+                col_widths = [col_width] * num_cols
+                
+                pdf_table = Table(table_data, colWidths=col_widths, repeatRows=1)
+                
+                # Apply table style
+                table_style = TableStyle([
+                    # Header style
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#000000')),
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                    ('ALIGN', (0, 0), (-1, 0), 'LEFT'),
+                    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                    ('FONTSIZE', (0, 0), (-1, 0), 10),
+                    ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                    ('TOPPADDING', (0, 0), (-1, 0), 12),
+                    
+                    # Data rows style
+                    ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+                    ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+                    ('ALIGN', (0, 1), (-1, -1), 'LEFT'),
+                    ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                    ('FONTSIZE', (0, 1), (-1, -1), 9),
+                    ('TOPPADDING', (0, 1), (-1, -1), 6),
+                    ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+                    
+                    # Grid
+                    ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                    ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                    
+                    # Alternating row colors
+                    ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F5F5F5')])
+                ])
+                
+                pdf_table.setStyle(table_style)
+                elements.append(pdf_table)
+            
+            # Build PDF
+            doc.build(elements)
+            
+            log_info(f"Report exported to PDF: {filename}", 'billing_app')
+            QMessageBox.information(
+                parent_widget,
+                "Success",
+                f"Report exported successfully to PDF!\n\n{filename}"
+            )
+        
+        except ImportError as e:
+            log_error(f"reportlab not installed", exception=e, logger_name='billing_errors')
+            QMessageBox.critical(
+                parent_widget,
+                "Export Error",
+                "PDF export requires 'reportlab' package.\nPlease install it: pip install reportlab"
+            )
+        except Exception as e:
+            log_error(f"Failed to export report to PDF", exception=e, logger_name='billing_errors')
+            QMessageBox.critical(
+                parent_widget,
+                "Export Error",
+                f"Failed to export report to PDF:\n{str(e)}"
             )
 
 
