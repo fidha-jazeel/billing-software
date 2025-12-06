@@ -451,30 +451,29 @@ class SupplierPage(QWidget):
         # Configure header FIRST before enabling sorting
         header = self.suppliers_table.horizontalHeader()
         header.setVisible(True)  # Ensure header is visible
-        # header.setStyleSheet(f"""
-        #     QHeaderView::section {{
-        #         background-color: {self.colors['accent_primary']};
-        #         color: white;
-        #         padding: 6px;
-        #         border: 1px solid {self.colors['primary_bg']};
-        #         font-weight: 600;
-        #         font-size: 13px;
-        #         text-align: left;
-        #     }}
-        #     QHeaderView::section:hover {{
-        #         background-color: {self.colors['accent_secondary']};
-        #     }}
-        # """)
+        header.setStyleSheet(f"""
+            QHeaderView::section {{
+                background-color: {self.colors['accent_primary']};
+                color: white;
+                padding: 12px 8px;
+                border: 1px solid {self.colors['primary_bg']};
+                border-right: 1px solid {self.colors['primary_bg']};
+                font-weight: 600;
+                font-size: 14px;
+                text-align: left;
+            }}
+            QHeaderView::section:hover {{
+                background-color: {self.colors['accent_secondary']};
+            }}
+        """)
         header.setMinimumHeight(100)
+        header.setMinimumWidth(100)
         header.setDefaultSectionSize(150)
         header.setStretchLastSection(False)
         header.setSectionsMovable(False)
         header.setDefaultAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         
-        # Enable sorting AFTER header is configured
-        self.suppliers_table.setSortingEnabled(True)
-        
-        # Set column widths
+        # Set column widths with fixed resize mode for alignment
         column_widths = {
             0: 180,   # Supplier Name
             1: 150,   # Contact Person
@@ -498,11 +497,16 @@ class SupplierPage(QWidget):
                 self.suppliers_table.setColumnWidth(col, width)
                 header.setSectionResizeMode(col, QHeaderView.ResizeMode.Fixed)
         
+        # Enable sorting AFTER header is configured
+        self.suppliers_table.setSortingEnabled(False)  # Disable during population
+        
         # Configure vertical header - hide row numbers
         self.suppliers_table.verticalHeader().setVisible(False)
+        self.suppliers_table.verticalHeader().setDefaultSectionSize(40)  # Set consistent row height
         
-        # Table styling - Dark theme compatible
+        # Table styling - Dark theme compatible with proper grid lines
         self.suppliers_table.setAlternatingRowColors(True)
+        self.suppliers_table.setShowGrid(True)  # Enable grid lines
         self.suppliers_table.setStyleSheet(self.get_table_style() + f"""
             QTableWidget {{
                 background-color: {self.colors['secondary_bg']};
@@ -514,10 +518,12 @@ class SupplierPage(QWidget):
                 border: 1px solid #3a3a3a;
             }}
             QTableWidget::item {{
-                padding: 8px 10px;
-                border: none;
+                padding: 5px 8px;
+                border-right: 1px solid #3a3a3a;
+                border-bottom: 1px solid #3a3a3a;
                 color: {self.colors['text_primary']};
                 background-color: {self.colors['secondary_bg']};
+                height: 40px;
             }}
             QTableWidget::item:alternate {{
                 background-color: {self.colors['primary_bg']};
@@ -531,6 +537,7 @@ class SupplierPage(QWidget):
         self.suppliers_table.setMinimumHeight(500)
         self.suppliers_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.suppliers_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.suppliers_table.setWordWrap(False)  # Prevent text wrapping that causes misalignment
     
     def _load_suppliers(self):
         """Load suppliers from database."""
