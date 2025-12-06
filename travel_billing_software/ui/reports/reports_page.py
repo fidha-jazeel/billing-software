@@ -81,7 +81,7 @@ class ReportsPage(QWidget):
         # Store all invoices for filtering
         self.all_invoices = []
         
-        # Store filter widgets for each report to ensure proper connections
+        # Store filter widgets for each report (indexed by report index)
         self.filter_widgets = {}
         
         # Initialize all 8 sub-page views
@@ -239,6 +239,7 @@ class ReportsPage(QWidget):
             apply_callback=self._handle_filter_change,
             clear_callback=self._clear_filters
         )
+        self.filter_widgets[0] = filters_section  # Store filter widget by report index
         self.sale_report.set_filters_widget(filters_section)
         payment_summary = self._create_payment_summary_section()
         self.sale_report.set_payment_summary_widget(payment_summary)
@@ -249,6 +250,7 @@ class ReportsPage(QWidget):
             apply_callback=self._handle_filter_change,
             clear_callback=self._clear_filters
         )
+        self.filter_widgets[1] = filters_section  # Store filter widget by report index
         self.purchase_report.set_filters_widget(filters_section)
         self.content_stack.addWidget(self.purchase_report)
         
@@ -257,6 +259,7 @@ class ReportsPage(QWidget):
             apply_callback=self._handle_filter_change,
             clear_callback=self._clear_filters
         )
+        self.filter_widgets[2] = filters_section  # Store filter widget by report index
         self.all_transactions.set_filters_widget(filters_section)
         self.content_stack.addWidget(self.all_transactions)
         
@@ -265,6 +268,7 @@ class ReportsPage(QWidget):
             apply_callback=self._handle_filter_change,
             clear_callback=self._clear_filters
         )
+        self.filter_widgets[3] = filters_section  # Store filter widget by report index
         self.day_book.set_filters_widget(filters_section)
         self.content_stack.addWidget(self.day_book)
         
@@ -273,6 +277,7 @@ class ReportsPage(QWidget):
             apply_callback=self._handle_filter_change,
             clear_callback=self._clear_filters
         )
+        self.filter_widgets[4] = filters_section  # Store filter widget by report index
         self.profit_loss.set_filters_widget(filters_section)
         self.content_stack.addWidget(self.profit_loss)
         
@@ -281,6 +286,7 @@ class ReportsPage(QWidget):
             apply_callback=self._handle_filter_change,
             clear_callback=self._clear_filters
         )
+        self.filter_widgets[5] = filters_section  # Store filter widget by report index
         self.bill_wise_profit.set_filters_widget(filters_section)
         self.content_stack.addWidget(self.bill_wise_profit)
         
@@ -289,6 +295,7 @@ class ReportsPage(QWidget):
             apply_callback=self._handle_filter_change,
             clear_callback=self._clear_filters
         )
+        self.filter_widgets[6] = filters_section  # Store filter widget by report index
         self.cash_transactions.set_filters_widget(filters_section)
         self.content_stack.addWidget(self.cash_transactions)
         
@@ -297,6 +304,7 @@ class ReportsPage(QWidget):
             apply_callback=self._handle_filter_change,
             clear_callback=self._clear_filters
         )
+        self.filter_widgets[7] = filters_section  # Store filter widget by report index
         self.balance_report.set_filters_widget(filters_section)
         self.content_stack.addWidget(self.balance_report)
     
@@ -388,12 +396,14 @@ class ReportsPage(QWidget):
             self.all_invoices = self.db_operations.load_all_invoices()
             log_info(f"Loaded {len(self.all_invoices)} invoices from database", 'billing_app')
             
-            # Apply filters
+            # Apply filters - switch to current report's filter widget first
             if filters is None:
-                # Use current filter widget values
+                # Update filter references to current report's widgets before filtering
+                self._switch_filter_context(current_index)
                 filtered_invoices = self.filters.apply_filters(self.all_invoices)
             else:
                 # Apply provided filter dict (future enhancement)
+                self._switch_filter_context(current_index)
                 filtered_invoices = self.filters.apply_filters(self.all_invoices)
             
             log_info(
@@ -466,6 +476,39 @@ class ReportsPage(QWidget):
         except Exception as e:
             log_error("Error updating payment summary", exception=e, logger_name='billing_errors')
     
+    def _switch_filter_context(self, report_index: int):
+        """
+        Switch the ReportFilters instance to read from the specified report's widgets.
+        This ensures apply_filters() reads from the correct filter widget.
+        
+        Args:
+            report_index: Index of the report (0-7) whose filter widgets to use
+        """
+        try:
+            if report_index not in self.filter_widgets:
+                log_warning(f"No filter widget found for report index {report_index}", 'billing_app')
+                return
+            
+            current_filter_frame = self.filter_widgets[report_index]
+            
+            # Retrieve widget references that were stored as properties on the filter_frame
+            # These were set in ReportFilters.create_filter_section()
+            if hasattr(current_filter_frame, 'filter_from_date'):
+                self.filters.filter_from_date = current_filter_frame.filter_from_date
+                self.filters.filter_to_date = current_filter_frame.filter_to_date
+                self.filters.filter_contact = current_filter_frame.filter_contact
+                self.filters.filter_passenger = current_filter_frame.filter_passenger
+                self.filters.filter_sector = current_filter_frame.filter_sector
+                self.filters.filter_supplier = current_filter_frame.filter_supplier
+                self.filters.filter_type = current_filter_frame.filter_type
+                
+                log_info(f"Switched filter context to report index {report_index}", 'billing_app')
+            else:
+                log_error(f"Filter widgets not found on filter_frame for report {report_index}", logger_name='billing_errors')
+            
+        except Exception as e:
+            log_error(f"Error switching filter context to report {report_index}", exception=e, logger_name='billing_errors')
+    
     def _handle_filter_change(self):
         """
         Handle Apply Filters button click.
@@ -491,6 +534,10 @@ class ReportsPage(QWidget):
         """
         try:
             log_info("Clear Filters clicked - resetting all filters", 'billing_app')
+            
+            # Switch to current report's filter context first
+            current_index = self.content_stack.currentIndex()
+            self._switch_filter_context(current_index)
             
             # Reset all filter input fields to initial state
             self.filters.clear_filters()

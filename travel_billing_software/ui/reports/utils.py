@@ -277,6 +277,15 @@ class ReportFilters:
         
         toggle_btn.clicked.connect(toggle_filters)
         
+        # Store widget references as properties of the filter_frame for later retrieval
+        filter_frame.filter_from_date = self.filter_from_date
+        filter_frame.filter_to_date = self.filter_to_date
+        filter_frame.filter_contact = self.filter_contact
+        filter_frame.filter_passenger = self.filter_passenger
+        filter_frame.filter_sector = self.filter_sector
+        filter_frame.filter_supplier = self.filter_supplier
+        filter_frame.filter_type = self.filter_type
+        
         log_info("Filter section created (collapsible)", 'billing_app')
         return filter_frame
     
