@@ -433,9 +433,6 @@ class DashboardImproved(QMainWindow):
             QHeaderView::section {{
                 background-color: {COLORS['secondary_bg']};
                 color: {COLORS['text_primary']};
-                padding: 8px;
-                border: 1px solid {COLORS['border_primary']};
-                border-bottom: 2px solid {COLORS['accent_primary']};
                 font-weight: 600;
                 font-size: 15px;
             }}
