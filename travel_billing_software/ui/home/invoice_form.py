@@ -207,9 +207,7 @@ class InvoiceFormWidget(QFrame):
         # Disable editing - dropdown selection only
         self.invoice_type.setEditable(False)
         
-        # Add empty placeholder first, then load types from database
-        self.invoice_type.addItem("")  # Empty option for no selection
-        
+        # Load types from database without empty placeholder
         if self.db:
             try:
                 types = self.db.get_dropdown_items('type')
@@ -223,8 +221,9 @@ class InvoiceFormWidget(QFrame):
         else:
             self.invoice_type.addItems(["Visa", "Ticket", "Hajj", "Umra"])
         
-        # Set placeholder behavior by starting with empty selection
-        self.invoice_type.setCurrentIndex(0)
+        # Set first item as default
+        if self.invoice_type.count() > 0:
+            self.invoice_type.setCurrentIndex(0)
         
         self.invoice_type.setStyleSheet(self._get_custom_combobox_style())
         self.invoice_type.setMinimumWidth(250)
@@ -601,9 +600,8 @@ class InvoiceFormWidget(QFrame):
             # Store current selection
             current_type = self.invoice_type.currentText()
             
-            # Clear and reload
+            # Clear and reload without empty option
             self.invoice_type.clear()
-            self.invoice_type.addItem("")  # Empty option for no selection
             
             # Load types from database
             types = self.db.get_dropdown_items('type')
@@ -611,14 +609,16 @@ class InvoiceFormWidget(QFrame):
                 self.invoice_type.addItems(types)
             
             # Restore selection if still valid
-            if current_type:  # Only restore if not empty
+            if current_type and types:  # Only restore if not empty and types exist
                 idx = self.invoice_type.findText(current_type)
                 if idx >= 0:
                     self.invoice_type.setCurrentIndex(idx)
                 else:
-                    self.invoice_type.setCurrentIndex(0)  # Default to empty
+                    self.invoice_type.setCurrentIndex(0)  # Default to first item
             else:
-                self.invoice_type.setCurrentIndex(0)  # Keep empty
+                # Default to first item if dropdown has items
+                if self.invoice_type.count() > 0:
+                    self.invoice_type.setCurrentIndex(0)
                 
             log_info("Type dropdown refreshed successfully", "invoice_form")
         except Exception as e:

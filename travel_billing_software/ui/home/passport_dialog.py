@@ -180,8 +180,8 @@ class PassportDetailsDialog(QDialog):
         self.full_name.setMinimumHeight(40)
         form_layout.addWidget(self.full_name, 1, 1)
         
-        # Row 2: Date of Birth *
-        dob_label = QLabel("<b>Date of Birth: *</b>")
+        # Row 2: Date of Birth
+        dob_label = QLabel("<b>Date of Birth:</b>")
         dob_label.setStyleSheet(label_style)
         form_layout.addWidget(dob_label, 2, 0)
         
@@ -192,8 +192,8 @@ class PassportDetailsDialog(QDialog):
         self.dob.setMinimumHeight(40)
         form_layout.addWidget(self.dob, 2, 1)
         
-        # Row 3: Nationality *
-        nationality_label = QLabel("<b>Nationality: *</b>")
+        # Row 3: Nationality
+        nationality_label = QLabel("<b>Nationality:</b>")
         nationality_label.setStyleSheet(label_style)
         form_layout.addWidget(nationality_label, 3, 0)
         
@@ -203,8 +203,8 @@ class PassportDetailsDialog(QDialog):
         self.nationality.setMinimumHeight(40)
         form_layout.addWidget(self.nationality, 3, 1)
         
-        # Row 4: Gender *
-        gender_label = QLabel("<b>Gender: *</b>")
+        # Row 4: Gender
+        gender_label = QLabel("<b>Gender:</b>")
         gender_label.setStyleSheet(label_style)
         form_layout.addWidget(gender_label, 4, 0)
         
@@ -225,8 +225,8 @@ class PassportDetailsDialog(QDialog):
         self.place_of_birth.setMinimumHeight(40)
         form_layout.addWidget(self.place_of_birth, 5, 1)
         
-        # Row 6: Issue Date *
-        issue_date_label = QLabel("<b>Issue Date: *</b>")
+        # Row 6: Issue Date
+        issue_date_label = QLabel("<b>Issue Date:</b>")
         issue_date_label.setStyleSheet(label_style)
         form_layout.addWidget(issue_date_label, 6, 0)
         
@@ -237,8 +237,8 @@ class PassportDetailsDialog(QDialog):
         self.issue_date.setMinimumHeight(40)
         form_layout.addWidget(self.issue_date, 6, 1)
         
-        # Row 7: Expiry Date *
-        expiry_date_label = QLabel("<b>Expiry Date: *</b>")
+        # Row 7: Expiry Date
+        expiry_date_label = QLabel("<b>Expiry Date:</b>")
         expiry_date_label.setStyleSheet(label_style)
         form_layout.addWidget(expiry_date_label, 7, 0)
         
@@ -249,8 +249,8 @@ class PassportDetailsDialog(QDialog):
         self.expiry_date.setMinimumHeight(40)
         form_layout.addWidget(self.expiry_date, 7, 1)
         
-        # Row 8: Issuing Authority *
-        issuing_auth_label = QLabel("<b>Issuing Authority: *</b>")
+        # Row 8: Issuing Authority
+        issuing_auth_label = QLabel("<b>Issuing Authority:</b>")
         issuing_auth_label.setStyleSheet(label_style)
         form_layout.addWidget(issuing_auth_label, 8, 0)
         
@@ -306,6 +306,7 @@ class PassportDetailsDialog(QDialog):
         """
         Validate and save passport details.
         Shows validation errors if mandatory fields are missing.
+        Silently saves and closes without success popup.
         """
         try:
             # Validate mandatory fields
@@ -338,12 +339,7 @@ class PassportDetailsDialog(QDialog):
                 "passport_dialog"
             )
             
-            QMessageBox.information(
-                self,
-                "Success",
-                f"Passport details saved for {self.full_name.text()}!"
-            )
-            
+            # Silent save - close immediately without success popup
             self.accept()  # Close with accepted status
             
         except Exception as e:
@@ -371,16 +367,7 @@ class PassportDetailsDialog(QDialog):
         if not self.full_name.text().strip():
             return "Full Name is required."
         
-        if not self.nationality.text().strip():
-            return "Nationality is required."
-        
-        if self.gender.currentText() == "Select":
-            return "Please select Gender."
-        
-        if not self.issuing_authority.text().strip():
-            return "Issuing Authority is required."
-        
-        # Validate date logic
+        # Optional validation: Check date logic only if both dates are set
         if self.issue_date.date() >= self.expiry_date.date():
             return "Expiry Date must be after Issue Date."
         
