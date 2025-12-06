@@ -448,41 +448,46 @@ class SupplierPage(QWidget):
     
     def _configure_table(self):
         """Configure table appearance and behavior."""
-        # Enable sorting
-        self.suppliers_table.setSortingEnabled(True)
-        
-        # Configure header
+        # Configure header FIRST before enabling sorting
         header = self.suppliers_table.horizontalHeader()
-        header.setStyleSheet(f"""
-            QHeaderView::section {{
-                background-color: {self.colors['accent_primary']};
-                color: white;
-                padding: 12px 8px;
-                border: none;
-                border-right: 1px solid {self.colors['primary_bg']};
-                font-weight: 600;
-                font-size: 15px;
-            }}
-            QHeaderView::section:hover {{
-                background-color: {self.colors['accent_secondary']};
-            }}
-        """)
-        header.setMinimumHeight(35)
+        header.setVisible(True)  # Ensure header is visible
+        # header.setStyleSheet(f"""
+        #     QHeaderView::section {{
+        #         background-color: {self.colors['accent_primary']};
+        #         color: white;
+        #         padding: 6px;
+        #         border: 1px solid {self.colors['primary_bg']};
+        #         font-weight: 600;
+        #         font-size: 13px;
+        #         text-align: left;
+        #     }}
+        #     QHeaderView::section:hover {{
+        #         background-color: {self.colors['accent_secondary']};
+        #     }}
+        # """)
+        header.setMinimumHeight(100)
+        header.setDefaultSectionSize(150)
+        header.setStretchLastSection(False)
+        header.setSectionsMovable(False)
+        header.setDefaultAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        
+        # Enable sorting AFTER header is configured
+        self.suppliers_table.setSortingEnabled(True)
         
         # Set column widths
         column_widths = {
             0: 180,   # Supplier Name
-            1: 130,   # Contact Person
-            2: 110,   # Phone
-            3: 160,   # Email
+            1: 150,   # Contact Person
+            2: 120,   # Phone
+            3: 180,   # Email
             4: 150,   # Company
-            5: 130,   # Payment Terms
-            6: 140,   # Pending Amount
-            7: 130,   # Amount Paid
-            8: 160,   # Received from Supplier
+            5: 140,   # Payment Terms
+            6: 150,   # Pending Amount
+            7: 140,   # Amount Paid
+            8: 180,   # Received from Supplier
             9: 110,   # GST
             10: 120,  # Created Date
-            11: 200,  # Actions
+            11: 220,  # Actions
             12: 0     # ID (hidden)
         }
         
@@ -491,21 +496,10 @@ class SupplierPage(QWidget):
                 self.suppliers_table.setColumnHidden(col, True)
             else:
                 self.suppliers_table.setColumnWidth(col, width)
+                header.setSectionResizeMode(col, QHeaderView.ResizeMode.Fixed)
         
-        header.setStretchLastSection(False)
-        header.setSectionsMovable(False)
-        
-        # Configure vertical header
-        self.suppliers_table.verticalHeader().setVisible(True)
-        self.suppliers_table.verticalHeader().setDefaultSectionSize(50)
-        self.suppliers_table.verticalHeader().setStyleSheet(f"""
-            QHeaderView::section {{
-                background-color: {self.colors['secondary_bg']};
-                color: {self.colors['text_primary']};
-                border: 1px solid #3a3a3a;
-                padding: 4px;
-            }}
-        """)
+        # Configure vertical header - hide row numbers
+        self.suppliers_table.verticalHeader().setVisible(False)
         
         # Table styling - Dark theme compatible
         self.suppliers_table.setAlternatingRowColors(True)
