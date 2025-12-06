@@ -442,9 +442,10 @@ class ReportsPage(QWidget):
         elif index == 5:
             self.bill_wise_profit.populate(filtered_invoices)
         elif index == 6:
-            # Cash Transactions needs special handling - get cash payments from DB
-            cash_payments = self.db_operations.get_cash_payments()
-            self.cash_transactions.populate(invoices=filtered_invoices, cash_payments=cash_payments)
+            # Cash Transactions needs special handling - get both received and paid cash
+            cash_received = self.db_operations.get_cash_payments()
+            cash_paid = self.db_operations.get_cash_supplier_payments()
+            self.cash_transactions.populate(invoices=filtered_invoices, cash_received=cash_received, cash_paid=cash_paid)
         elif index == 7:
             self.balance_report.populate(filtered_invoices)
     

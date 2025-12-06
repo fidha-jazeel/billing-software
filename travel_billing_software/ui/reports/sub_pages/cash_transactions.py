@@ -8,6 +8,7 @@ Table: 8 columns - Date, Invoice #, Customer, Contact, Cash Received,
 Summary: Total Cash Received, Total Cash Paid, Net Cash Flow
 Logic: Show invoices with cash payment mode
 """
+from datetime import datetime
 from typing import List, Dict, Any
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QScrollArea,
@@ -115,20 +116,50 @@ class CashTransactionsView(QWidget):
         self.filters_placeholder.deleteLater()
         layout.insertWidget(index, filters_widget)
     
-    def populate(self, invoices: List[Dict[str, Any]] = None, cash_payments: List[Dict[str, Any]] = None):
+    def populate(self, invoices: List[Dict[str, Any]] = None, cash_received: List[Dict[str, Any]] = None, cash_paid: List[Dict[str, Any]] = None):
         """
         Populate cash transactions report.
         
         Args:
             invoices: Not used - kept for compatibility
-            cash_payments: List of cash payment records from payments_received table
+            cash_received: List of cash payment records received from customers
+            cash_paid: List of cash payment records paid to suppliers
         """
         try:
             log_info("Populating cash transactions report", 'billing_app')
             
             self.cash_transactions_table.setRowCount(0)
             
-            if not cash_payments:
+            # Combine both received and paid transactions
+            all_transactions = []
+            
+            if cash_received:
+                for payment in cash_received:
+                    all_transactions.append({
+                        'date': payment.get('date', ''),
+                        'reference': payment.get('invoice_number', ''),
+                        'party': payment.get('customer_name', ''),
+                        'contact': payment.get('customer_phone', ''),
+                        'received': payment.get('amount', 0.0),
+                        'paid': 0.0,
+                        'balance': payment.get('total_amount', 0.0) - payment.get('amount', 0.0),
+                        'type': 'RECEIVED'
+                    })
+            
+            if cash_paid:
+                for payment in cash_paid:
+                    all_transactions.append({
+                        'date': payment.get('date', ''),
+                        'reference': payment.get('reference_number', '-'),
+                        'party': payment.get('supplier_name', ''),
+                        'contact': payment.get('supplier_phone', ''),
+                        'received': 0.0,
+                        'paid': payment.get('amount', 0.0),
+                        'balance': -payment.get('amount', 0.0),  # Negative for paid out
+                        'type': 'PAID'
+                    })
+            
+            if not all_transactions:
                 log_warning("No cash transactions found", 'billing_app')
                 show_no_records_message(self, "Cash Transactions")
                 SummaryCardManager.update_summary_cards(self.summary_frame, [
@@ -136,57 +167,77 @@ class CashTransactionsView(QWidget):
                 ])
                 return
             
-            total_received = 0.0
+            # Sort by date (most recent first)
+            try:
+                all_transactions.sort(key=lambda x: datetime.strptime(x['date'], '%d/%m/%Y'), reverse=True)
+            except:
+                pass  # If date parsing fails, keep original order
             
-            for payment in cash_payments:
+            total_received = 0.0
+            total_paid = 0.0
+            
+            for transaction in all_transactions:
                 row = self.cash_transactions_table.rowCount()
                 self.cash_transactions_table.insertRow(row)
                 
-                cash_received = payment.get('amount', 0.0)
-                total_amount = payment.get('total_amount', 0.0)
-                balance = total_amount - cash_received
+                cash_received_amt = transaction['received']
+                cash_paid_amt = transaction['paid']
+                balance = transaction['balance']
                 
-                total_received += cash_received
+                total_received += cash_received_amt
+                total_paid += cash_paid_amt
                 
                 # Date
-                self.cash_transactions_table.setItem(row, 0, QTableWidgetItem(payment.get('date', '')))
+                self.cash_transactions_table.setItem(row, 0, QTableWidgetItem(transaction['date']))
                 
-                # Invoice #
-                self.cash_transactions_table.setItem(row, 1, QTableWidgetItem(payment.get('invoice_number', '')))
+                # Reference (Invoice # or Payment Reference)
+                self.cash_transactions_table.setItem(row, 1, QTableWidgetItem(transaction['reference']))
                 
-                # Customer (Payer)
-                self.cash_transactions_table.setItem(row, 2, QTableWidgetItem(payment.get('customer_name', '')))
+                # Party (Customer or Supplier)
+                party_text = transaction['party']
+                if transaction['type'] == 'PAID':
+                    party_text = f"🔴 {party_text}"  # Mark supplier payments
+                else:
+                    party_text = f"🟢 {party_text}"  # Mark customer receipts
+                self.cash_transactions_table.setItem(row, 2, QTableWidgetItem(party_text))
                 
                 # Contact
-                self.cash_transactions_table.setItem(row, 3, QTableWidgetItem(payment.get('customer_phone', '')))
+                self.cash_transactions_table.setItem(row, 3, QTableWidgetItem(transaction['contact']))
                 
                 # Cash Received
-                received_item = QTableWidgetItem(f"₹{cash_received:,.2f}")
-                received_item.setForeground(QColor("#00FF00"))  # Green
+                received_item = QTableWidgetItem(f"₹{cash_received_amt:,.2f}")
+                if cash_received_amt > 0:
+                    received_item.setForeground(QColor("#00FF00"))  # Green
                 self.cash_transactions_table.setItem(row, 4, received_item)
                 
-                # Cash Paid (always 0 for now)
-                paid_item = QTableWidgetItem("₹0.00")
-                paid_item.setForeground(QColor("#FF0000"))  # Red
+                # Cash Paid
+                paid_item = QTableWidgetItem(f"₹{cash_paid_amt:,.2f}")
+                if cash_paid_amt > 0:
+                    paid_item.setForeground(QColor("#FF0000"))  # Red
                 self.cash_transactions_table.setItem(row, 5, paid_item)
                 
                 # Balance
-                balance_item = QTableWidgetItem(f"₹{balance:,.2f}")
+                balance_item = QTableWidgetItem(f"₹{abs(balance):,.2f}")
                 if balance > 0:
                     balance_item.setForeground(QColor("#FF0000"))  # Red (still owed)
+                elif balance < 0:
+                    balance_item.setForeground(QColor("#FFA500"))  # Orange (paid out)
                 else:
-                    balance_item.setForeground(QColor("#00FF00"))  # Green (paid)
+                    balance_item.setForeground(QColor("#00FF00"))  # Green (settled)
                 self.cash_transactions_table.setItem(row, 6, balance_item)
                 
                 # Status
-                if balance <= 0:
-                    status = '✅ Paid'
+                if transaction['type'] == 'PAID':
+                    status = '🔴 Paid Out'
+                    color = "#FF0000"
+                elif balance <= 0:
+                    status = '✅ Received'
                     color = "#00FF00"
-                elif cash_received > 0 and balance > 0:
+                elif cash_received_amt > 0 and balance > 0:
                     status = '🟡 Partial'
                     color = "#FFA500"
                 else:
-                    status = '🔴 Unpaid'
+                    status = '🔴 Pending'
                     color = "#FF0000"
                 
                 status_item = QTableWidgetItem(status)
@@ -194,14 +245,18 @@ class CashTransactionsView(QWidget):
                 self.cash_transactions_table.setItem(row, 7, status_item)
             
             # Update summary
-            net_cash_flow = total_received  # No cash paid out in this implementation
+            net_cash_flow = total_received - total_paid
             SummaryCardManager.update_summary_cards(self.summary_frame, [
                 f"₹{total_received:,.2f}",
-                "₹0.00",
+                f"₹{total_paid:,.2f}",
                 f"₹{net_cash_flow:,.2f}"
             ])
             
-            log_info(f"Cash transactions populated: {len(cash_payments)} transactions, Total: ₹{total_received:,.2f}", 'billing_app')
+            log_info(
+                f"Cash transactions populated: {len(all_transactions)} transactions, "
+                f"Received: ₹{total_received:,.2f}, Paid: ₹{total_paid:,.2f}, Net: ₹{net_cash_flow:,.2f}",
+                'billing_app'
+            )
             
         except Exception as e:
             log_error("Error populating cash transactions report", exception=e, logger_name='billing_errors')

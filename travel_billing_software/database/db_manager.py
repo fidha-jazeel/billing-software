@@ -854,24 +854,41 @@ class DatabaseManager:
                             **passport_kwargs
                         )
             
-            # Record payment if received amount > 0
-            received = invoice_data.get('received_amount', 0.00)
-            if received > 0:
+            # Handle payment record - delete old payment records for this invoice first
+            cur.execute("DELETE FROM payments_received WHERE invoice_id = ?", (invoice_id,))
+            
+            # Record payment if paid amount > 0
+            paid = invoice_data.get('paid_amount', 0.00)
+            if paid > 0:
+                # Map payment mode from UI to database format
+                payment_mode_map = {
+                    'Cash': 'CASH',
+                    'Bank Transfer': 'BANK',
+                    'Card': 'CARD',
+                    'Google Pay': 'UPI',
+                    'Other': 'OTHER'
+                }
+                ui_payment_mode = invoice_data.get('payment_mode', 'Cash')
+                db_payment_mode = payment_mode_map.get(ui_payment_mode, 'CASH')
+                
                 self.add_payment_received(
                     contact_id,
                     invoice_id,
-                    received,
-                    invoice_data.get('payment_mode', 'CASH'),
+                    paid,
+                    db_payment_mode,
                     datetime.now().strftime('%Y-%m-%d'),
                     invoice_data.get('payment_notes', '')
                 )
                 
                 # Update payment status
-                total = invoice_data.get('total_amount', 0.00)
-                if received >= total:
+                total = invoice_data.get('grand_total', 0.00)
+                if paid >= total:
                     cur.execute("UPDATE invoices SET payment_status = 'PAID' WHERE id = ?", (invoice_id,))
                 else:
                     cur.execute("UPDATE invoices SET payment_status = 'PARTIAL' WHERE id = ?", (invoice_id,))
+            else:
+                # No payment made, set status to PENDING
+                cur.execute("UPDATE invoices SET payment_status = 'PENDING' WHERE id = ?", (invoice_id,))
             
             # Commit transaction
             self.conn.commit()

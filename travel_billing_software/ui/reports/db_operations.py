@@ -417,15 +417,207 @@ class ReportsDBOperations:
                                     'amount': float(payment.get('amount', 0)),
                                     'total_amount': float(inv_row['total_amount']),
                                     'reference_number': payment.get('reference_number', ''),
-                                    'notes': payment.get('notes', '')
+                                    'notes': payment.get('notes', ''),
+                                    'type': 'RECEIVED'  # Mark as received payment
                                 })
                         except Exception as e:
                             log_warning(f"Error enriching payment {payment.get('id')}: {e}", 'billing_app')
                             continue
             
-            log_info(f"Loaded {len(cash_payments)} cash payments", 'billing_app')
+            log_info(f"Loaded {len(cash_payments)} cash payments received", 'billing_app')
             return cash_payments
             
         except Exception as e:
             log_error("Failed to load cash payments", exception=e, logger_name='billing_errors')
             return []
+    
+    def get_cash_supplier_payments(self) -> List[Dict[str, Any]]:
+        """
+        Fetch all CASH supplier payments from supplier_payments table.
+        
+        Returns:
+            List of supplier payment records with supplier details
+        """
+        try:
+            cur = self.db.conn.cursor()
+            cur.execute("""
+                SELECT sp.date, sp.amount, sp.payment_mode, sp.reference_number, sp.notes,
+                       c.name as supplier_name, c.phone as supplier_phone
+                FROM supplier_payments sp
+                LEFT JOIN contacts c ON sp.supplier_id = c.id
+                WHERE sp.payment_mode = 'CASH'
+                ORDER BY sp.date DESC
+            """)
+            
+            cash_supplier_payments = []
+            for row in cur.fetchall():
+                payment_date = row['date']
+                try:
+                    date_obj = datetime.strptime(payment_date, '%Y-%m-%d')
+                    formatted_date = date_obj.strftime('%d/%m/%Y')
+                except:
+                    formatted_date = payment_date
+                
+                cash_supplier_payments.append({
+                    'date': formatted_date,
+                    'supplier_name': row['supplier_name'],
+                    'supplier_phone': row['supplier_phone'],
+                    'amount': float(row['amount']),
+                    'reference_number': row['reference_number'] or '',
+                    'notes': row['notes'] or '',
+                    'type': 'PAID'  # Mark as payment made
+                })
+            
+            log_info(f"Loaded {len(cash_supplier_payments)} cash supplier payments", 'billing_app')
+            return cash_supplier_payments
+            
+        except Exception as e:
+            log_error("Failed to load cash supplier payments", exception=e, logger_name='billing_errors')
+            return []
+
+
+if __name__ == "__main__":
+    """
+    Test script to verify all ReportsDBOperations methods are working correctly.
+    Run this file directly to test database operations.
+    """
+    print("=" * 80)
+    print("TESTING ReportsDBOperations - Database Operations for Reports")
+    print("=" * 80)
+    
+    try:
+        # Initialize the database operations
+        print("\n[1] Initializing ReportsDBOperations...")
+        db_ops = ReportsDBOperations()
+        print("✓ ReportsDBOperations initialized successfully")
+        
+        # Test 1: Load all invoices
+        print("\n[2] Testing load_all_invoices()...")
+        invoices = db_ops.load_all_invoices()
+        print(f"✓ Loaded {len(invoices)} invoices")
+        if invoices:
+            sample = invoices[0]
+            print(f"   Sample Invoice: {sample['invoice_number']}")
+            print(f"   Customer: {sample['customer_name']} ({sample['customer_phone']})")
+            print(f"   Total: ₹{sample['total_amount']:,.2f}")
+            print(f"   Paid: ₹{sample['paid_amount']:,.2f}")
+            print(f"   Balance: ₹{sample['balance']:,.2f}")
+            print(f"   Status: {sample['payment_status']}")
+            print(f"   Tickets: {len(sample['tickets'])}")
+            print(f"   Passengers: {len(sample['passengers'])}")
+        else:
+            print("   ⚠ No invoices found in database")
+        
+        # Test 2: Get all payments summary
+        print("\n[3] Testing get_all_payments_summary()...")
+        payment_summary = db_ops.get_all_payments_summary()
+        print(f"✓ Payment Summary Retrieved:")
+        print(f"   Total Cash Received: ₹{payment_summary['cash']:,.2f}")
+        print(f"   Total Bank Received: ₹{payment_summary['bank']:,.2f}")
+        print(f"   Grand Total: ₹{payment_summary['cash'] + payment_summary['bank']:,.2f}")
+        
+        # Test 3: Get cash payments
+        print("\n[4] Testing get_cash_payments()...")
+        cash_payments = db_ops.get_cash_payments()
+        print(f"✓ Loaded {len(cash_payments)} cash payments (received)")
+        if cash_payments:
+            sample_payment = cash_payments[0]
+            print(f"   Sample Payment:")
+            print(f"   Date: {sample_payment['date']}")
+            print(f"   Invoice: {sample_payment['invoice_number']}")
+            print(f"   Customer: {sample_payment['customer_name']}")
+            print(f"   Amount: ₹{sample_payment['amount']:,.2f}")
+        else:
+            print("   ⚠ No cash payments found")
+        
+        # Test 4: Get cash supplier payments
+        print("\n[5] Testing get_cash_supplier_payments()...")
+        supplier_payments = db_ops.get_cash_supplier_payments()
+        print(f"✓ Loaded {len(supplier_payments)} cash supplier payments (paid)")
+        if supplier_payments:
+            sample_sp = supplier_payments[0]
+            print(f"   Sample Supplier Payment:")
+            print(f"   Date: {sample_sp['date']}")
+            print(f"   Supplier: {sample_sp['supplier_name']}")
+            print(f"   Amount: ₹{sample_sp['amount']:,.2f}")
+        else:
+            print("   ⚠ No supplier cash payments found")
+        
+        # Test 5: Calculate profit metrics
+        if invoices:
+            print("\n[6] Testing calculate_profit_metrics()...")
+            profit_metrics = db_ops.calculate_profit_metrics(invoices)
+            print(f"✓ Profit Metrics Calculated:")
+            print(f"   Total Sales: ₹{profit_metrics['total_sale']:,.2f}")
+            print(f"   Total Cost: ₹{profit_metrics['total_cost']:,.2f}")
+            print(f"   Gross Profit: ₹{profit_metrics['gross_profit']:,.2f}")
+            print(f"   Profit Margin: {profit_metrics['profit_margin']:.2f}%")
+        
+        # Test 6: Calculate balance report
+        print("\n[7] Testing calculate_balance_report()...")
+        balance_report = db_ops.calculate_balance_report()
+        print(f"✓ Balance Report Generated for {len(balance_report)} customers")
+        if balance_report:
+            # Show top 3 customers with highest balances
+            sorted_balances = sorted(balance_report, key=lambda x: x['balance'], reverse=True)
+            print("   Top Customers with Outstanding Balance:")
+            for i, customer in enumerate(sorted_balances[:3], 1):
+                print(f"   {i}. {customer['customer_name']}")
+                print(f"      Total Invoiced: ₹{customer['total']:,.2f}")
+                print(f"      Received: ₹{customer['received']:,.2f}")
+                print(f"      Balance: ₹{customer['balance']:,.2f}")
+        
+        # Test 7: Get supplier bills
+        print("\n[8] Testing get_supplier_bills()...")
+        supplier_bills = db_ops.get_supplier_bills()
+        print(f"✓ Loaded {len(supplier_bills)} supplier bills")
+        
+        # Test 8: Get expenses
+        print("\n[9] Testing get_expenses()...")
+        expenses = db_ops.get_expenses()
+        print(f"✓ Loaded {len(expenses)} expense records")
+        
+        # Test 9: Filter by date (if invoices exist)
+        if invoices:
+            print("\n[10] Testing filter_invoices_by_date()...")
+            from_date = "01/01/2024"
+            to_date = "31/12/2024"
+            filtered = db_ops.filter_invoices_by_date(invoices, from_date, to_date)
+            print(f"✓ Filtered invoices from {from_date} to {to_date}: {len(filtered)} records")
+        
+        # Test 10: Filter by contact (if invoices exist)
+        if invoices and invoices[0]['customer_phone']:
+            print("\n[11] Testing filter_invoices_by_contact()...")
+            test_contact = invoices[0]['customer_phone'][:5]  # First 5 digits
+            filtered = db_ops.filter_invoices_by_contact(invoices, test_contact)
+            print(f"✓ Filtered by contact '{test_contact}': {len(filtered)} records")
+        
+        # Summary
+        print("\n" + "=" * 80)
+        print("DATABASE OPERATIONS TEST SUMMARY")
+        print("=" * 80)
+        print(f"Total Invoices in Database: {len(invoices)}")
+        print(f"Total Cash Received: ₹{payment_summary['cash']:,.2f}")
+        print(f"Total Bank Received: ₹{payment_summary['bank']:,.2f}")
+        print(f"Cash Payments (Received): {len(cash_payments)}")
+        print(f"Cash Payments (Paid to Suppliers): {len(supplier_payments)}")
+        print(f"Customers with Balance: {len(balance_report)}")
+        print(f"Supplier Bills: {len(supplier_bills)}")
+        print(f"Expenses: {len(expenses)}")
+        
+        if invoices:
+            total_tickets = sum(len(inv['tickets']) for inv in invoices)
+            total_passengers = sum(len(inv['passengers']) for inv in invoices)
+            print(f"Total Tickets/Items: {total_tickets}")
+            print(f"Total Passengers: {total_passengers}")
+        
+        print("\n✅ ALL TESTS COMPLETED SUCCESSFULLY!")
+        print("=" * 80)
+        
+    except Exception as e:
+        print(f"\n❌ ERROR DURING TESTING:")
+        print(f"   {type(e).__name__}: {str(e)}")
+        import traceback
+        print("\nFull Traceback:")
+        traceback.print_exc()
+        print("=" * 80)
