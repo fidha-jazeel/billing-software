@@ -129,8 +129,9 @@ class ReportsDBOperations:
         Returns:
             Formatted invoice dictionary
         """
-        # Convert invoice_date to dd/MM/yyyy format
-        invoice_date_str = inv.get('invoice_date', '')
+        # Convert date to dd/MM/yyyy format
+        # Database column is 'date', not 'invoice_date'
+        invoice_date_str = inv.get('date', '') or inv.get('invoice_date', '')
         try:
             if invoice_date_str:
                 date_obj = datetime.strptime(invoice_date_str, '%Y-%m-%d')
@@ -194,7 +195,7 @@ class ReportsDBOperations:
             List of supplier bill dictionaries
         """
         try:
-            bills = self.db.get_all_supplier_bills()
+            bills = self.db.get_purchase_bills()
             log_info(f"Loaded {len(bills)} supplier bills", 'billing_app')
             return bills
         except Exception as e:
@@ -318,19 +319,28 @@ class ReportsDBOperations:
             filtered = []
             
             for inv in invoices:
-                invoice_date = datetime.strptime(inv['invoice_date'], '%d/%m/%Y')
-                
-                if from_date:
-                    from_dt = datetime.strptime(from_date, '%d/%m/%Y')
-                    if invoice_date < from_dt:
+                try:
+                    date_str = inv.get('invoice_date', '').strip()
+                    if not date_str:
+                        # Skip invoices with empty dates
                         continue
-                
-                if to_date:
-                    to_dt = datetime.strptime(to_date, '%d/%m/%Y')
-                    if invoice_date > to_dt:
-                        continue
-                
-                filtered.append(inv)
+                    
+                    invoice_date = datetime.strptime(date_str, '%d/%m/%Y')
+                    
+                    if from_date:
+                        from_dt = datetime.strptime(from_date, '%d/%m/%Y')
+                        if invoice_date < from_dt:
+                            continue
+                    
+                    if to_date:
+                        to_dt = datetime.strptime(to_date, '%d/%m/%Y')
+                        if invoice_date > to_dt:
+                            continue
+                    
+                    filtered.append(inv)
+                except ValueError:
+                    # Skip invoices with invalid date format
+                    continue
             
             log_info(f"Filtered {len(filtered)} invoices from {len(invoices)} total", 'billing_app')
             return filtered
@@ -384,7 +394,7 @@ class ReportsDBOperations:
                             # Get invoice details
                             cur = self.db.conn.cursor()
                             cur.execute("""
-                                SELECT i.invoice_number, i.invoice_date, i.total_amount,
+                                SELECT i.invoice_number, i.date as invoice_date, i.total_amount,
                                        c.name as customer_name, c.phone as customer_phone
                                 FROM invoices i
                                 LEFT JOIN contacts c ON i.contact_id = c.id
@@ -608,8 +618,88 @@ if __name__ == "__main__":
         if invoices:
             total_tickets = sum(len(inv['tickets']) for inv in invoices)
             total_passengers = sum(len(inv['passengers']) for inv in invoices)
+            total_amount = sum(inv['total_amount'] for inv in invoices)
+            total_paid = sum(inv['paid_amount'] for inv in invoices)
+            avg_invoice = total_amount / len(invoices) if invoices else 0
+            
             print(f"Total Tickets/Items: {total_tickets}")
             print(f"Total Passengers: {total_passengers}")
+            print(f"Total Invoice Amount: ₹{total_amount:,.2f}")
+            print(f"Total Paid Amount: ₹{total_paid:,.2f}")
+            print(f"Average Invoice Value: ₹{avg_invoice:,.2f}")
+        
+        # Test Report-specific calculations
+        print("\n" + "=" * 80)
+        print("📊 TESTING REPORT CALCULATIONS")
+        print("=" * 80)
+        
+        # Sale Report calculations
+        sale_total = sum(inv['total_amount'] for inv in invoices)
+        sale_count = len(invoices)
+        sale_avg = sale_total / sale_count if sale_count else 0
+        print(f"\n1. SALE REPORT:")
+        print(f"   Total Sales: ₹{sale_total:,.2f}")
+        print(f"   Total Invoices: {sale_count}")
+        print(f"   Avg Invoice Value: ₹{sale_avg:,.2f}")
+        
+        # Purchase Report calculations
+        purchase_total = 0
+        purchase_items = 0
+        for inv in invoices:
+            for ticket in inv['tickets']:
+                purchase_total += ticket['supplier_amount'] * ticket['quantity']
+                purchase_items += 1
+        purchase_avg = purchase_total / purchase_items if purchase_items else 0
+        print(f"\n2. PURCHASE REPORT:")
+        print(f"   Total Purchase Cost: ₹{purchase_total:,.2f}")
+        print(f"   Total Items: {purchase_items}")
+        print(f"   Avg Cost per Item: ₹{purchase_avg:,.2f}")
+        
+        # Day Book calculations
+        daily_data = {}
+        for inv in invoices:
+            date = inv.get('invoice_date', '')
+            if date not in daily_data:
+                daily_data[date] = {'sales': 0, 'purchases': 0}
+            daily_data[date]['sales'] += inv['total_amount']
+            for ticket in inv['tickets']:
+                daily_data[date]['purchases'] += ticket['supplier_amount'] * ticket['quantity']
+        
+        total_daily_sales = sum(d['sales'] for d in daily_data.values())
+        total_daily_purchases = sum(d['purchases'] for d in daily_data.values())
+        net_profit = total_daily_sales - total_daily_purchases
+        
+        print(f"\n3. DAY BOOK:")
+        print(f"   Total Daily Sales: ₹{total_daily_sales:,.2f}")
+        print(f"   Total Daily Purchases: ₹{total_daily_purchases:,.2f}")
+        print(f"   Net Profit: ₹{net_profit:,.2f}")
+        print(f"   Days with Activity: {len(daily_data)}")
+        
+        # Profit & Loss calculations
+        gross_profit = sale_total - purchase_total
+        print(f"\n4. PROFIT & LOSS:")
+        print(f"   Total Revenue: ₹{sale_total:,.2f}")
+        print(f"   Total Cost: ₹{purchase_total:,.2f}")
+        print(f"   Gross Profit: ₹{gross_profit:,.2f}")
+        
+        # Cash Transactions
+        cash_received_total = sum(p['amount'] for p in cash_payments)
+        cash_paid_total = sum(p['amount'] for p in supplier_payments)
+        net_cash = cash_received_total - cash_paid_total
+        print(f"\n5. CASH TRANSACTIONS:")
+        print(f"   Total Cash Received: ₹{cash_received_total:,.2f}")
+        print(f"   Total Cash Paid: ₹{cash_paid_total:,.2f}")
+        print(f"   Net Cash Flow: ₹{net_cash:,.2f}")
+        
+        # Balance Report
+        total_invoiced = sum(c['total'] for c in balance_report)
+        total_received_balance = sum(c['received'] for c in balance_report)
+        total_balance_due = sum(c['balance'] for c in balance_report)
+        print(f"\n6. BALANCE REPORT:")
+        print(f"   Total Invoiced: ₹{total_invoiced:,.2f}")
+        print(f"   Total Received: ₹{total_received_balance:,.2f}")
+        print(f"   Total Outstanding: ₹{total_balance_due:,.2f}")
+        print(f"   Customers: {len(balance_report)}")
         
         print("\n✅ ALL TESTS COMPLETED SUCCESSFULLY!")
         print("=" * 80)

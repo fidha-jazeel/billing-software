@@ -8,9 +8,9 @@ Reference: Original reports.py lines 19-2533 (entire ReportsPage class)
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
     QScrollArea, QStackedWidget, QListWidget, QListWidgetItem,
-    QMessageBox
+    QMessageBox, QDateEdit
 )
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QDate
 from PyQt6.QtGui import QFont
 from travel_billing_software.utils.logger import log_info, log_error, log_warning
 

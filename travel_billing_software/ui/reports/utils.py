@@ -673,13 +673,21 @@ class SummaryCardManager:
             frame: Summary cards container frame
             values: List of new values to display
         """
-        cards = frame.findChildren(QFrame)
-        for i, card in enumerate(cards):
-            if i < len(values):
-                for label in card.findChildren(QLabel):
-                    if label.property('summary_value'):
-                        label.setText(values[i])
-                        break
+        # Get direct child frames from layout (not recursive findChildren)
+        layout = frame.layout()
+        if not layout:
+            return
+        
+        for i in range(min(layout.count(), len(values))):
+            item = layout.itemAt(i)
+            if item and item.widget():
+                card = item.widget()
+                if isinstance(card, QFrame):
+                    # Find the value label in this specific card
+                    for label in card.findChildren(QLabel):
+                        if label.property('summary_value'):
+                            label.setText(values[i])
+                            break
 
 
 def create_report_header(title: str, description: str, colors: dict) -> QWidget:
