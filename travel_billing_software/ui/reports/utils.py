@@ -13,6 +13,7 @@ from PyQt6.QtCore import Qt, QDate
 from PyQt6.QtGui import QColor
 from travel_billing_software.utils.logger import log_info, log_error, log_warning
 from travel_billing_software.config.config import format_currency, get_currency_symbol
+from travel_billing_software.database.db_manager import get_db_instance
 
 
 
@@ -90,16 +91,18 @@ class ReportFilters:
     - Booking type filtering
     """
     
-    def __init__(self, colors: dict, get_button_style: callable):
+    def __init__(self, colors: dict, get_button_style: callable, db_manager=None):
         """
         Initialize filter manager.
         
         Args:
             colors: Color scheme dictionary
             get_button_style: Function to get button stylesheet
+            db_manager: Database manager instance (optional, will use singleton if not provided)
         """
         self.colors = colors
         self.get_button_style = get_button_style
+        self.db = db_manager if db_manager else get_db_instance()
         
         # Filter widgets - will be created in create_filter_section()
         self.filter_from_date = None
@@ -109,6 +112,59 @@ class ReportFilters:
         self.filter_sector = None
         self.filter_supplier = None
         self.filter_type = None
+    
+    def load_suppliers_from_db(self) -> List[str]:
+        """
+        Load supplier names from database and return as sorted list.
+        
+        Returns:
+            List of supplier names sorted alphabetically, with 'All' as first item
+        """
+        try:
+            # Get all contacts with type 'SUPPLIER'
+            suppliers = self.db.get_contacts(contact_type='SUPPLIER')
+            
+            # Extract supplier names
+            supplier_names = [s.get('name', '') for s in suppliers if s.get('name')]
+            
+            # Sort alphabetically
+            supplier_names.sort()
+            
+            # Add 'All' at the beginning
+            supplier_list = ['All'] + supplier_names
+            
+            log_info(f"Loaded {len(supplier_names)} suppliers from database", 'billing_app')
+            return supplier_list
+            
+        except Exception as e:
+            log_error("Failed to load suppliers from database", exception=e, logger_name='billing_errors')
+            # Return default list as fallback
+            return ['All', 'IndiGo', 'Air India', 'SpiceJet', 'Vistara', 'AirAsia', 'Other']
+    
+    def load_types_from_db(self) -> List[str]:
+        """
+        Load booking/invoice types from database and return as sorted list.
+        
+        Returns:
+            List of type names sorted alphabetically, with 'All' as first item
+        """
+        try:
+            # Get all types from dropdown_types table
+            types = self.db.get_dropdown_items('type')
+            
+            # Sort alphabetically
+            types.sort()
+            
+            # Add 'All' at the beginning
+            type_list = ['All'] + types
+            
+            log_info(f"Loaded {len(types)} types from database", 'billing_app')
+            return type_list
+            
+        except Exception as e:
+            log_error("Failed to load types from database", exception=e, logger_name='billing_errors')
+            # Return default list as fallback
+            return ['All', 'Flight', 'Hotel', 'Visa', 'Tour Package', 'Insurance', 'Other']
     
     def create_filter_section(self, apply_callback: callable, clear_callback: callable) -> QFrame:
         """
@@ -233,19 +289,22 @@ class ReportFilters:
         self.filter_sector = sector_section['input']
         sector_supplier_row.addLayout(sector_section['layout'])
         
+        # Load suppliers dynamically from database
+        supplier_list = self.load_suppliers_from_db()
         supplier_section = self._create_combo_row(
             "Supplier:",
-            ["All", "IndiGo", "Air India", "SpiceJet", "Vistara", "AirAsia", "Other"]
+            supplier_list
         )
         self.filter_supplier = supplier_section['combo']
         sector_supplier_row.addLayout(supplier_section['layout'])
         
         content_layout.addLayout(sector_supplier_row)
         
-        # Booking Type
+        # Booking Type - Load dynamically from database
+        type_list = self.load_types_from_db()
         type_section = self._create_combo_row(
             "Type:",
-            ["All", "Flight", "Hotel", "Visa", "Tour Package", "Insurance", "Other"]
+            type_list
         )
         self.filter_type = type_section['combo']
         content_layout.addLayout(type_section['layout'])
@@ -553,6 +612,74 @@ class ReportFilters:
         except Exception as e:
             log_error("Error clearing filters", exception=e, logger_name='billing_errors')
             raise
+    
+    def refresh_supplier_dropdown(self):
+        """
+        Refresh the supplier dropdown with latest data from database.
+        This should be called when suppliers are added/updated in the Supplier page.
+        """
+        try:
+            if self.filter_supplier is None:
+                log_warning("Supplier dropdown not initialized yet", 'billing_app')
+                return
+            
+            # Store current selection
+            current_selection = self.filter_supplier.currentText()
+            
+            # Clear existing items
+            self.filter_supplier.clear()
+            
+            # Reload suppliers from database
+            supplier_list = self.load_suppliers_from_db()
+            
+            # Add updated items
+            self.filter_supplier.addItems(supplier_list)
+            
+            # Restore previous selection if it still exists
+            index = self.filter_supplier.findText(current_selection)
+            if index >= 0:
+                self.filter_supplier.setCurrentIndex(index)
+            else:
+                self.filter_supplier.setCurrentIndex(0)  # Default to 'All'
+            
+            log_info(f"Supplier dropdown refreshed with {len(supplier_list)} items", 'billing_app')
+            
+        except Exception as e:
+            log_error("Error refreshing supplier dropdown", exception=e, logger_name='billing_errors')
+    
+    def refresh_type_dropdown(self):
+        """
+        Refresh the type dropdown with latest data from database.
+        This should be called when types are added/updated in Settings → Types page.
+        """
+        try:
+            if self.filter_type is None:
+                log_warning("Type dropdown not initialized yet", 'billing_app')
+                return
+            
+            # Store current selection
+            current_selection = self.filter_type.currentText()
+            
+            # Clear existing items
+            self.filter_type.clear()
+            
+            # Reload types from database
+            type_list = self.load_types_from_db()
+            
+            # Add updated items
+            self.filter_type.addItems(type_list)
+            
+            # Restore previous selection if it still exists
+            index = self.filter_type.findText(current_selection)
+            if index >= 0:
+                self.filter_type.setCurrentIndex(index)
+            else:
+                self.filter_type.setCurrentIndex(0)  # Default to 'All'
+            
+            log_info(f"Type dropdown refreshed with {len(type_list)} items", 'billing_app')
+            
+        except Exception as e:
+            log_error("Error refreshing type dropdown", exception=e, logger_name='billing_errors')
 
 
 class ReportExporter:

@@ -77,8 +77,8 @@ class ReportsPage(QWidget):
         # Initialize database operations
         self.db_operations = ReportsDBOperations()
         
-        # Initialize filters
-        self.filters = ReportFilters(colors, get_button_style)
+        # Initialize filters with database manager for dynamic supplier loading
+        self.filters = ReportFilters(colors, get_button_style, db_manager=self.db_operations.db)
         
         # Store all invoices for filtering
         self.all_invoices = []
@@ -429,6 +429,58 @@ class ReportsPage(QWidget):
                 "Data Load Error",
                 f"Failed to load report data:\n{str(e)}"
             )
+    
+    def refresh_suppliers(self):
+        """
+        Refresh supplier dropdowns across all report filters.
+        This should be called when a new supplier is added from the Supplier page.
+        """
+        try:
+            log_info("Refreshing supplier dropdowns across all reports", 'billing_app')
+            
+            # Refresh supplier dropdown in each filter widget
+            for report_index, filter_widget in self.filter_widgets.items():
+                if hasattr(filter_widget, 'filter_supplier'):
+                    # Temporarily switch context to this filter widget
+                    old_supplier = self.filters.filter_supplier
+                    self.filters.filter_supplier = filter_widget.filter_supplier
+                    
+                    # Refresh the dropdown
+                    self.filters.refresh_supplier_dropdown()
+                    
+                    # Restore original context
+                    self.filters.filter_supplier = old_supplier
+            
+            log_info("Supplier dropdowns refreshed successfully", 'billing_app')
+            
+        except Exception as e:
+            log_error("Error refreshing supplier dropdowns", exception=e, logger_name='billing_errors')
+    
+    def refresh_types(self):
+        """
+        Refresh type dropdowns across all report filters.
+        This should be called when a new type is added from the Settings → Types page.
+        """
+        try:
+            log_info("Refreshing type dropdowns across all reports", 'billing_app')
+            
+            # Refresh type dropdown in each filter widget
+            for report_index, filter_widget in self.filter_widgets.items():
+                if hasattr(filter_widget, 'filter_type'):
+                    # Temporarily switch context to this filter widget
+                    old_type = self.filters.filter_type
+                    self.filters.filter_type = filter_widget.filter_type
+                    
+                    # Refresh the dropdown
+                    self.filters.refresh_type_dropdown()
+                    
+                    # Restore original context
+                    self.filters.filter_type = old_type
+            
+            log_info("Type dropdowns refreshed successfully", 'billing_app')
+            
+        except Exception as e:
+            log_error("Error refreshing type dropdowns", exception=e, logger_name='billing_errors')
     
     def _populate_report_by_index(self, index: int, filtered_invoices: list):
         """Populate specific report by index with filtered data."""

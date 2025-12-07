@@ -533,11 +533,11 @@ class SettingsPage(QWidget):
                 if hasattr(home_page, 'invoice_form') and hasattr(home_page.invoice_form, 'refresh_type_dropdown'):
                     home_page.invoice_form.refresh_type_dropdown()
             
-            # Refresh Reports Page Type filter
+            # Refresh Reports Page Type filter dropdowns
             if hasattr(self.main_window, 'reports_page'):
                 reports_page = self.main_window.reports_page
-                if hasattr(reports_page, 'refresh_type_filter'):
-                    reports_page.refresh_type_filter()
+                if hasattr(reports_page, 'refresh_types'):
+                    reports_page.refresh_types()
         except Exception as e:
             print(f"Warning: Could not refresh type dropdowns: {e}")
     
