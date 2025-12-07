@@ -588,6 +588,25 @@ class SupplierBillingPage(QWidget):
         except:
             return []
     
+    def refresh_data(self):
+        """Refresh supplier billing data from database."""
+        # Reload supplier list in combo box
+        current_supplier = self.supplier_combo.currentText()
+        self.supplier_combo.clear()
+        self.supplier_combo.addItems(self._get_supplier_list())
+        
+        # Try to restore the previously selected supplier
+        if current_supplier:
+            index = self.supplier_combo.findText(current_supplier)
+            if index >= 0:
+                self.supplier_combo.setCurrentIndex(index)
+        
+        # Reload recent payments
+        self._load_recent_payments()
+        
+        # Update supplier balance display
+        self._on_supplier_changed()
+    
     def _on_supplier_changed(self):
         """Update supplier balance info when supplier is selected."""
         supplier_name = self.supplier_combo.currentText().strip()

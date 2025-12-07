@@ -430,6 +430,10 @@ class PaymentsPage(QWidget):
             QMessageBox.critical(self, "Error", f"Failed to load data:\n{str(e)}")
             print(f"Error loading payments data: {e}")
     
+    def refresh_data(self):
+        """Refresh payment data from database."""
+        self._load_data()
+    
     def _update_statistics(self):
         """Update the statistics cards."""
         # Total pending

@@ -645,6 +645,12 @@ class SupplierPage(QWidget):
         """Suppliers are saved directly to database."""
         return True  # No-op, kept for compatibility
     
+    def refresh_data(self):
+        """Refresh supplier data from database."""
+        self._load_suppliers()
+        self._calculate_all_supplier_financials()
+        self._populate_table()
+    
     def _populate_table(self, suppliers_list=None):
         """Populate table with suppliers - simplified view."""
         if suppliers_list is None:

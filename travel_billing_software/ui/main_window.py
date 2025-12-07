@@ -197,19 +197,27 @@ class DashboardImproved(QMainWindow):
                 btn.style().unpolish(btn)
                 btn.style().polish(btn)
 
-        # Switch pages
+        # Switch pages and refresh data
         if page_id == 'home':
             self.content_stack.setCurrentWidget(self.home_page)
         elif page_id == 'reports':
             self.content_stack.setCurrentWidget(self.reports_page)
         elif page_id == 'payments':
             self.content_stack.setCurrentWidget(self.payments_page)
+            if hasattr(self.payments_page, 'refresh_data'):
+                self.payments_page.refresh_data()
         elif page_id == 'expenses':
             self.content_stack.setCurrentWidget(self.expenses_page)
+            if hasattr(self.expenses_page, 'refresh_data'):
+                self.expenses_page.refresh_data()
         elif page_id == 'suppliers':
             self.content_stack.setCurrentWidget(self.suppliers_page)
+            if hasattr(self.suppliers_page, 'refresh_data'):
+                self.suppliers_page.refresh_data()
         elif page_id == 'supplier_billing':
             self.content_stack.setCurrentWidget(self.supplier_billing_page)
+            if hasattr(self.supplier_billing_page, 'refresh_data'):
+                self.supplier_billing_page.refresh_data()
         elif page_id == 'ai':
             self.content_stack.setCurrentWidget(self.ai_page)
         elif page_id == 'settings':
