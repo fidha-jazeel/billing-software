@@ -614,6 +614,11 @@ class ExpensesPage(QWidget):
             QMessageBox.critical(self, "Error", f"Failed to load expenses:\n{str(e)}")
             self.expenses = []
     
+    def refresh_data(self):
+        """Refresh expenses data from database."""
+        self._load_expenses()
+        self._populate_table()
+        
     def _save_expenses(self):
         """Save expenses is now handled by individual add/update operations."""
         return True  # No-op, kept for compatibility
