@@ -616,21 +616,40 @@ class SupplierPage(QWidget):
             # Convert database format to expected format
             self.suppliers = []
             for contact in contacts:
+                # Initialize financial data
+                financial_data = {
+                    'amount_pending': 0.0,
+                    'amount_paid': 0.0,
+                    'amount_received': 0.0
+                }
+                
+                # Get supplier balance from database
+                try:
+                    balance_info = self.db.get_supplier_balance(contact['id'])
+                    financial_data['amount_pending'] = float(balance_info.get('balance', 0.0))
+                    financial_data['amount_paid'] = float(balance_info.get('total_paid', 0.0))
+                    financial_data['amount_received'] = float(balance_info.get('total_payable', 0.0))
+                except Exception as e:
+                    print(f"Error getting supplier balance for {contact['name']}: {e}")
+                
                 supplier = {
                     'id': contact['id'],
                     'name': contact['name'],
-                    'contact_person': contact.get('company_name', ''),  # Using company_name as contact_person
+                    'contact_person': contact.get('company_name', ''),
                     'phone': contact.get('phone', ''),
                     'email': contact.get('email', ''),
                     'company': contact.get('company_name', ''),
                     'address': contact.get('address', ''),
                     'gst': contact.get('gstin', ''),
                     'opening_balance': float(contact.get('opening_balance', 0)),
-                    'financial': {'amount_pending': 0.0, 'amount_paid': 0.0, 'amount_received': 0.0}
+                    'payment_terms': 'Cash',  # Default payment terms
+                    'financial': financial_data
                 }
                 self.suppliers.append(supplier)
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to load suppliers:\n{str(e)}")
+            import traceback
+            traceback.print_exc()
             self.suppliers = []
     
     def _save_suppliers(self):
@@ -1074,9 +1093,13 @@ class SupplierPage(QWidget):
     
     def _calculate_all_supplier_financials(self):
         """Calculate financial data for all suppliers from database."""
-        # Get supplier balances from database
+        # Financial data is now loaded directly in _load_suppliers
+        # This method is kept for backward compatibility
+        # Only recalculate if financial data is missing
         for supplier in self.suppliers:
-            if 'id' in supplier:
+            if 'id' in supplier and (not supplier.get('financial') or 
+                                     supplier['financial'].get('amount_pending') == 0.0 and 
+                                     supplier['financial'].get('amount_paid') == 0.0):
                 try:
                     balance_info = self.db.get_supplier_balance(supplier['id'])
                     supplier['financial'] = {
@@ -1088,13 +1111,6 @@ class SupplierPage(QWidget):
                     }
                 except Exception as e:
                     print(f"Error calculating financials for supplier {supplier.get('name')}: {e}")
-                    supplier['financial'] = {
-                        'total_payable': 0.0,
-                        'amount_paid': 0.0,
-                        'amount_pending': 0.0,
-                        'amount_received': 0.0,
-                        'transactions': []
-                    }
     
     def _manage_supplier_finances(self, supplier):
         """Open dialog to manage supplier financial transactions."""

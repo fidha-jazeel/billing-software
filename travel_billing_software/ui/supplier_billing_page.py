@@ -1075,11 +1075,27 @@ class SupplierBillingPage(QWidget):
             """)
     
     def _save_bill(self):
-        """Save supplier bill."""
-        supplier = self.supplier_combo.currentText().strip()
+        """Save supplier bill to database."""
+        supplier_name = self.supplier_combo.currentText().strip()
         
-        if not supplier:
+        if not supplier_name:
             QMessageBox.warning(self, "Validation Error", "Please select a supplier!")
+            return
+        
+        # Get supplier_id from database
+        try:
+            suppliers = self.db.get_contacts('SUPPLIER')
+            supplier_id = None
+            for supplier in suppliers:
+                if supplier.get('name') == supplier_name:
+                    supplier_id = supplier['id']
+                    break
+            
+            if not supplier_id:
+                QMessageBox.warning(self, "Validation Error", "Supplier not found in database!")
+                return
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to get supplier: {str(e)}")
             return
         
         # Collect items
@@ -1094,25 +1110,13 @@ class SupplierBillingPage(QWidget):
                 
                 if item_name and amount > 0:
                     items.append({
-                        'item': item_name,
+                        'description': item_name,
                         'amount': amount
                     })
         
         if not items:
             QMessageBox.warning(self, "Validation Error", "Please add at least one item with amount!")
             return
-        
-        # Collect payments
-        payments = []
-        for payment_row in self.payment_rows:
-            payment_type = payment_row['type'].currentText()
-            amount = payment_row['amount'].value()
-            
-            if amount > 0:
-                payments.append({
-                    'type': payment_type,
-                    'amount': amount
-                })
         
         # Calculate totals
         total = sum(item['amount'] for item in items)
@@ -1122,36 +1126,52 @@ class SupplierBillingPage(QWidget):
         else:
             roundoff = 0.0
         
-        paid = sum(p['amount'] for p in payments)
-        balance = total - paid
+        # Get bill details
+        bill_number = self.bill_number_input.text()
+        bill_date = self.bill_date.date().toString("yyyy-MM-dd")
         
-        # Create bill data
-        bill_data = {
-            'id': str(datetime.now().timestamp()),
-            'bill_number': self.bill_number_input.text(),
-            'supplier': supplier,
-            'phone': self.phone_input.text(),
-            'bill_date': self.bill_date.date().toString("yyyy-MM-dd"),
-            'items': items,
-            'payments': payments,
-            'roundoff': roundoff,
-            'total': total,
-            'paid': paid,
-            'balance': balance,
-            'created_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        }
-        
-        # Save to file
-        self.bills.append(bill_data)
-        if self._save_bills():
-            QMessageBox.information(
-                self, 
-                "Success", 
-                f"Supplier bill saved successfully!\n\nBill Number: {bill_data['bill_number']}\nTotal: ₹{total:,.2f}\nBalance: ₹{balance:,.2f}"
+        # Save to database
+        try:
+            bill_id = self.db.add_purchase_bill(
+                supplier_id=supplier_id,
+                date=bill_date,
+                total_amount=total,
+                items=items,
+                bill_number=bill_number
             )
-            self._reset_form()
-        else:
-            QMessageBox.critical(self, "Error", "Failed to save supplier bill!")
+            
+            if bill_id > 0:
+                # Save payments as supplier payments
+                for payment_row in self.payment_rows:
+                    payment_type = payment_row['type'].currentText()
+                    amount = payment_row['amount'].value()
+                    
+                    if amount > 0:
+                        self.db.add_supplier_payment(
+                            supplier_id=supplier_id,
+                            amount=amount,
+                            payment_mode=payment_type,
+                            date=bill_date,
+                            notes=f"Payment for bill {bill_number}"
+                        )
+                
+                # Calculate paid and balance
+                paid = sum(p['amount'].value() for p in self.payment_rows if p['amount'].value() > 0)
+                balance = total - paid
+                
+                QMessageBox.information(
+                    self, 
+                    "Success", 
+                    f"Supplier bill saved successfully!\n\nBill Number: {bill_number}\nTotal: ₹{total:,.2f}\nPaid: ₹{paid:,.2f}\nBalance: ₹{balance:,.2f}"
+                )
+                
+                # Reload bills and reset form
+                self._load_bills()
+                self._reset_form()
+            else:
+                QMessageBox.critical(self, "Error", "Failed to save supplier bill to database!")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to save supplier bill:\n{str(e)}")
     
     def _reset_form(self):
         """Reset form to default state."""
@@ -1184,25 +1204,33 @@ class SupplierBillingPage(QWidget):
         )
     
     def _load_bills(self):
-        """Load bills from database."""
+        """Load bills from database with items."""
         try:
             db_bills = self.db.get_purchase_bills()
-            # Convert to expected format
             self.bills = []
+            
             for bill in db_bills:
-                bill_data = {
-                    'id': bill['id'],
-                    'bill_number': bill.get('bill_number', ''),
-                    'supplier': bill.get('supplier_name', ''),
-                    'date': bill.get('date', ''),
-                    'due_date': bill.get('due_date', ''),
-                    'total': bill.get('total_amount', 0.0),
-                    'notes': bill.get('notes', ''),
-                    'items': []  # Would need to load from purchase_bill_items if implemented
-                }
-                self.bills.append(bill_data)
+                # Get bill with items
+                bill_with_items = self.db.get_purchase_bill_with_items(bill['id'])
+                
+                if bill_with_items:
+                    bill_data = {
+                        'id': bill_with_items['id'],
+                        'bill_number': bill_with_items.get('bill_number', ''),
+                        'supplier': bill_with_items.get('supplier_name', ''),
+                        'phone': bill_with_items.get('supplier_phone', ''),
+                        'bill_date': bill_with_items.get('date', ''),
+                        'due_date': bill_with_items.get('due_date', ''),
+                        'total': float(bill_with_items.get('total_amount', 0.0)),
+                        'notes': bill_with_items.get('notes', ''),
+                        'items': bill_with_items.get('items', []),
+                        'created_date': bill_with_items.get('created_at', '')
+                    }
+                    self.bills.append(bill_data)
         except Exception as e:
             print(f"Error loading bills: {e}")
+            import traceback
+            traceback.print_exc()
             self.bills = []
     
     def _save_bills(self):
