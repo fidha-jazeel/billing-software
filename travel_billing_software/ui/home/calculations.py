@@ -128,16 +128,17 @@ class CalculationsWidget(QFrame):
             f"}}"
         )
         
-        # Row 0: Payment Mode
-        payment_mode_lbl = QLabel("Payment Mode:")
-        payment_mode_lbl.setStyleSheet(label_style)
-        calc_grid.addWidget(payment_mode_lbl, 0, 0)
+        # Row 0 (left): Paid
+        paid_lbl = QLabel("Paid:")
+        paid_lbl.setStyleSheet(label_style)
+        calc_grid.addWidget(paid_lbl, 0, 0)
         
-        self.payment_mode = QComboBox()
-        self.payment_mode.addItems(["Cash", "Bank Transfer", "Card", "Google Pay", "Other"])
-        self.payment_mode.setStyleSheet(combobox_style)
-        self.payment_mode.setMinimumWidth(200)
-        calc_grid.addWidget(self.payment_mode, 0, 1)
+        self.txt_received = QLineEdit()
+        self.txt_received.setPlaceholderText("0.00")
+        self.txt_received.setStyleSheet(input_style)
+        self.txt_received.textChanged.connect(self._on_received_changed)
+        self.txt_received.setMinimumWidth(200)
+        calc_grid.addWidget(self.txt_received, 0, 1)
         
         # Spacer column
         calc_grid.setColumnMinimumWidth(2, 80)
@@ -159,22 +160,21 @@ class CalculationsWidget(QFrame):
         self.lbl_total.setMinimumWidth(200)
         calc_grid.addWidget(self.lbl_total, 0, 4)
         
-        # Row 1 (right): Paid
-        paid_lbl = QLabel("Paid:")
-        paid_lbl.setStyleSheet(label_style)
-        calc_grid.addWidget(paid_lbl, 1, 3)
+        # Row 1 (left): Payment Mode
+        payment_mode_lbl = QLabel("Payment Mode:")
+        payment_mode_lbl.setStyleSheet(label_style)
+        calc_grid.addWidget(payment_mode_lbl, 1, 0)
         
-        self.txt_received = QLineEdit()
-        self.txt_received.setPlaceholderText("0.00")
-        self.txt_received.setStyleSheet(input_style)
-        self.txt_received.textChanged.connect(self._on_received_changed)
-        self.txt_received.setMinimumWidth(200)
-        calc_grid.addWidget(self.txt_received, 1, 4)
+        self.payment_mode = QComboBox()
+        self.payment_mode.addItems(["Cash", "Bank Transfer", "Card", "Google Pay", "Other"])
+        self.payment_mode.setStyleSheet(combobox_style)
+        self.payment_mode.setMinimumWidth(200)
+        calc_grid.addWidget(self.payment_mode, 1, 1)
         
-        # Row 2 (right): Balance
+        # Row 1 (right): Balance
         balance_lbl = QLabel("Balance:")
         balance_lbl.setStyleSheet(label_style)
-        calc_grid.addWidget(balance_lbl, 2, 3)
+        calc_grid.addWidget(balance_lbl, 1, 3)
         
         balance_style = (
             f"color: {self.colors['danger']}; font-weight: bold; "
@@ -186,7 +186,7 @@ class CalculationsWidget(QFrame):
         self.lbl_balance = QLabel(f"{self.get_currency_symbol()}0.00")
         self.lbl_balance.setStyleSheet(balance_style)
         self.lbl_balance.setMinimumWidth(200)
-        calc_grid.addWidget(self.lbl_balance, 2, 4)
+        calc_grid.addWidget(self.lbl_balance, 1, 4)
         
         main_layout.addLayout(calc_grid)
     

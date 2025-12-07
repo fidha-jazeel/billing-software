@@ -64,7 +64,7 @@ class InvoiceFormWidget(QFrame):
         self.db = db
         
         # Collapse state and animation
-        self.is_collapsed = False
+        self.is_collapsed = True
         self.animation = None
         self.collapsed_height = 0
         self.expanded_height = 0
@@ -100,7 +100,7 @@ class InvoiceFormWidget(QFrame):
         header_layout.addWidget(title, 0, 0, 1, 5)
         
         # Collapse button
-        self.btn_collapse = QPushButton("▼")
+        self.btn_collapse = QPushButton("▶")
         self.btn_collapse.setStyleSheet(
             f"QPushButton {{ "
             f"background-color: transparent; "
@@ -123,7 +123,7 @@ class InvoiceFormWidget(QFrame):
         
         main_layout.addLayout(header_layout)
         
-        # Always visible section: Customer Name & Contact
+        # Always visible section: Customer Name & Type
         always_visible = QGridLayout()
         always_visible.setSpacing(15)
         
@@ -143,56 +143,6 @@ class InvoiceFormWidget(QFrame):
         self.customer_name.setMinimumWidth(250)
         always_visible.addWidget(self.customer_name, 0, 1)
         
-        lbl_contact = QLabel("Contact Number:")
-        lbl_contact.setStyleSheet(
-            f"color: {self.colors['text_primary']}; "
-            f"font-weight: bold; font-size: 15px;"
-        )
-        lbl_contact.setAlignment(
-            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
-        )
-        always_visible.addWidget(lbl_contact, 0, 2)
-        
-        self.contact_number = QLineEdit()
-        self.contact_number.setPlaceholderText("Enter contact number")
-        self.contact_number.setStyleSheet(self._get_custom_input_style())
-        self.contact_number.setMinimumWidth(250)
-        self.contact_number.textChanged.connect(self._on_contact_changed)
-        always_visible.addWidget(self.contact_number, 0, 3)
-        
-        main_layout.addLayout(always_visible)
-        
-        # Collapsible section container with stable styling
-        self.collapsible_widget = QWidget()
-        # Set transparent background so parent styling shows through
-        self.collapsible_widget.setStyleSheet("QWidget { background: transparent; }")
-        # Set size policy to maintain width but allow height changes
-        self.collapsible_widget.setSizePolicy(
-            QSizePolicy.Policy.Preferred,
-            QSizePolicy.Policy.Maximum
-        )
-        
-        collapsible_layout = QGridLayout(self.collapsible_widget)
-        collapsible_layout.setContentsMargins(0, 10, 0, 0)
-        collapsible_layout.setSpacing(15)
-        
-        # Row 1: Email & Type
-        lbl_email = QLabel("Email:")
-        lbl_email.setStyleSheet(
-            f"color: {self.colors['text_primary']}; "
-            f"font-weight: bold; font-size: 15px;"
-        )
-        lbl_email.setAlignment(
-            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
-        )
-        collapsible_layout.addWidget(lbl_email, 0, 0)
-        
-        self.customer_email = QLineEdit()
-        self.customer_email.setPlaceholderText("Enter customer email")
-        self.customer_email.setStyleSheet(self._get_custom_input_style())
-        self.customer_email.setMinimumWidth(250)
-        collapsible_layout.addWidget(self.customer_email, 0, 1)
-        
         lbl_type = QLabel("Type:")
         lbl_type.setStyleSheet(
             f"color: {self.colors['text_primary']}; "
@@ -201,7 +151,7 @@ class InvoiceFormWidget(QFrame):
         lbl_type.setAlignment(
             Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
         )
-        collapsible_layout.addWidget(lbl_type, 0, 2)
+        always_visible.addWidget(lbl_type, 0, 2)
         
         self.invoice_type = QComboBox()
         # Disable editing - dropdown selection only
@@ -227,9 +177,59 @@ class InvoiceFormWidget(QFrame):
         
         self.invoice_type.setStyleSheet(self._get_custom_combobox_style())
         self.invoice_type.setMinimumWidth(250)
-        collapsible_layout.addWidget(self.invoice_type, 0, 3)
+        always_visible.addWidget(self.invoice_type, 0, 3)
         
-        # Row 2: Invoice Number & Invoice Date
+        main_layout.addLayout(always_visible)
+        
+        # Collapsible section container with stable styling
+        self.collapsible_widget = QWidget()
+        # Set transparent background so parent styling shows through
+        self.collapsible_widget.setStyleSheet("QWidget { background: transparent; }")
+        # Set size policy to maintain width but allow height changes
+        self.collapsible_widget.setSizePolicy(
+            QSizePolicy.Policy.Preferred,
+            QSizePolicy.Policy.Maximum
+        )
+        
+        collapsible_layout = QGridLayout(self.collapsible_widget)
+        collapsible_layout.setContentsMargins(0, 10, 0, 0)
+        collapsible_layout.setSpacing(15)
+        
+        # Row 0: Email & Contact Number
+        lbl_email = QLabel("Email:")
+        lbl_email.setStyleSheet(
+            f"color: {self.colors['text_primary']}; "
+            f"font-weight: bold; font-size: 15px;"
+        )
+        lbl_email.setAlignment(
+            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+        )
+        collapsible_layout.addWidget(lbl_email, 0, 0)
+        
+        self.customer_email = QLineEdit()
+        self.customer_email.setPlaceholderText("Enter customer email")
+        self.customer_email.setStyleSheet(self._get_custom_input_style())
+        self.customer_email.setMinimumWidth(250)
+        collapsible_layout.addWidget(self.customer_email, 0, 1)
+        
+        lbl_contact = QLabel("Contact Number:")
+        lbl_contact.setStyleSheet(
+            f"color: {self.colors['text_primary']}; "
+            f"font-weight: bold; font-size: 15px;"
+        )
+        lbl_contact.setAlignment(
+            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+        )
+        collapsible_layout.addWidget(lbl_contact, 0, 2)
+        
+        self.contact_number = QLineEdit()
+        self.contact_number.setPlaceholderText("Enter contact number")
+        self.contact_number.setStyleSheet(self._get_custom_input_style())
+        self.contact_number.setMinimumWidth(250)
+        self.contact_number.textChanged.connect(self._on_contact_changed)
+        collapsible_layout.addWidget(self.contact_number, 0, 3)
+        
+        # Row 1: Invoice Number & Invoice Date
         lbl_inv_num = QLabel("Invoice Number:")
         lbl_inv_num.setStyleSheet(
             f"color: {self.colors['text_primary']}; "
@@ -268,10 +268,10 @@ class InvoiceFormWidget(QFrame):
         main_layout.addWidget(self.collapsible_widget)
         
         # Set explicit tab order for speed
-        QWidget.setTabOrder(self.customer_name, self.contact_number)
-        QWidget.setTabOrder(self.contact_number, self.customer_email)
-        QWidget.setTabOrder(self.customer_email, self.invoice_type)
-        QWidget.setTabOrder(self.invoice_type, self.invoice_number)
+        QWidget.setTabOrder(self.customer_name, self.invoice_type)
+        QWidget.setTabOrder(self.invoice_type, self.customer_email)
+        QWidget.setTabOrder(self.customer_email, self.contact_number)
+        QWidget.setTabOrder(self.contact_number, self.invoice_number)
         QWidget.setTabOrder(self.invoice_number, self.invoice_date)
         
         # Initialize animation after all widgets are created
@@ -304,9 +304,9 @@ class InvoiceFormWidget(QFrame):
             # Collapsed height is 0 (completely hidden)
             self.collapsed_height = 0
             
-            # Set initial state to expanded with both min and max
+            # Set initial state to collapsed with both min and max
             self.collapsible_widget.setMinimumHeight(0)
-            self.collapsible_widget.setMaximumHeight(self.expanded_height)
+            self.collapsible_widget.setMaximumHeight(self.collapsed_height)
             
             log_info(
                 f"Heights calculated - Collapsed: {self.collapsed_height}, "

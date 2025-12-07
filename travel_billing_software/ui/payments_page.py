@@ -270,8 +270,11 @@ class PaymentsPage(QWidget):
         # Set last column to stretch for full width utilization
         header.setSectionResizeMode(6, QHeaderView.ResizeMode.Stretch)
         
-        # Table display settings
+        # Table display settings with proper scrolling
         self.unpaid_table.setMinimumHeight(450)
+        self.unpaid_table.setMaximumHeight(550)  # Set max height to enable scrolling
+        self.unpaid_table.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.unpaid_table.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.unpaid_table.setSizeAdjustPolicy(QTableWidget.SizeAdjustPolicy.AdjustToContents)
         self.unpaid_table.setShowGrid(True)
         self.unpaid_table.setAlternatingRowColors(True)
@@ -334,8 +337,11 @@ class PaymentsPage(QWidget):
         # Set last column to stretch for full width utilization
         history_header.setSectionResizeMode(5, QHeaderView.ResizeMode.Stretch)
         
-        # Table display settings
+        # Table display settings with proper scrolling
         self.history_table.setMinimumHeight(450)
+        self.history_table.setMaximumHeight(550)  # Set max height to enable scrolling
+        self.history_table.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.history_table.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.history_table.setSizeAdjustPolicy(QTableWidget.SizeAdjustPolicy.AdjustToContents)
         self.history_table.setShowGrid(True)
         self.history_table.setAlternatingRowColors(True)
@@ -502,6 +508,11 @@ class PaymentsPage(QWidget):
         
         search_text = self.search_input.text().lower()
         
+        print(f"🔍 Populating payment history - Total payments: {len(self.payment_history)}")
+        print(f"   Search text: '{search_text}'")
+        
+        displayed_count = 0
+        displayed_count = 0
         for payment in self.payment_history:
             # Filter by search
             if search_text:
@@ -510,6 +521,7 @@ class PaymentsPage(QWidget):
                 if search_text not in customer and search_text not in invoice_num:
                     continue
             
+            displayed_count += 1
             row = self.history_table.rowCount()
             self.history_table.insertRow(row)
             
@@ -532,6 +544,8 @@ class PaymentsPage(QWidget):
             
             # Mode
             self.history_table.setItem(row, 5, QTableWidgetItem(str(payment.get('payment_mode') or '')))
+        
+        print(f"✅ Displayed {displayed_count} payment records in history table")
     
     def _filter_data(self):
         """Filter data based on search input."""

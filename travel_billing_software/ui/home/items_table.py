@@ -8,8 +8,8 @@ from PyQt6.QtWidgets import (
     QPushButton, QTableWidget, QHeaderView, QLineEdit,
     QComboBox, QDoubleSpinBox, QMessageBox, QCompleter
 )
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QCursor
+from PyQt6.QtCore import Qt, pyqtSignal, QEvent
+from PyQt6.QtGui import QCursor, QKeyEvent
 from travel_billing_software.utils.logger import log_info, log_error, log_warning
 from .passport_dialog import PassportDetailsDialog
 
@@ -124,6 +124,45 @@ class ItemsTableWidget(QFrame):
         
         layout.addWidget(self.table)
     
+    def eventFilter(self, obj: QWidget, event: QEvent) -> bool:
+        """
+        Event filter to handle Enter key navigation in table cells.
+        
+        When Enter is pressed in a table cell, move focus to the next cell
+        in the same row instead of adding a new row.
+        
+        Args:
+            obj: The object receiving the event
+            event: The event
+            
+        Returns:
+            True if event was handled, False otherwise
+        """
+        if event.type() == QEvent.Type.KeyPress:
+            if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+                # Find which row and column this widget belongs to
+                for row in range(self.table.rowCount()):
+                    for col in range(self.table.columnCount() - 1):  # Exclude Actions column
+                        widget = self.table.cellWidget(row, col)
+                        if widget is obj or (hasattr(widget, 'lineEdit') and widget.lineEdit() is obj):
+                            # Move to next column in same row
+                            next_col = col + 1
+                            if next_col < self.table.columnCount() - 1:  # Don't move to Actions column
+                                next_widget = self.table.cellWidget(row, next_col)
+                                if next_widget:
+                                    # Handle different widget types
+                                    if isinstance(next_widget, QLineEdit):
+                                        next_widget.setFocus()
+                                        next_widget.selectAll()
+                                    elif isinstance(next_widget, QComboBox):
+                                        next_widget.setFocus()
+                                    elif isinstance(next_widget, QDoubleSpinBox):
+                                        next_widget.setFocus()
+                                        next_widget.selectAll()
+                                return True
+                            return False
+        return super().eventFilter(obj, event)
+    
     def set_passenger_history(self, history: Dict[str, List[Dict[str, Any]]]):
         """
         Set passenger history for auto-completion.
@@ -201,27 +240,32 @@ class ItemsTableWidget(QFrame):
             passenger_name = QLineEdit()
             passenger_name.setPlaceholderText("Name")
             passenger_name.setStyleSheet(lineedit_style)
+            passenger_name.installEventFilter(self)  # Install event filter for Enter key navigation
             self._setup_passenger_completer(passenger_name, row)
             
             pnr = QLineEdit()
             pnr.setPlaceholderText("PNR")
             pnr.setStyleSheet(lineedit_style)
+            pnr.installEventFilter(self)  # Install event filter for Enter key navigation
             
             sector = QLineEdit()
             sector.setPlaceholderText("Sector")
             sector.setStyleSheet(lineedit_style)
+            sector.installEventFilter(self)  # Install event filter for Enter key navigation
             
             supplier = QComboBox()
             supplier.setEditable(True)
             supplier.addItems(self.get_supplier_list())
             supplier.setStyleSheet(combobox_style)
             supplier.setObjectName(f"supplier_{row}")
+            supplier.installEventFilter(self)  # Install event filter for Enter key navigation
             # Connect to handle custom supplier names
             supplier.editTextChanged.connect(lambda text, r=row: self._handle_custom_supplier(text, r))
             
             passport_number = QLineEdit()
             passport_number.setPlaceholderText("Passport No.")
             passport_number.setStyleSheet(lineedit_style)
+            passport_number.installEventFilter(self)  # Install event filter for Enter key navigation
             
             qty = QDoubleSpinBox()
             qty.setMinimum(1)
@@ -232,6 +276,7 @@ class ItemsTableWidget(QFrame):
             qty.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
             qty.wheelEvent = lambda event: event.ignore()
             qty.valueChanged.connect(self.items_changed.emit)
+            qty.installEventFilter(self)  # Install event filter for Enter key navigation
             
             supplier_amount = QDoubleSpinBox()
             supplier_amount.setMinimum(0)
@@ -241,6 +286,7 @@ class ItemsTableWidget(QFrame):
             supplier_amount.setPrefix("₹ ")
             supplier_amount.setStyleSheet(spinbox_style)
             supplier_amount.valueChanged.connect(self.items_changed.emit)
+            supplier_amount.installEventFilter(self)  # Install event filter for Enter key navigation
             
             customer_amount = QDoubleSpinBox()
             customer_amount.setMinimum(0)
@@ -250,6 +296,7 @@ class ItemsTableWidget(QFrame):
             customer_amount.setPrefix("₹ ")
             customer_amount.setStyleSheet(spinbox_style)
             customer_amount.valueChanged.connect(self.items_changed.emit)
+            customer_amount.installEventFilter(self)  # Install event filter for Enter key navigation
             
             # Actions column
             actions_widget = self._create_actions_widget(row)
