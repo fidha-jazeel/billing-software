@@ -44,7 +44,7 @@ class SupplierBillingPage(QWidget):
         content = QWidget()
         layout = QVBoxLayout(content)
         layout.setContentsMargins(30, 30, 30, 30)
-        layout.setSpacing(25)
+        layout.setSpacing(15)
         
         # Header Section
         header_frame = QFrame()
@@ -89,118 +89,274 @@ class SupplierBillingPage(QWidget):
             }}
         """)
         form_layout = QVBoxLayout(form_frame)
-        form_layout.setSpacing(20)
+        form_layout.setSpacing(10)
+        form_layout.setContentsMargins(0, 0, 0, 0)
         
         # Form Title
         form_title = QLabel("Payment Details")
         form_title.setStyleSheet(f"""
             QLabel {{
                 color: {self.colors['accent_primary']};
-                font-size: 20px;
+                font-size: 22px;
                 font-weight: bold;
+                margin: 0px;
+                padding: 0px 0px 10px 0px;
             }}
         """)
         form_layout.addWidget(form_title)
         
-        # Form Fields
-        fields_layout = QFormLayout()
+        # Form Fields - Horizontal Layout
+        fields_layout = QVBoxLayout()
         fields_layout.setSpacing(15)
-        fields_layout.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
+        fields_layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Custom input style to prevent interference
+        custom_input_style = f"""
+            QLineEdit, QDateEdit, QDoubleSpinBox, QComboBox {{
+                background-color: {self.colors['secondary_bg']};
+                color: {self.colors['text_primary']};
+                border: 1px solid #3a3a3a;
+                border-radius: 5px;
+                padding: 10px;
+                font-size: 16px;
+                min-height: 40px;
+                margin: 0px;
+            }}
+            QLineEdit:focus, QDateEdit:focus, QDoubleSpinBox:focus, QComboBox:focus {{
+                border: 2px solid {self.colors['accent_primary']};
+            }}
+            QComboBox::drop-down {{
+                border: none;
+                width: 35px;
+                padding-right: 5px;
+            }}
+            QComboBox::down-arrow {{
+                image: none;
+                border-left: 8px solid transparent;
+                border-right: 8px solid transparent;
+                border-top: 10px solid {self.colors['text_primary']};
+                margin-right: 8px;
+            }}
+            QDateEdit::drop-down {{
+                border: none;
+                width: 35px;
+                padding-right: 5px;
+            }}
+            QDateEdit::down-arrow {{
+                image: none;
+                border-left: 8px solid transparent;
+                border-right: 8px solid transparent;
+                border-top: 10px solid {self.colors['text_primary']};
+                margin-right: 8px;
+            }}
+            QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {{
+                border: none;
+                background: transparent;
+                width: 30px;
+                subcontrol-origin: border;
+            }}
+            QDoubleSpinBox::up-button {{
+                subcontrol-position: top right;
+                border-left: 1px solid #3a3a3a;
+            }}
+            QDoubleSpinBox::down-button {{
+                subcontrol-position: bottom right;
+                border-left: 1px solid #3a3a3a;
+            }}
+            QDoubleSpinBox::up-arrow {{
+                image: none;
+                border-left: 6px solid transparent;
+                border-right: 6px solid transparent;
+                border-bottom: 8px solid {self.colors['text_primary']};
+                width: 12px;
+                height: 12px;
+                margin: 3px;
+            }}
+            QDoubleSpinBox::down-arrow {{
+                image: none;
+                border-left: 6px solid transparent;
+                border-right: 6px solid transparent;
+                border-top: 8px solid {self.colors['text_primary']};
+                width: 12px;
+                height: 12px;
+                margin: 3px;
+            }}
+        """
         
         # Supplier Selection
-        supplier_label = QLabel("Select Supplier: *")
-        supplier_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 15px;")
+        supplier_row = QHBoxLayout()
+        supplier_row.setSpacing(15)
+        supplier_row.setContentsMargins(0, 0, 0, 0)
+        
+        supplier_label = QLabel("Select Supplier *")
+        supplier_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 17px; margin: 0px; padding: 0px;")
+        supplier_label.setMinimumWidth(180)
+        supplier_label.setMaximumWidth(180)
+        supplier_row.addWidget(supplier_label)
         
         self.supplier_combo = QComboBox()
         self.supplier_combo.setEditable(True)
         self.supplier_combo.addItems(self._get_supplier_list())
-        self.supplier_combo.setStyleSheet(self.get_combobox_style())
+        self.supplier_combo.setStyleSheet(custom_input_style)
         self.supplier_combo.currentTextChanged.connect(self._on_supplier_changed)
-        fields_layout.addRow(supplier_label, self.supplier_combo)
+        supplier_row.addWidget(self.supplier_combo)
+        fields_layout.addLayout(supplier_row)
         
         # Supplier Balance Info (Read-only labels)
         balance_info_layout = QHBoxLayout()
+        balance_info_layout.setSpacing(30)
+        balance_info_layout.setContentsMargins(180, 5, 0, 5)
         
         self.total_payable_label = QLabel("Total Payable: ₹0.00")
-        self.total_payable_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-size: 14px; font-weight: bold;")
+        self.total_payable_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-size: 16px; font-weight: bold; margin: 0px; padding: 0px;")
         balance_info_layout.addWidget(self.total_payable_label)
         
         self.already_paid_label = QLabel("Already Paid: ₹0.00")
-        self.already_paid_label.setStyleSheet(f"color: {self.colors['success']}; font-size: 14px; font-weight: bold;")
+        self.already_paid_label.setStyleSheet(f"color: {self.colors['success']}; font-size: 16px; font-weight: bold; margin: 0px; padding: 0px;")
         balance_info_layout.addWidget(self.already_paid_label)
         
         self.pending_label = QLabel("Pending: ₹0.00")
-        self.pending_label.setStyleSheet(f"color: {self.colors['danger']}; font-size: 14px; font-weight: bold;")
+        self.pending_label.setStyleSheet(f"color: {self.colors['danger']}; font-size: 16px; font-weight: bold; margin: 0px; padding: 0px;")
         balance_info_layout.addWidget(self.pending_label)
         
         balance_info_layout.addStretch()
         
-        fields_layout.addRow("", balance_info_layout)
+        fields_layout.addLayout(balance_info_layout)
         
         # Payment Date
-        date_label = QLabel("Payment Date: *")
-        date_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 15px;")
+        date_row = QHBoxLayout()
+        date_row.setSpacing(15)
+        date_row.setContentsMargins(0, 0, 0, 0)
+        
+        date_label = QLabel("Payment Date *")
+        date_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 17px; margin: 0px; padding: 0px;")
+        date_label.setMinimumWidth(180)
+        date_label.setMaximumWidth(180)
+        date_row.addWidget(date_label)
         
         self.payment_date = QDateEdit()
         self.payment_date.setCalendarPopup(True)
         self.payment_date.setDate(QDate.currentDate())
         self.payment_date.setDisplayFormat("dd/MM/yyyy")
-        self.payment_date.setStyleSheet(self.get_input_style())
-        fields_layout.addRow(date_label, self.payment_date)
+        self.payment_date.setStyleSheet(custom_input_style)
+        date_row.addWidget(self.payment_date)
+        fields_layout.addLayout(date_row)
         
         # Payment Amount
-        amount_label = QLabel("Payment Amount: *")
-        amount_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 15px;")
+        amount_row = QHBoxLayout()
+        amount_row.setSpacing(15)
+        amount_row.setContentsMargins(0, 0, 0, 0)
+        
+        amount_label = QLabel("Payment Amount *")
+        amount_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 17px; margin: 0px; padding: 0px;")
+        amount_label.setMinimumWidth(180)
+        amount_label.setMaximumWidth(180)
+        amount_row.addWidget(amount_label)
         
         self.payment_amount = QDoubleSpinBox()
         self.payment_amount.setRange(0, 9999999)
         self.payment_amount.setDecimals(2)
         self.payment_amount.setPrefix("₹ ")
         self.payment_amount.setValue(0.0)
-        self.payment_amount.setStyleSheet(self.get_input_style())
-        fields_layout.addRow(amount_label, self.payment_amount)
+        self.payment_amount.setStyleSheet(custom_input_style)
+        amount_row.addWidget(self.payment_amount)
+        fields_layout.addLayout(amount_row)
         
         # Payment Mode
-        mode_label = QLabel("Payment Mode: *")
-        mode_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 15px;")
+        mode_row = QHBoxLayout()
+        mode_row.setSpacing(15)
+        mode_row.setContentsMargins(0, 0, 0, 0)
+        
+        mode_label = QLabel("Payment Mode *")
+        mode_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 17px; margin: 0px; padding: 0px;")
+        mode_label.setMinimumWidth(180)
+        mode_label.setMaximumWidth(180)
+        mode_row.addWidget(mode_label)
         
         self.payment_mode = QComboBox()
         self.payment_mode.addItems(["CASH", "BANK", "UPI", "CHEQUE", "CARD"])
-        self.payment_mode.setStyleSheet(self.get_combobox_style())
-        fields_layout.addRow(mode_label, self.payment_mode)
+        self.payment_mode.setStyleSheet(custom_input_style)
+        mode_row.addWidget(self.payment_mode)
+        fields_layout.addLayout(mode_row)
         
         # Reference Number
-        ref_label = QLabel("Reference Number:")
-        ref_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 15px;")
+        ref_row = QHBoxLayout()
+        ref_row.setSpacing(15)
+        ref_row.setContentsMargins(0, 0, 0, 0)
+        
+        ref_label = QLabel("Reference Number")
+        ref_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 17px; margin: 0px; padding: 0px;")
+        ref_label.setMinimumWidth(180)
+        ref_label.setMaximumWidth(180)
+        ref_row.addWidget(ref_label)
         
         self.reference_number = QLineEdit()
         self.reference_number.setPlaceholderText("Transaction ID / Cheque No / Reference")
-        self.reference_number.setStyleSheet(self.get_input_style())
-        fields_layout.addRow(ref_label, self.reference_number)
+        self.reference_number.setStyleSheet(custom_input_style)
+        ref_row.addWidget(self.reference_number)
+        fields_layout.addLayout(ref_row)
         
         # Notes
-        notes_label = QLabel("Notes:")
-        notes_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 15px;")
+        notes_row = QHBoxLayout()
+        notes_row.setSpacing(15)
+        notes_row.setContentsMargins(0, 0, 0, 0)
+        notes_row.setAlignment(Qt.AlignmentFlag.AlignTop)
+        
+        notes_label = QLabel("Notes")
+        notes_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 17px; margin: 0px; padding: 8px 0px 0px 0px;")
+        notes_label.setMinimumWidth(180)
+        notes_label.setMaximumWidth(180)
+        notes_label.setAlignment(Qt.AlignmentFlag.AlignTop)
+        notes_row.addWidget(notes_label)
         
         self.notes_input = QTextEdit()
         self.notes_input.setPlaceholderText("Additional notes (optional)")
-        self.notes_input.setMaximumHeight(80)
-        self.notes_input.setStyleSheet(self.get_input_style())
-        fields_layout.addRow(notes_label, self.notes_input)
+        self.notes_input.setMaximumHeight(100)
+        self.notes_input.setStyleSheet(f"""
+            QTextEdit {{
+                background-color: {self.colors['secondary_bg']};
+                color: {self.colors['text_primary']};
+                border: 1px solid #3a3a3a;
+                border-radius: 5px;
+                padding: 10px;
+                font-size: 16px;
+                margin: 0px;
+            }}
+            QTextEdit:focus {{
+                border: 2px solid {self.colors['accent_primary']};
+            }}
+        """)
+        notes_row.addWidget(self.notes_input)
+        fields_layout.addLayout(notes_row)
         
         form_layout.addLayout(fields_layout)
         
         # Buttons
         button_layout = QHBoxLayout()
+        button_layout.setSpacing(15)
         button_layout.addStretch()
         
         save_btn = QPushButton("💾 Save Payment")
-        save_btn.setStyleSheet(self.get_button_style('add'))
+        save_btn.setMinimumHeight(45)
+        save_btn.setMinimumWidth(150)
+        save_btn.setStyleSheet(self.get_button_style('add') + """
+            QPushButton {
+                font-size: 16px;
+                font-weight: bold;
+            }
+        """)
         save_btn.clicked.connect(self._save_payment)
         button_layout.addWidget(save_btn)
         
         reset_btn = QPushButton("🔄 Reset")
-        reset_btn.setStyleSheet(self.get_button_style('cancel'))
+        reset_btn.setMinimumHeight(45)
+        reset_btn.setMinimumWidth(120)
+        reset_btn.setStyleSheet(self.get_button_style('cancel') + """
+            QPushButton {
+                font-size: 16px;
+                font-weight: bold;
+            }
+        """)
         reset_btn.clicked.connect(self._reset_form)
         button_layout.addWidget(reset_btn)
         
@@ -236,51 +392,183 @@ class SupplierBillingPage(QWidget):
             "Date", "Supplier", "Amount", "Mode", "Reference", "Notes", "Actions"
         ])
         
-        # Use standard table styling
+        # Complete custom table styling to prevent interference
         self.payments_table.setStyleSheet(f"""
+            /* Main Table Widget */
             QTableWidget {{
                 background-color: {self.colors['secondary_bg']};
                 color: {self.colors['text_primary']};
+                border: 1px solid #3a3a3a;
                 gridline-color: #3a3a3a;
-                font-size: 14px;
+                font-size: 15px;
                 selection-background-color: {self.colors['accent_primary']};
                 selection-color: white;
-                border: 1px solid #3a3a3a;
+                margin: 0px;
+                padding: 0px;
+                outline: none;
             }}
-            QHeaderView::section {{
+            
+            /* Table Items */
+            QTableWidget::item {{
+                padding: 12px 10px;
+                border: none;
+                border-bottom: 1px solid #3a3a3a;
+                margin: 0px;
+            }}
+            
+            QTableWidget::item:selected {{
                 background-color: {self.colors['accent_primary']};
                 color: white;
-                padding: 8px;
-                border: 1px solid {self.colors['primary_bg']};
-                font-weight: bold;
-                font-size: 14px;
             }}
-            QTableWidget::item {{
-                padding: 8px;
+            
+            /* Header View */
+            QHeaderView {{
+                background-color: #3a3a3a;
+                border: none;
+                margin: 0px;
+                padding: 0px;
+            }}
+            
+            /* Header Sections */
+            QHeaderView::section {{
+                background-color: #3a3a3a;
+                color: white;
+                padding: 15px 10px;
+                border: none;
+                border-right: 1px solid #2a2a2a;
+                border-bottom: 1px solid #2a2a2a;
+                font-weight: 600;
+                font-size: 16px;
+                text-align: left;
+                margin: 0px;
+            }}
+            
+            QHeaderView::section:hover {{
+                background-color: #4a4a4a;
+            }}
+            
+            QHeaderView::section:first {{
+                border-left: none;
+            }}
+            
+            QHeaderView::section:last {{
+                border-right: none;
+            }}
+            
+            /* Corner Button */
+            QTableCornerButton::section {{
+                background-color: #3a3a3a;
+                border: none;
+                border-right: 1px solid #2a2a2a;
+                border-bottom: 1px solid #2a2a2a;
+            }}
+            
+            /* Scrollbars */
+            QScrollBar:vertical {{
+                background-color: {self.colors['secondary_bg']};
+                width: 12px;
+                margin: 0px;
+                padding: 0px;
+            }}
+            
+            QScrollBar::handle:vertical {{
+                background-color: #4a4a4a;
+                border-radius: 6px;
+                min-height: 30px;
+                margin: 2px;
+            }}
+            
+            QScrollBar::handle:vertical:hover {{
+                background-color: #5a5a5a;
+            }}
+            
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+                height: 0px;
+                border: none;
+                background: none;
+            }}
+            
+            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{
+                background: none;
+            }}
+            
+            QScrollBar:horizontal {{
+                background-color: {self.colors['secondary_bg']};
+                height: 12px;
+                margin: 0px;
+                padding: 0px;
+            }}
+            
+            QScrollBar::handle:horizontal {{
+                background-color: #4a4a4a;
+                border-radius: 6px;
+                min-width: 30px;
+                margin: 2px;
+            }}
+            
+            QScrollBar::handle:horizontal:hover {{
+                background-color: #5a5a5a;
+            }}
+            
+            QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{
+                width: 0px;
+                border: none;
+                background: none;
+            }}
+            
+            QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {{
+                background: none;
             }}
         """)
         
-        # Configure table
+        # Configure header
         header = self.payments_table.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Fixed)
-        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
-        header.setSectionResizeMode(2, QHeaderView.ResizeMode.Fixed)
-        header.setSectionResizeMode(3, QHeaderView.ResizeMode.Fixed)
-        header.setSectionResizeMode(4, QHeaderView.ResizeMode.Fixed)
-        header.setSectionResizeMode(5, QHeaderView.ResizeMode.Stretch)
-        header.setSectionResizeMode(6, QHeaderView.ResizeMode.Fixed)
+        header.setMinimumHeight(50)
+        header.setMaximumHeight(50)
+        header.setDefaultSectionSize(150)
+        header.setDefaultAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        header.setStretchLastSection(False)
+        header.setSectionsMovable(False)
+        header.setSectionsClickable(True)
+        header.setHighlightSections(True)
         
-        self.payments_table.setColumnWidth(0, 100)
-        self.payments_table.setColumnWidth(2, 120)
-        self.payments_table.setColumnWidth(3, 100)
-        self.payments_table.setColumnWidth(4, 150)
-        self.payments_table.setColumnWidth(6, 100)
+        # Configure vertical header
+        v_header = self.payments_table.verticalHeader()
+        v_header.setDefaultSectionSize(55)
+        v_header.setMinimumSectionSize(55)
+        v_header.setMaximumSectionSize(55)
+        v_header.setVisible(False)
         
-        self.payments_table.verticalHeader().setVisible(False)
+        # Configure column widths with fixed sizing
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Fixed)
+        self.payments_table.setColumnWidth(0, 120)  # Date
+        self.payments_table.setColumnWidth(1, 180)  # Supplier
+        self.payments_table.setColumnWidth(2, 130)  # Amount
+        self.payments_table.setColumnWidth(3, 110)  # Mode
+        self.payments_table.setColumnWidth(4, 150)  # Reference
+        self.payments_table.setColumnWidth(5, 200)  # Notes
+        self.payments_table.setColumnWidth(6, 120)  # Actions
+        
+        # Set last column to stretch
+        header.setSectionResizeMode(6, QHeaderView.ResizeMode.Stretch)
+        
+        # Table display settings with explicit values
+        self.payments_table.setMinimumHeight(400)
+        self.payments_table.setMaximumHeight(600)
         self.payments_table.setAlternatingRowColors(True)
+        self.payments_table.setShowGrid(True)
+        self.payments_table.setWordWrap(False)
         self.payments_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.payments_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
-        self.payments_table.setMinimumHeight(300)
+        self.payments_table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
+        self.payments_table.setHorizontalScrollMode(QTableWidget.ScrollMode.ScrollPerPixel)
+        self.payments_table.setVerticalScrollMode(QTableWidget.ScrollMode.ScrollPerPixel)
+        self.payments_table.setCornerButtonEnabled(True)
+        self.payments_table.setFrameStyle(QFrame.Shape.NoFrame)
+        
+        # Remove any margins and padding
+        self.payments_table.setContentsMargins(0, 0, 0, 0)
+        self.payments_table.setViewportMargins(0, 0, 0, 0)
         
         table_layout.addWidget(self.payments_table)
         
