@@ -80,23 +80,49 @@ class CalculationsWidget(QFrame):
         
         # Grid layout for calculations
         calc_grid = QGridLayout()
-        calc_grid.setSpacing(20)
+        calc_grid.setHorizontalSpacing(20)  # Equal spacing between columns
+        calc_grid.setVerticalSpacing(10)    # Equal spacing between rows
         
-        # Styles
-        label_style = f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 15px;"
+        # Uniform dimensions for all components
+        FIELD_WIDTH = 250
+        FIELD_HEIGHT = 20
+        
+        # Styles - All uniform
+        label_style = (
+            f"color: {self.colors['text_primary']}; "
+            f"font-weight: bold; "
+            f"font-size: 15px;"
+        )
+        
+        # Unified style for all input fields with same dimensions
+        unified_field_style = (
+            f"background-color: {self.colors['primary_bg']}; "
+            f"border-radius: 5px; "
+            f"padding: 10px; "
+            f"font-weight: bold; "
+            f"font-size: 15px; "
+            f"min-width: {FIELD_WIDTH}px; "
+            f"max-width: {FIELD_WIDTH}px; "
+            f"min-height: {FIELD_HEIGHT}px; "
+            f"max-height: {FIELD_HEIGHT}px; "
+        )
+        
+        input_style = (
+            f"QLineEdit {{ "
+            f"{unified_field_style}"
+            f"color: {self.colors['success']}; "
+            f"border: 2px solid {self.colors['success']}; "
+            f"}}"
+        )
         
         combobox_style = (
             f"QComboBox {{ "
-            f"background-color: {self.colors['primary_bg']}; "
+            f"{unified_field_style}"
             f"color: {self.colors['text_secondary']}; "
-            f"border: 1px solid {self.colors['border_primary']}; "
-            f"border-radius: 5px; "
-            f"padding: 10px; "
-            f"font-size: 15px; "
-            f"min-height: 30px; "
+            f"border: 2px solid {self.colors['border_primary']}; "
             f"}} "
             f"QComboBox:focus {{ "
-            f"border: 1px solid {self.colors['border_focus']}; "
+            f"border: 2px solid {self.colors['border_focus']}; "
             f"}} "
             f"QComboBox::drop-down {{ "
             f"border: none; "
@@ -112,23 +138,19 @@ class CalculationsWidget(QFrame):
             f"}}"
         )
         
-        value_style = (
-            f"color: {self.colors['accent_secondary']}; font-weight: bold; "
-            f"font-size: 15px; "
-            f"background-color: {self.colors['primary_bg']}; "
-            f"padding: 10px; border-radius: 5px;"
+        total_style = (
+            f"color: {self.colors['accent_gold']}; "
+            f"border: 2px solid {self.colors['accent_gold']}; "
+            f"{unified_field_style}"
         )
         
-        input_style = (
-            f"QLineEdit {{ "
-            f"background-color: {self.colors['primary_bg']}; "
-            f"color: {self.colors['success']}; "
-            f"border: 1px solid {self.colors['success']}; "
-            f"padding: 10px; font-weight: bold; font-size: 15px; "
-            f"}}"
+        balance_style = (
+            f"color: {self.colors['danger']}; "
+            f"border: 2px solid {self.colors['danger']}; "
+            f"{unified_field_style}"
         )
         
-        # Row 0 (left): Paid
+        # Row 0, Column 0: Paid
         paid_lbl = QLabel("Paid:")
         paid_lbl.setStyleSheet(label_style)
         calc_grid.addWidget(paid_lbl, 0, 0)
@@ -137,30 +159,18 @@ class CalculationsWidget(QFrame):
         self.txt_received.setPlaceholderText("0.00")
         self.txt_received.setStyleSheet(input_style)
         self.txt_received.textChanged.connect(self._on_received_changed)
-        self.txt_received.setMinimumWidth(200)
         calc_grid.addWidget(self.txt_received, 0, 1)
         
-        # Spacer column
-        calc_grid.setColumnMinimumWidth(2, 80)
-        
-        # Row 0 (right): Total
+        # Row 0, Column 1: Total
         total_lbl = QLabel("Total:")
         total_lbl.setStyleSheet(label_style)
-        calc_grid.addWidget(total_lbl, 0, 3)
+        calc_grid.addWidget(total_lbl, 0, 2)
         
-        total_style = (
-            f"color: {self.colors['accent_gold']}; font-weight: bold; "
-            f"font-size: 16px; "
-            f"background-color: {self.colors['primary_bg']}; "
-            f"padding: 12px; border: 2px solid {self.colors['accent_gold']}; "
-            f"border-radius: 5px;"
-        )
         self.lbl_total = QLabel(f"{self.get_currency_symbol()}0.00")
         self.lbl_total.setStyleSheet(total_style)
-        self.lbl_total.setMinimumWidth(200)
-        calc_grid.addWidget(self.lbl_total, 0, 4)
+        calc_grid.addWidget(self.lbl_total, 0, 3)
         
-        # Row 1 (left): Payment Mode
+        # Row 1, Column 0: Payment Mode
         payment_mode_lbl = QLabel("Payment Mode:")
         payment_mode_lbl.setStyleSheet(label_style)
         calc_grid.addWidget(payment_mode_lbl, 1, 0)
@@ -168,25 +178,16 @@ class CalculationsWidget(QFrame):
         self.payment_mode = QComboBox()
         self.payment_mode.addItems(["Cash", "Bank Transfer", "Card", "Google Pay", "Other"])
         self.payment_mode.setStyleSheet(combobox_style)
-        self.payment_mode.setMinimumWidth(200)
         calc_grid.addWidget(self.payment_mode, 1, 1)
         
-        # Row 1 (right): Balance
+        # Row 1, Column 1: Balance
         balance_lbl = QLabel("Balance:")
         balance_lbl.setStyleSheet(label_style)
-        calc_grid.addWidget(balance_lbl, 1, 3)
+        calc_grid.addWidget(balance_lbl, 1, 2)
         
-        balance_style = (
-            f"color: {self.colors['danger']}; font-weight: bold; "
-            f"font-size: 16px; "
-            f"background-color: {self.colors['primary_bg']}; "
-            f"padding: 12px; border: 2px solid {self.colors['danger']}; "
-            f"border-radius: 5px;"
-        )
         self.lbl_balance = QLabel(f"{self.get_currency_symbol()}0.00")
         self.lbl_balance.setStyleSheet(balance_style)
-        self.lbl_balance.setMinimumWidth(200)
-        calc_grid.addWidget(self.lbl_balance, 1, 4)
+        calc_grid.addWidget(self.lbl_balance, 1, 3)
         
         main_layout.addLayout(calc_grid)
     
@@ -232,26 +233,39 @@ class CalculationsWidget(QFrame):
             # Calculate balance
             self._balance = self._total - self._received
             
+            # Uniform dimensions for all fields
+            FIELD_WIDTH = 250
+            FIELD_HEIGHT = 45
+            
+            # Base unified style
+            unified_field_style = (
+                f"background-color: {self.colors['primary_bg']}; "
+                f"border-radius: 5px; "
+                f"padding: 10px; "
+                f"font-weight: bold; "
+                f"font-size: 15px; "
+                f"min-width: {FIELD_WIDTH}px; "
+                f"max-width: {FIELD_WIDTH}px; "
+                f"min-height: {FIELD_HEIGHT}px; "
+                f"max-height: {FIELD_HEIGHT}px; "
+            )
+            
             # Update label with color coding
             if self._balance > 0:
                 # Outstanding balance (red)
                 self.lbl_balance.setStyleSheet(
-                    f"color: {self.colors['danger']}; font-weight: bold; "
-                    f"font-size: 16px; "
-                    f"background-color: {self.colors['primary_bg']}; "
-                    f"padding: 12px; border: 2px solid {self.colors['danger']}; "
-                    f"border-radius: 5px;"
+                    f"color: {self.colors['danger']}; "
+                    f"border: 2px solid {self.colors['danger']}; "
+                    f"{unified_field_style}"
                 )
                 self.lbl_balance.setText(f"{self.get_currency_symbol()}{self._balance:.2f}")
                 
             elif self._balance < 0:
                 # Overpaid (green)
                 self.lbl_balance.setStyleSheet(
-                    f"color: {self.colors['success']}; font-weight: bold; "
-                    f"font-size: 16px; "
-                    f"background-color: {self.colors['primary_bg']}; "
-                    f"padding: 12px; border: 2px solid {self.colors['success']}; "
-                    f"border-radius: 5px;"
+                    f"color: {self.colors['success']}; "
+                    f"border: 2px solid {self.colors['success']}; "
+                    f"{unified_field_style}"
                 )
                 self.lbl_balance.setText(
                     f"{self.get_currency_symbol()}{abs(self._balance):.2f} (Overpaid)"
@@ -260,11 +274,9 @@ class CalculationsWidget(QFrame):
             else:
                 # Fully paid (green)
                 self.lbl_balance.setStyleSheet(
-                    f"color: {self.colors['success']}; font-weight: bold; "
-                    f"font-size: 16px; "
-                    f"background-color: {self.colors['primary_bg']}; "
-                    f"padding: 12px; border: 2px solid {self.colors['success']}; "
-                    f"border-radius: 5px;"
+                    f"color: {self.colors['success']}; "
+                    f"border: 2px solid {self.colors['success']}; "
+                    f"{unified_field_style}"
                 )
                 self.lbl_balance.setText(f"{self.get_currency_symbol()}0.00 (Paid)")
             
