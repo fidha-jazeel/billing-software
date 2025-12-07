@@ -39,6 +39,8 @@ from travel_billing_software.ui.supplier_page import SupplierPage
 
 # Import database manager
 from travel_billing_software.database.db_manager import get_db_instance
+from travel_billing_software.config.config import format_currency, get_currency_symbol
+
 DB_ENABLED = True
 
 
@@ -823,7 +825,7 @@ class DashboardImproved(QMainWindow):
         # Column 6: Price (QDoubleSpinBox)
         price = QDoubleSpinBox()
         price.setMaximum(10_000_000)
-        price.setPrefix("₹ ")
+        price.setPrefix(f"{get_currency_symbol()} ")
         price.setDecimals(2)
         price.valueChanged.connect(lambda _: self.calculate_row_total(row))
         price.setStyleSheet("""
@@ -1142,7 +1144,7 @@ class DashboardImproved(QMainWindow):
                 self.lbl_balance.setText(f"{get_currency_symbol()}0.00 (Paid)")
         except Exception as e:
             print(f"Error calculating balance: {e}")
-            self.lbl_balance.setText("₹0.00")
+            self.lbl_balance.setText(format_currency(0))
 
     def save_invoice(self):
         """Save the invoice data to JSON file and database."""
@@ -1184,7 +1186,7 @@ class DashboardImproved(QMainWindow):
                     "price": price_w.value() if price_w else 0,
                     "qty": qty_w.value() if qty_w else 0,
                     "tax": tax_w.value() if tax_w else 0,
-                    "amount": amount_w.text() if amount_w else "₹0.00"
+                    "amount": amount_w.text() if amount_w else format_currency(0)
                 }
                 invoice_data["items"].append(item)
             

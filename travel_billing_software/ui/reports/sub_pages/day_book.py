@@ -15,6 +15,8 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QCursor
 from travel_billing_software.utils.logger import log_info, log_error, log_warning
+
+from travel_billing_software.config.config import format_currency, get_currency_symbol
 from ..utils import (
     TableConfigurator, ReportExporter, SummaryCardManager,
     create_report_header, show_no_records_message
@@ -121,7 +123,7 @@ class DayBookView(QWidget):
                 log_warning("No records found for day book report", 'billing_app')
                 show_no_records_message(self, "Day Book")
                 SummaryCardManager.update_summary_cards(self.summary_frame, [
-                    "₹0.00", "₹0.00", "₹0.00"
+                    format_currency(0), format_currency(0), format_currency(0)
                 ])
                 return
             
@@ -171,26 +173,26 @@ class DayBookView(QWidget):
                 self.daybook_table.setItem(row, 1, QTableWidgetItem(str(data['invoices'])))
                 
                 # Sales
-                sales_item = QTableWidgetItem(f"₹{data['sales']:,.2f}")
+                sales_item = QTableWidgetItem(format_currency(data['sales']))
                 sales_item.setForeground(QColor("#00FF00"))  # Green for sales
                 self.daybook_table.setItem(row, 2, sales_item)
                 
                 # Purchases
-                purchases_item = QTableWidgetItem(f"₹{data['purchases']:,.2f}")
+                purchases_item = QTableWidgetItem(format_currency(data['purchases']))
                 purchases_item.setForeground(QColor("#FF0000"))  # Red for purchases
                 self.daybook_table.setItem(row, 3, purchases_item)
                 
                 # Profit
                 profit_color = "#00FF00" if profit >= 0 else "#FF0000"
-                profit_item = QTableWidgetItem(f"₹{profit:,.2f}")
+                profit_item = QTableWidgetItem(format_currency(profit))
                 profit_item.setForeground(QColor(profit_color))
                 self.daybook_table.setItem(row, 4, profit_item)
             
             # Update summary
             SummaryCardManager.update_summary_cards(self.summary_frame, [
-                f"₹{total_sales:,.2f}",
-                f"₹{total_purchases:,.2f}",
-                f"₹{total_profit:,.2f}"
+                format_currency(total_sales),
+                format_currency(total_purchases),
+                format_currency(total_profit)
             ])
             
             log_info(f"Day book populated: {len(daily_data)} days, Profit: ₹{total_profit:,.2f}", 'billing_app')

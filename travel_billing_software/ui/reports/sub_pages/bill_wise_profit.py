@@ -16,6 +16,9 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QCursor
 from travel_billing_software.utils.logger import log_info, log_error, log_warning
+
+from travel_billing_software.config.config import format_currency, get_currency_symbol
+
 from ..utils import (
     TableConfigurator, ReportExporter, SummaryCardManager,
     create_report_header, show_no_records_message
@@ -130,7 +133,7 @@ class BillWiseProfitView(QWidget):
                 log_warning("No records found for bill wise profit report", 'billing_app')
                 show_no_records_message(self, "Bill Wise Profit")
                 SummaryCardManager.update_summary_cards(self.summary_frame, [
-                    "₹0.00", "₹0.00", "₹0.00"
+                    format_currency(0), format_currency(0), format_currency(0)
                 ])
                 return
             
@@ -188,17 +191,17 @@ class BillWiseProfitView(QWidget):
                     self.bill_wise_profit_table.setItem(row, 7, QTableWidgetItem(str(quantity)))
                     
                     # Column 8: Sale Price
-                    sale_item = QTableWidgetItem(f"₹{sale_price:,.2f}")
+                    sale_item = QTableWidgetItem(format_currency(sale_price))
                     sale_item.setForeground(QColor("#00FF00"))  # Green
                     self.bill_wise_profit_table.setItem(row, 8, sale_item)
                     
                     # Column 9: Cost Price
-                    cost_item = QTableWidgetItem(f"₹{cost_price:,.2f}")
+                    cost_item = QTableWidgetItem(format_currency(cost_price))
                     cost_item.setForeground(QColor("#FF0000"))  # Red
                     self.bill_wise_profit_table.setItem(row, 9, cost_item)
                     
                     # Column 10: Profit
-                    profit_item = QTableWidgetItem(f"₹{profit:,.2f}")
+                    profit_item = QTableWidgetItem(format_currency(profit))
                     if profit > 0:
                         profit_item.setForeground(QColor("#00FF00"))  # Green
                     else:
@@ -215,9 +218,9 @@ class BillWiseProfitView(QWidget):
             
             # Update summary
             SummaryCardManager.update_summary_cards(self.summary_frame, [
-                f"₹{total_sale:,.2f}",
-                f"₹{total_cost:,.2f}",
-                f"₹{total_profit:,.2f}"
+                format_currency(total_sale),
+                format_currency(total_cost),
+                format_currency(total_profit)
             ])
             
             log_info(f"Bill wise profit populated: {self.bill_wise_profit_table.rowCount()} items, Profit: ₹{total_profit:,.2f}", 'billing_app')

@@ -377,9 +377,9 @@ class SupplierPage(QWidget):
         stats_layout2 = QHBoxLayout(stats_frame2)
         stats_layout2.setSpacing(20)
         
-        self.total_pending_label = self._create_stat_card("Total Pending to Pay", "₹0.00", self.colors['danger'])
-        self.total_paid_label = self._create_stat_card("Total Amount Paid", "₹0.00", self.colors['success'])
-        self.total_received_label = self._create_stat_card("Total Received from Suppliers", "₹0.00", self.colors['accent_cyan'])
+        self.total_pending_label = self._create_stat_card("Total Pending to Pay", format_currency(0), self.colors['danger'])
+        self.total_paid_label = self._create_stat_card("Total Amount Paid", format_currency(0), self.colors['success'])
+        self.total_received_label = self._create_stat_card("Total Received from Suppliers", format_currency(0), self.colors['accent_cyan'])
         
         stats_layout2.addWidget(self.total_pending_label)
         stats_layout2.addWidget(self.total_paid_label)
@@ -687,19 +687,19 @@ class SupplierPage(QWidget):
             self.suppliers_table.setItem(row, 1, phone_item)
             
             # Total Payable (from invoice items)
-            payable_item = QTableWidgetItem(f"₹{total_payable:,.2f}")
+            payable_item = QTableWidgetItem(format_currency(total_payable))
             payable_item.setForeground(QColor(self.colors['text_primary']))
             payable_item.setFont(QFont('Arial', 13, QFont.Weight.Bold))
             self.suppliers_table.setItem(row, 2, payable_item)
             
             # Amount Paid
-            paid_item = QTableWidgetItem(f"₹{paid:,.2f}")
+            paid_item = QTableWidgetItem(format_currency(paid))
             paid_item.setForeground(QColor(self.colors['success']))
             paid_item.setFont(QFont('Arial', 13))
             self.suppliers_table.setItem(row, 3, paid_item)
             
             # Pending Amount (Amount Not Yet Paid to Supplier)
-            pending_item = QTableWidgetItem(f"₹{pending:,.2f}")
+            pending_item = QTableWidgetItem(format_currency(pending))
             if pending > 0:
                 pending_item.setForeground(QColor(self.colors['danger']))
                 pending_item.setFont(QFont('Arial', 13, QFont.Weight.Bold))
@@ -953,15 +953,15 @@ class SupplierPage(QWidget):
         summary_layout = QHBoxLayout(summary_frame)
         
         # Total Payable Card
-        payable_card = self._create_mini_card("Total Payable", f"₹{total_payable:,.2f}", self.colors['text_primary'])
+        payable_card = self._create_mini_card("Total Payable", format_currency(total_payable), self.colors['text_primary'])
         summary_layout.addWidget(payable_card)
         
         # Paid Card
-        paid_card = self._create_mini_card("Amount Paid", f"₹{paid:,.2f}", self.colors['success'])
+        paid_card = self._create_mini_card("Amount Paid", format_currency(paid), self.colors['success'])
         summary_layout.addWidget(paid_card)
         
         # Pending Card
-        pending_card = self._create_mini_card("Pending Amount", f"₹{pending:,.2f}", self.colors['danger'])
+        pending_card = self._create_mini_card("Pending Amount", format_currency(pending), self.colors['danger'])
         summary_layout.addWidget(pending_card)
         
         layout.addWidget(summary_frame)
@@ -1036,7 +1036,7 @@ class SupplierPage(QWidget):
                 cost = item.get('cost_price', 0.0) or 0.0
                 qty = item.get('quantity', 1) or 1
                 total_cost = cost * qty
-                cost_item = QTableWidgetItem(f"₹{total_cost:,.2f}")
+                cost_item = QTableWidgetItem(format_currency(total_cost))
                 cost_item.setForeground(QColor(self.colors['text_primary']))
                 cost_item.setFont(QFont('Arial', 12, QFont.Weight.Bold))
                 items_table.setItem(row, 4, cost_item)
@@ -1054,7 +1054,7 @@ class SupplierPage(QWidget):
             for row, payment in enumerate(payments):
                 payments_table.setItem(row, 0, QTableWidgetItem(payment.get('date', 'N/A')))
                 
-                amount_item = QTableWidgetItem(f"₹{payment.get('amount', 0.0):,.2f}")
+                amount_item = QTableWidgetItem(format_currency(payment.get('amount', 0.0)))
                 amount_item.setForeground(QColor(self.colors['success']))
                 payments_table.setItem(row, 1, amount_item)
                 
@@ -1161,11 +1161,11 @@ class SupplierPage(QWidget):
                     elif card == self.credit_suppliers_label:
                         label.setText(str(credit_count))
                     elif card == self.total_pending_label:
-                        label.setText(f"₹{total_pending:,.2f}")
+                        label.setText(format_currency(total_pending))
                     elif card == self.total_paid_label:
-                        label.setText(f"₹{total_paid:,.2f}")
+                        label.setText(format_currency(total_paid))
                     elif card == self.total_received_label:
-                        label.setText(f"₹{total_received:,.2f}")
+                        label.setText(format_currency(total_received))
     
     def _export_suppliers(self):
         """Export suppliers to CSV."""
@@ -1426,7 +1426,7 @@ class SupplierPage(QWidget):
             transactions_table.setItem(row, 1, type_item)
             
             amount = trans.get('amount', 0.0)
-            amount_item = QTableWidgetItem(f"₹{amount:,.2f}")
+            amount_item = QTableWidgetItem(format_currency(amount))
             amount_item.setFont(QFont('Arial', 11, QFont.Weight.Bold))
             transactions_table.setItem(row, 2, amount_item)
             

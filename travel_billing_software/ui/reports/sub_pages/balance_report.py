@@ -16,6 +16,8 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QCursor
 from travel_billing_software.utils.logger import log_info, log_error, log_warning
+
+from travel_billing_software.config.config import format_currency, get_currency_symbol
 from ..utils import (
     TableConfigurator, ReportExporter, SummaryCardManager,
     create_report_header, show_no_records_message
@@ -126,7 +128,7 @@ class BalanceReportView(QWidget):
                 log_warning("No records found for balance report", 'billing_app')
                 show_no_records_message(self, "Balance Report")
                 SummaryCardManager.update_summary_cards(self.summary_frame, [
-                    "₹0.00", "₹0.00", "₹0.00"
+                    format_currency(0), format_currency(0), format_currency(0)
                 ])
                 return
             
@@ -187,15 +189,15 @@ class BalanceReportView(QWidget):
                 self.balance_table.setItem(row, 2, count_item)
                 
                 # Total Invoiced
-                self.balance_table.setItem(row, 3, QTableWidgetItem(f"₹{total_invoiced:,.2f}"))
+                self.balance_table.setItem(row, 3, QTableWidgetItem(format_currency(total_invoiced)))
                 
                 # Total Received
-                received_item = QTableWidgetItem(f"₹{total_received:,.2f}")
+                received_item = QTableWidgetItem(format_currency(total_received))
                 received_item.setForeground(QColor(self.colors['success']))
                 self.balance_table.setItem(row, 4, received_item)
                 
                 # Balance Due
-                balance_item = QTableWidgetItem(f"₹{balance_due:,.2f}")
+                balance_item = QTableWidgetItem(format_currency(balance_due))
                 if balance_due > 0:
                     balance_item.setForeground(QColor(self.colors['danger']))
                 else:
@@ -230,9 +232,9 @@ class BalanceReportView(QWidget):
             
             # Update summary
             SummaryCardManager.update_summary_cards(self.summary_frame, [
-                f"₹{overall_balance:,.2f}",
-                f"₹{overall_received:,.2f}",
-                f"₹{overall_invoiced:,.2f}"
+                format_currency(overall_balance),
+                format_currency(overall_received),
+                format_currency(overall_invoiced)
             ])
             
             log_info(f"Balance report populated: {len(customer_balances)} customers, Balance: ₹{overall_balance:,.2f}", 'billing_app')

@@ -17,6 +17,8 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QCursor
 from travel_billing_software.utils.logger import log_info, log_error, log_warning
+
+from travel_billing_software.config.config import format_currency, get_currency_symbol
 from ..utils import (
     TableConfigurator, ReportExporter, SummaryCardManager,
     create_report_header, show_no_records_message
@@ -163,7 +165,7 @@ class CashTransactionsView(QWidget):
                 log_warning("No cash transactions found", 'billing_app')
                 show_no_records_message(self, "Cash Transactions")
                 SummaryCardManager.update_summary_cards(self.summary_frame, [
-                    "₹0.00", "₹0.00", "₹0.00"
+                    format_currency(0), format_currency(0), format_currency(0)
                 ])
                 return
             
@@ -205,19 +207,19 @@ class CashTransactionsView(QWidget):
                 self.cash_transactions_table.setItem(row, 3, QTableWidgetItem(transaction['contact']))
                 
                 # Cash Received
-                received_item = QTableWidgetItem(f"₹{cash_received_amt:,.2f}")
+                received_item = QTableWidgetItem(format_currency(cash_received_amt))
                 if cash_received_amt > 0:
                     received_item.setForeground(QColor("#00FF00"))  # Green
                 self.cash_transactions_table.setItem(row, 4, received_item)
                 
                 # Cash Paid
-                paid_item = QTableWidgetItem(f"₹{cash_paid_amt:,.2f}")
+                paid_item = QTableWidgetItem(format_currency(cash_paid_amt))
                 if cash_paid_amt > 0:
                     paid_item.setForeground(QColor("#FF0000"))  # Red
                 self.cash_transactions_table.setItem(row, 5, paid_item)
                 
                 # Balance
-                balance_item = QTableWidgetItem(f"₹{abs(balance):,.2f}")
+                balance_item = QTableWidgetItem(format_currency(abs(balance)))
                 if balance > 0:
                     balance_item.setForeground(QColor("#FF0000"))  # Red (still owed)
                 elif balance < 0:
@@ -247,9 +249,9 @@ class CashTransactionsView(QWidget):
             # Update summary
             net_cash_flow = total_received - total_paid
             SummaryCardManager.update_summary_cards(self.summary_frame, [
-                f"₹{total_received:,.2f}",
-                f"₹{total_paid:,.2f}",
-                f"₹{net_cash_flow:,.2f}"
+                format_currency(total_received),
+                format_currency(total_paid),
+                format_currency(net_cash_flow)
             ])
             
             log_info(

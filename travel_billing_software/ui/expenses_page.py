@@ -410,10 +410,10 @@ class ExpensesPage(QWidget):
         stats_layout.setSpacing(8)
         stats_layout.setContentsMargins(0, 0, 0, 0)
         
-        self.total_expenses_label = self._create_stat_card("Total Expenses", "₹0.00", self.colors['danger'])
+        self.total_expenses_label = self._create_stat_card("Total Expenses", format_currency(0), self.colors['danger'])
         self.expense_count_label = self._create_stat_card("Number of Expenses", "0", self.colors['accent_primary'])
-        self.avg_expense_label = self._create_stat_card("Average Expense", "₹0.00", self.colors['accent_secondary'])
-        self.cash_expenses_label = self._create_stat_card("Cash Expenses", "₹0.00", self.colors['success'])
+        self.avg_expense_label = self._create_stat_card("Average Expense", format_currency(0), self.colors['accent_secondary'])
+        self.cash_expenses_label = self._create_stat_card("Cash Expenses", format_currency(0), self.colors['success'])
         
         stats_layout.addWidget(self.total_expenses_label)
         stats_layout.addWidget(self.expense_count_label)
@@ -659,7 +659,7 @@ class ExpensesPage(QWidget):
             
             # Amount
             amount = expense.get('amount', 0.0)
-            amount_item = QTableWidgetItem(f"₹{amount:,.2f}")
+            amount_item = QTableWidgetItem(format_currency(amount))
             amount_item.setForeground(QColor(self.colors['danger']))
             amount_item.setFont(QFont('Arial', 12, QFont.Weight.Bold))
             self.expenses_table.setItem(row, 2, amount_item)
@@ -886,7 +886,7 @@ class ExpensesPage(QWidget):
         layout.addWidget(title)
 
         # Amount highlight box with high visibility
-        amount_label = QLabel(f"₹{expense.get('amount', 0.0):,.2f}")
+        amount_label = QLabel(format_currency(expense.get('amount', 0.0)))
         amount_label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         amount_label.setMinimumHeight(60)
         amount_label.setStyleSheet("""
@@ -932,7 +932,7 @@ class ExpensesPage(QWidget):
         details_data = [
             ("Date", formatted_date),
             ("Category", expense.get('category', 'N/A')),
-            ("Amount", f"₹{expense.get('amount', 0.0):,.2f}"),
+            ("Amount", format_currency(expense.get('amount', 0.0))),
             ("Payment Method", expense.get('payment_mode', 'N/A')),
             ("Vendor (Paid To)", expense.get('vendor', 'N/A')),
             ("Person Responsible", expense.get('responsible_person', 'N/A')),
@@ -1068,13 +1068,13 @@ class ExpensesPage(QWidget):
             for label in card.findChildren(QLabel):
                 if label.property('stat_value'):
                     if card == self.total_expenses_label:
-                        label.setText(f"₹{total:,.2f}")
+                        label.setText(format_currency(total))
                     elif card == self.expense_count_label:
                         label.setText(str(count))
                     elif card == self.avg_expense_label:
-                        label.setText(f"₹{avg:,.2f}")
+                        label.setText(format_currency(avg))
                     elif card == self.cash_expenses_label:
-                        label.setText(f"₹{cash_total:,.2f}")
+                        label.setText(format_currency(cash_total))
     
     def _export_expenses(self):
         """Export expenses to CSV."""

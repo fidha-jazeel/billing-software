@@ -10,6 +10,8 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QCursor
 from travel_billing_software.utils.logger import log_info, log_error, log_warning
+
+from travel_billing_software.config.config import format_currency, get_currency_symbol
 from ..utils import (
     TableConfigurator,
     ReportExporter,
@@ -222,12 +224,12 @@ class SaleReportView(QWidget):
                 
                 # Update summary with zeros (6 cards)
                 SummaryCardManager.update_summary_cards(self.summary_frame, [
-                    "₹0.00",  # Total Sales
+                    format_currency(0),  # Total Sales
                     "0",      # Total Invoices
-                    "₹0.00",  # Avg Invoice Value
-                    "₹0.00",  # Total Received
-                    "₹0.00",  # Total Due
-                    "₹0.00"   # Net Profit
+                    format_currency(0),  # Avg Invoice Value
+                    format_currency(0),  # Total Received
+                    format_currency(0),  # Total Due
+                    format_currency(0)   # Net Profit
                 ])
                 return
             
@@ -274,7 +276,7 @@ class SaleReportView(QWidget):
                     total = float(invoice.get('total_amount', 0))
                     total_sales += total
                     
-                    total_item = QTableWidgetItem(f"₹{total:,.2f}")
+                    total_item = QTableWidgetItem(format_currency(total))
                     total_item.setForeground(QColor(self.colors['accent_gold']))
                     self.sale_table.setItem(row, 5, total_item)
                     
@@ -307,18 +309,18 @@ class SaleReportView(QWidget):
             total_due = total_sales - total_received
             
             SummaryCardManager.update_summary_cards(self.summary_frame, [
-                f"₹{total_sales:,.2f}",      # Total Sales
+                format_currency(total_sales),      # Total Sales
                 str(len(invoices)),           # Total Invoices
-                f"₹{avg_value:,.2f}",        # Avg Invoice Value
-                f"₹{total_received:,.2f}",   # Total Received
-                f"₹{total_due:,.2f}",        # Total Due
-                f"₹{net_profit:,.2f}"        # Net Profit
+                format_currency(avg_value),        # Avg Invoice Value
+                format_currency(total_received),   # Total Received
+                format_currency(total_due),        # Total Due
+                format_currency(net_profit)        # Net Profit
             ])
             
             log_info(
                 f"Sale report populated successfully with {len(invoices)} records, "
-                f"Total Sales: ₹{total_sales:,.2f}, Received: ₹{total_received:,.2f}, "
-                f"Due: ₹{total_due:,.2f}, Net Profit: ₹{net_profit:,.2f}",
+                f"Total Sales: {format_currency(0)}{total_sales:,.2f}, Received: {format_currency(0)}{total_received:,.2f}, "
+                f"Due: {format_currency(0)}{total_due:,.2f}, Net Profit: {format_currency(0)}{net_profit:,.2f}",
                 'billing_app'
             )
             

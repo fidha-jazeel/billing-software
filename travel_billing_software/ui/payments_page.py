@@ -572,16 +572,16 @@ class PaymentsPage(QWidget):
             self.unpaid_table.setItem(row, 2, QTableWidgetItem(str(inv.get('customer_name') or '')))
             
             # Total
-            total_item = QTableWidgetItem(f"₹{inv.get('total_amount', 0):,.2f}")
+            total_item = QTableWidgetItem(format_currency(inv.get('total_amount', 0)))
             self.unpaid_table.setItem(row, 3, total_item)
             
             # Paid
-            paid_item = QTableWidgetItem(f"₹{inv.get('paid_amount', 0):,.2f}")
+            paid_item = QTableWidgetItem(format_currency(inv.get('paid_amount', 0)))
             paid_item.setForeground(QColor(self.colors['success']))
             self.unpaid_table.setItem(row, 4, paid_item)
             
             # Balance
-            balance_item = QTableWidgetItem(f"₹{inv.get('balance', 0):,.2f}")
+            balance_item = QTableWidgetItem(format_currency(inv.get('balance', 0)))
             balance_item.setForeground(QColor(self.colors['danger']))
             self.unpaid_table.setItem(row, 5, balance_item)
             

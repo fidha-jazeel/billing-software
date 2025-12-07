@@ -15,6 +15,8 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QCursor
 from travel_billing_software.utils.logger import log_info, log_error, log_warning
+
+from travel_billing_software.config.config import format_currency, get_currency_symbol
 from ..utils import (
     TableConfigurator, ReportExporter, SummaryCardManager,
     create_report_header, show_no_records_message
@@ -123,7 +125,7 @@ class ProfitLossView(QWidget):
                 log_warning("No records found for profit & loss report", 'billing_app')
                 show_no_records_message(self, "Profit & Loss")
                 SummaryCardManager.update_summary_cards(self.summary_frame, [
-                    "₹0.00", "₹0.00", "₹0.00"
+                    format_currency(0), format_currency(0), format_currency(0)
                 ])
                 return
             
@@ -161,17 +163,17 @@ class ProfitLossView(QWidget):
                 self.profit_loss_table.setItem(row, 2, QTableWidgetItem(invoice.get('customer_name', '')))
                 
                 # Sales
-                sales_item = QTableWidgetItem(f"₹{sales:,.2f}")
+                sales_item = QTableWidgetItem(format_currency(sales))
                 sales_item.setForeground(QColor("#00FF00"))  # Green
                 self.profit_loss_table.setItem(row, 3, sales_item)
                 
                 # Cost
-                cost_item = QTableWidgetItem(f"₹{cost:,.2f}")
+                cost_item = QTableWidgetItem(format_currency(cost))
                 cost_item.setForeground(QColor("#FF0000"))  # Red
                 self.profit_loss_table.setItem(row, 4, cost_item)
                 
                 # Profit
-                profit_item = QTableWidgetItem(f"₹{profit:,.2f}")
+                profit_item = QTableWidgetItem(format_currency(profit))
                 if profit > 0:
                     profit_item.setForeground(QColor("#00FF00"))  # Green
                 else:
@@ -188,9 +190,9 @@ class ProfitLossView(QWidget):
             
             # Update summary
             SummaryCardManager.update_summary_cards(self.summary_frame, [
-                f"₹{total_sales:,.2f}",
-                f"₹{total_cost:,.2f}",
-                f"₹{total_profit:,.2f}"
+                format_currency(total_sales),
+                format_currency(total_cost),
+                format_currency(total_profit)
             ])
             
             log_info(f"Profit & loss populated: {len(invoices)} invoices, Profit: ₹{total_profit:,.2f}", 'billing_app')

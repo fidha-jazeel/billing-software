@@ -750,7 +750,7 @@ class SupplierBillingPage(QWidget):
                 
                 # Amount
                 amount = payment.get('amount', 0.0)
-                amount_item = QTableWidgetItem(f"₹{amount:,.2f}")
+                amount_item = QTableWidgetItem(format_currency(amount))
                 amount_item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
                 self.payments_table.setItem(row, 2, amount_item)
                 

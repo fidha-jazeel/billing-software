@@ -15,6 +15,8 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QCursor
 from travel_billing_software.utils.logger import log_info, log_error, log_warning
+
+from travel_billing_software.config.config import format_currency, get_currency_symbol
 from ..utils import (
     TableConfigurator, ReportExporter, SummaryCardManager,
     create_report_header, show_no_records_message
@@ -123,7 +125,7 @@ class AllTransactionsView(QWidget):
                 log_warning("No records found for all transactions report", 'billing_app')
                 show_no_records_message(self, "All Transactions")
                 SummaryCardManager.update_summary_cards(self.summary_frame, [
-                    "0", "₹0.00", "₹0.00"
+                    "0", format_currency(0), format_currency(0)
                 ])
                 return
             
@@ -156,7 +158,7 @@ class AllTransactionsView(QWidget):
                 
                 # Total
                 amount = invoice.get('total_amount', 0.0)
-                amount_item = QTableWidgetItem(f"₹{amount:,.2f}")
+                amount_item = QTableWidgetItem(format_currency(amount))
                 amount_item.setForeground(QColor("#FFFFFF"))
                 self.transactions_table.setItem(row, 5, amount_item)
                 
@@ -180,8 +182,8 @@ class AllTransactionsView(QWidget):
             avg_transaction = total_value / transaction_count if transaction_count > 0 else 0.0
             SummaryCardManager.update_summary_cards(self.summary_frame, [
                 str(transaction_count),
-                f"₹{total_value:,.2f}",
-                f"₹{avg_transaction:,.2f}"
+                format_currency(total_value),
+                format_currency(avg_transaction)
             ])
             
             log_info(f"All transactions populated: {transaction_count} transactions, Total: ₹{total_value:,.2f}", 'billing_app')
