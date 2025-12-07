@@ -256,32 +256,22 @@ class ExpensesPage(QWidget):
     
     def _init_ui(self):
         """Initialize the UI."""
-        # Main layout
-        main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.setSpacing(0)
+        # Main layout - no scroll area for responsive fit
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(8, 8, 8, 8)
+        layout.setSpacing(6)
         
-        # Scroll area
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setStyleSheet(f"QScrollArea {{ border: none; background-color: {self.colors['primary_bg']}; }}")
-        
-        content = QWidget()
-        layout = QVBoxLayout(content)
-        layout.setContentsMargins(10, 12, 10, 12)
-        layout.setSpacing(10)
-        
-        # Header Section
+        # Header Section - Compact
         header_frame = QFrame()
         header_layout = QVBoxLayout(header_frame)
         header_layout.setContentsMargins(0, 0, 0, 0)
-        header_layout.setSpacing(5)
+        header_layout.setSpacing(2)
         
         title = QLabel("💰 Expenses Management")
         title.setStyleSheet(f"""
             QLabel {{
                 color: {self.colors['accent_primary']};
-                font-size: 32px;
+                font-size: 24px;
                 font-weight: bold;
                 letter-spacing: 0.5px;
             }}
@@ -292,12 +282,15 @@ class ExpensesPage(QWidget):
         subtitle.setStyleSheet(f"""
             QLabel {{
                 color: {self.colors['text_secondary']};
-                font-size: 16px;
+                font-size: 13px;
             }}
         """)
         header_layout.addWidget(subtitle)
         
         layout.addWidget(header_frame)
+        
+        # Add spacing before action bar
+        layout.addSpacing(12)
         
         # Action Bar
         action_bar = QFrame()
@@ -308,14 +301,19 @@ class ExpensesPage(QWidget):
                 background-color: {self.colors['secondary_bg']};
                 border-radius: 10px;
                 padding: 15px;
+                margin: 8px 0px;
             }}
         """)
         action_layout = QHBoxLayout(action_bar)
-        action_layout.setSpacing(10)
+        action_layout.setSpacing(12)
         
         # Date Filter Section
         date_label = QLabel("Filter by Date:")
-        date_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold;")
+        date_label.setStyleSheet(f"""
+            color: {self.colors['text_primary']}; 
+            font-weight: bold;
+            font-size: 14px;
+        """)
         action_layout.addWidget(date_label)
         
         self.start_date = QDateEdit()
@@ -324,16 +322,20 @@ class ExpensesPage(QWidget):
         self.start_date.setDisplayFormat("dd/MM/yyyy")
         self.start_date.setStyleSheet(self.get_input_style() + """
             QDateEdit {
-                padding: 10px;
-                font-size: 15px;
+                padding: 10px 12px;
+                font-size: 14px;
                 min-width: 140px;
+                min-height: 38px;
             }
         """)
         self.start_date.dateChanged.connect(self._filter_expenses)
         action_layout.addWidget(self.start_date)
         
         to_label = QLabel("to")
-        to_label.setStyleSheet(f"color: {self.colors['text_secondary']};")
+        to_label.setStyleSheet(f"""
+            color: {self.colors['text_secondary']};
+            font-size: 14px;
+        """)
         action_layout.addWidget(to_label)
         
         self.end_date = QDateEdit()
@@ -342,9 +344,10 @@ class ExpensesPage(QWidget):
         self.end_date.setDisplayFormat("dd/MM/yyyy")
         self.end_date.setStyleSheet(self.get_input_style() + """
             QDateEdit {
-                padding: 10px;
-                font-size: 15px;
+                padding: 10px 12px;
+                font-size: 14px;
                 min-width: 140px;
+                min-height: 38px;
             }
         """)
         self.end_date.dateChanged.connect(self._filter_expenses)
@@ -355,9 +358,10 @@ class ExpensesPage(QWidget):
         self.search_input.setPlaceholderText("🔍 Search by category, vendor, or description...")
         self.search_input.setStyleSheet(self.get_input_style() + """
             QLineEdit {
-                padding: 12px 15px;
-                font-size: 16px;
+                padding: 10px 15px;
+                font-size: 14px;
                 min-width: 300px;
+                min-height: 38px;
             }
         """)
         self.search_input.textChanged.connect(self._filter_expenses)
@@ -369,9 +373,10 @@ class ExpensesPage(QWidget):
         add_btn = QPushButton("➕ Add New Expense")
         add_btn.setStyleSheet(self.get_button_style('add') + """
             QPushButton {
-                padding: 12px 25px;
-                font-size: 16px;
+                padding: 10px 20px;
+                font-size: 14px;
                 font-weight: 600;
+                min-height: 38px;
             }
         """)
         add_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -382,8 +387,9 @@ class ExpensesPage(QWidget):
         export_btn = QPushButton("📊 Export to CSV")
         export_btn.setStyleSheet(self.get_button_style('primary') + """
             QPushButton {
-                padding: 12px 25px;
-                font-size: 16px;
+                padding: 10px 20px;
+                font-size: 14px;
+                min-height: 38px;
             }
         """)
         export_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -392,11 +398,15 @@ class ExpensesPage(QWidget):
         
         layout.addWidget(action_bar)
         
+        # Add spacing between action bar and stats cards
+        layout.addSpacing(20)
+        
         # Statistics Cards
         stats_frame = QFrame()
         stats_frame.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         stats_layout = QHBoxLayout(stats_frame)
-        stats_layout.setSpacing(12)
+        stats_layout.setSpacing(8)
+        stats_layout.setContentsMargins(0, 0, 0, 0)
         
         self.total_expenses_label = self._create_stat_card("Total Expenses", "₹0.00", self.colors['danger'])
         self.expense_count_label = self._create_stat_card("Number of Expenses", "0", self.colors['accent_primary'])
@@ -410,30 +420,33 @@ class ExpensesPage(QWidget):
         
         layout.addWidget(stats_frame)
         
+        # Add spacing between stats cards and table
+        layout.addSpacing(15)
+        
         # Expenses Table
         table_frame = QFrame()
         table_frame.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         table_frame.setStyleSheet(f"""
             QFrame {{
                 background-color: #1A1A1A;
-                border-radius: 10px;
+                border-radius: 8px;
                 border: 1.2px solid #333333;
                 padding: 0px;
                 margin: 0px;
             }}
         """)
         table_layout = QVBoxLayout(table_frame)
-        table_layout.setContentsMargins(10, 10, 10, 10)
-        table_layout.setSpacing(8)
+        table_layout.setContentsMargins(6, 6, 6, 6)
+        table_layout.setSpacing(4)
 
         # Table title with clean styling
         table_title = QLabel("📋 Expense Records")
         table_title.setStyleSheet(f"""
             QLabel {{
                 color: #FFFFFF;
-                font-size: 20px;
+                font-size: 16px;
                 font-weight: bold;
-                padding: 5px 0px;
+                padding: 2px 0px;
                 background-color: transparent;
                 border: none;
             }}
@@ -451,12 +464,8 @@ class ExpensesPage(QWidget):
         # Add table to layout with stretch factor for full expansion
         table_layout.addWidget(self.expenses_table, 1)
 
-        # Add table frame to main layout with stretch factor
+        # Add table frame to main layout with maximum stretch for responsiveness
         layout.addWidget(table_frame, 1)
-        layout.setStretch(layout.count() - 1, 1)
-        
-        scroll.setWidget(content)
-        main_layout.addWidget(scroll)
         
         # Update statistics
         self._update_statistics()
@@ -469,18 +478,20 @@ class ExpensesPage(QWidget):
                 background-color: {self.colors['secondary_bg']};
                 border-radius: 10px;
                 border-left: 5px solid {color};
-                padding: 20px;
+                padding: 18px;
+                min-height: 40px;
             }}
         """)
         card_layout = QVBoxLayout(card)
         card_layout.setSpacing(8)
+        card_layout.setContentsMargins(12, 12, 12, 12)
         
         title_label = QLabel(title)
         title_label.setStyleSheet(f"""
             QLabel {{
                 color: {self.colors['text_secondary']};
-                font-size: 15px;
-                font-weight: 500;
+                font-size: 14px;
+                font-weight: 600;
             }}
         """)
         card_layout.addWidget(title_label)
@@ -489,7 +500,7 @@ class ExpensesPage(QWidget):
         value_label.setStyleSheet(f"""
             QLabel {{
                 color: {color};
-                font-size: 32px;
+                font-size: 28px;
                 font-weight: bold;
             }}
         """)
@@ -513,22 +524,19 @@ class ExpensesPage(QWidget):
         header = self.expenses_table.horizontalHeader()
         header.setVisible(True)
         header.setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
-        header.setMinimumHeight(45)
-        header.setMaximumHeight(45)
+        header.setMinimumHeight(35)
+        header.setMaximumHeight(35)
         
         header.setStyleSheet("""
             QHeaderView::section {
                 background-color: #202020;
                 color: #FFFFFF;
-
-
-
                 font-weight: bold;
-                font-size: 15px;
+                font-size: 13px;
                 border: 1px solid #444444;
-                padding: 6px;
+                padding: 4px;
                 text-align: center;
-                min-height: 45px;
+                min-height: 35px;
             }
             QHeaderView::section:hover {
                 background-color: #2A2A2A;
@@ -564,34 +572,24 @@ class ExpensesPage(QWidget):
         header.setSectionsMovable(False)
         header.setSectionsClickable(True)
 
-        # Configure vertical header
+        # Configure vertical header with compact row height
         self.expenses_table.verticalHeader().setVisible(True)
-        self.expenses_table.verticalHeader().setDefaultSectionSize(50)
+        self.expenses_table.verticalHeader().setDefaultSectionSize(35)
 
-
-
-
-
-
-
-
-
-
-        # Table styling - Clean dark theme with no white rows
+        # Table styling - Clean dark theme with compact rows
         self.expenses_table.setAlternatingRowColors(True)
         self.expenses_table.setStyleSheet(self.get_table_style() + f"""
             QTableWidget {{
                 background-color: #1E1E1E;
                 gridline-color: #444444;
-                font-size: 15px;
+                font-size: 13px;
                 selection-background-color: #2A2A2A;
                 selection-color: #FFFFFF;
-
                 color: #FFFFFF;
                 border: 1.2px solid #FFFFFF;
             }}
             QTableWidget::item {{
-                padding: 8px 10px;
+                padding: 4px 8px;
                 border: none;
                 background-color: #1E1E1E;
                 color: #FFFFFF;
