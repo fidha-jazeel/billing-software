@@ -155,7 +155,7 @@ class ReportsPage(QWidget):
         
         # Header
         header_label = QLabel("📊 Reports")
-        header_font = QFont("Segoe UI", 16, QFont.Weight.Bold)
+        header_font = QFont("Segoe UI", 18, QFont.Weight.Bold)
         header_label.setFont(header_font)
         header_label.setStyleSheet(f"color: {self.colors['text_primary']};")
         sidebar_layout.addWidget(header_label)
@@ -178,7 +178,7 @@ class ReportsPage(QWidget):
                 border-radius: 8px;
                 margin: 2px 0px;
                 color: {self.colors['text_primary']};
-                font-size: 13px;
+                font-size: 15px;
             }}
             QListWidget::item:hover {{
                 background-color: {self.colors.get('hover', "#7e7c7c")};
@@ -222,7 +222,7 @@ class ReportsPage(QWidget):
         footer.setStyleSheet(f"""
             QLabel {{
                 color: {self.colors['text_secondary']};
-                font-size: 11px;
+                font-size: 13px;
                 padding: 15px;
                 border-top: 1px solid #dcdcdc;
             }}
@@ -334,11 +334,11 @@ class ReportsPage(QWidget):
         cash_layout = QVBoxLayout(cash_box)
         
         cash_title = QLabel("💵 Total Cash Received")
-        cash_title.setStyleSheet("color: white; font-size: 12px;")
+        cash_title.setStyleSheet("color: white; font-size: 14px;")
         cash_layout.addWidget(cash_title)
         
         self.lbl_total_cash = QLabel("₹0.00")
-        self.lbl_total_cash.setStyleSheet("color: white; font-size: 20px; font-weight: bold;")
+        self.lbl_total_cash.setStyleSheet("color: white; font-size: 24px; font-weight: bold;")
         cash_layout.addWidget(self.lbl_total_cash)
         
         layout.addWidget(cash_box)
@@ -355,11 +355,11 @@ class ReportsPage(QWidget):
         bank_layout = QVBoxLayout(bank_box)
         
         bank_title = QLabel("🏦 Total Bank Received")
-        bank_title.setStyleSheet("color: white; font-size: 12px;")
+        bank_title.setStyleSheet("color: white; font-size: 14px;")
         bank_layout.addWidget(bank_title)
         
         self.lbl_total_bank = QLabel("₹0.00")
-        self.lbl_total_bank.setStyleSheet("color: white; font-size: 20px; font-weight: bold;")
+        self.lbl_total_bank.setStyleSheet("color: white; font-size: 24px; font-weight: bold;")
         bank_layout.addWidget(self.lbl_total_bank)
         
         layout.addWidget(bank_box)
