@@ -14,19 +14,26 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from dotenv import load_dotenv
 
 from travel_billing_software.utils.path_loader import resource_path
+from travel_billing_software.utils.api_key_manager import get_api_key_manager
 
 load_dotenv(resource_path("travel_billing_software/.env"))
 
 AI_ENABLED = True
 
+# Try to get API key from stored settings first, fallback to environment variable
+api_key_manager = get_api_key_manager()
+api_key = api_key_manager.get_api_key('google_ai')
 
-api_key = os.getenv("GOOGLE_API_KEY")
+# Fallback to environment variable if not found in settings
+if not api_key:
+    api_key = os.getenv("GOOGLE_API_KEY")
+
 if not api_key:
     AI_ENABLED = False
-    print("GOOGLE_API_KEY not set. AI features disabled.")
+    print("GOOGLE_API_KEY not set. AI features disabled. Please configure API key in Settings.")
 
 def get_agent_report(user_question: str):
-    return "AI features are disabled."
+    return "AI features are disabled. Please configure your Google AI API key in Settings."
 if AI_ENABLED:
     try:
         # -------------------------

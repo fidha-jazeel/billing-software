@@ -231,3 +231,8 @@ output/
 invoices/
 .env
 *.env
+
+# API Keys - NEVER commit these files
+.api_keys.json
+**/config/.api_keys.json
+travel_billing_software/config/.api_keys.json

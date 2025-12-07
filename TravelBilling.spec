@@ -13,7 +13,6 @@ a = Analysis(
         ('travel_billing_software/ui', 'travel_billing_software/ui'),
         ('travel_billing_software/utils', 'travel_billing_software/utils'),
         ('travel_billing_software/database', 'travel_billing_software/database'),
-        ('travel_billing_software/.env', 'travel_billing_software'),
     ],
     hiddenimports=[],
     hookspath=[],

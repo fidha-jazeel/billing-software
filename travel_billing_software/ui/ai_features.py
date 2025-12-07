@@ -9,8 +9,10 @@ from PyQt6.QtCore import Qt, QThread, pyqtSignal
 try:
     # Backend agent that talks to the billing.db
     from travel_billing_software.utils.sql_react_agent import get_agent_report
+    from travel_billing_software.utils.api_key_manager import get_api_key_manager
 except ImportError:
     get_agent_report = None
+    get_api_key_manager = None
 
 
 class AIWorkerThread(QThread):
@@ -99,6 +101,42 @@ class AIFeaturesPage(QWidget):
             f"color: {self.COLORS['accent_secondary']}; font-size: 25px; font-weight: bold;"
         )
         layout.addWidget(heading)
+        
+        # Check if API key is configured
+        api_key_configured = False
+        if get_api_key_manager:
+            api_manager = get_api_key_manager()
+            api_key_configured = api_manager.has_api_key('google_ai')
+        
+        # Show warning if no API key
+        if not api_key_configured:
+            warning_frame = QFrame()
+            warning_frame.setStyleSheet(
+                f"""
+                QFrame {{
+                    background-color: #f9731620;
+                    border: 2px solid #f97316;
+                    border-radius: 8px;
+                    padding: 15px;
+                }}
+            """
+            )
+            warning_layout = QVBoxLayout(warning_frame)
+            
+            warning_title = QLabel("⚠️ API Key Not Configured")
+            warning_title.setStyleSheet("color: #f97316; font-size: 18px; font-weight: bold;")
+            warning_layout.addWidget(warning_title)
+            
+            warning_text = QLabel(
+                "AI features require a Google AI API key to function.\n\n"
+                "Please go to Settings → AI Configuration to add your API key.\n"
+                "Get a free API key from: https://aistudio.google.com/app/apikey"
+            )
+            warning_text.setStyleSheet("color: #f97316; font-size: 14px;")
+            warning_text.setWordWrap(True)
+            warning_layout.addWidget(warning_text)
+            
+            layout.addWidget(warning_frame)
 
         sub = QLabel(
             "Ask simple questions like:\n"
