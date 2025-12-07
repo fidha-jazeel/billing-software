@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, pyqtSignal, QEvent
 from PyQt6.QtGui import QCursor, QKeyEvent
 from travel_billing_software.utils.logger import log_info, log_error, log_warning
+from travel_billing_software.utils.custom_widgets import NoWheelDoubleSpinBox
 from .passport_dialog import PassportDetailsDialog
 
 
@@ -156,7 +157,7 @@ class ItemsTableWidget(QFrame):
                                         next_widget.selectAll()
                                     elif isinstance(next_widget, QComboBox):
                                         next_widget.setFocus()
-                                    elif isinstance(next_widget, QDoubleSpinBox):
+                                    elif isinstance(next_widget, (QDoubleSpinBox, NoWheelDoubleSpinBox)):
                                         next_widget.setFocus()
                                         next_widget.selectAll()
                                 return True
@@ -267,18 +268,17 @@ class ItemsTableWidget(QFrame):
             passport_number.setStyleSheet(lineedit_style)
             passport_number.installEventFilter(self)  # Install event filter for Enter key navigation
             
-            qty = QDoubleSpinBox()
+            qty = NoWheelDoubleSpinBox()
             qty.setMinimum(1)
             qty.setMaximum(9999)
             qty.setValue(1)
             qty.setDecimals(0)
             qty.setStyleSheet(spinbox_style)
             qty.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
-            qty.wheelEvent = lambda event: event.ignore()
             qty.valueChanged.connect(self.items_changed.emit)
             qty.installEventFilter(self)  # Install event filter for Enter key navigation
             
-            supplier_amount = QDoubleSpinBox()
+            supplier_amount = NoWheelDoubleSpinBox()
             supplier_amount.setMinimum(0)
             supplier_amount.setMaximum(999999)
             supplier_amount.setValue(0)
@@ -288,7 +288,7 @@ class ItemsTableWidget(QFrame):
             supplier_amount.valueChanged.connect(self.items_changed.emit)
             supplier_amount.installEventFilter(self)  # Install event filter for Enter key navigation
             
-            customer_amount = QDoubleSpinBox()
+            customer_amount = NoWheelDoubleSpinBox()
             customer_amount.setMinimum(0)
             customer_amount.setMaximum(999999)
             customer_amount.setValue(0)

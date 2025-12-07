@@ -21,6 +21,7 @@ from reportlab.platypus import (
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from travel_billing_software.utils.path_loader import resource_path
+from travel_billing_software.utils.config_manager import ConfigManager
 import os
 from datetime import datetime
 import math
@@ -78,8 +79,18 @@ except Exception:
     pass
 
 
-# Default currency (used only if invoice_data doesn't provide one)
-DEFAULT_CURRENCY = "₹"
+# ---------------------------
+# Get currency from ConfigManager
+# ---------------------------
+def _get_default_currency():
+    """Get currency symbol from config settings."""
+    try:
+        cm = ConfigManager()
+        return cm.get_invoice_config().get('currency_symbol', '₹')
+    except:
+        return '₹'
+
+DEFAULT_CURRENCY = _get_default_currency()
 
 # ---------------------------
 # UTILITIES

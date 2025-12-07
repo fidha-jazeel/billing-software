@@ -84,6 +84,28 @@ def get_currency_symbol():
 def get_invoice_prefix():
     return cm.get_invoice_config().get("prefix", "INV")
 
+def format_currency(amount: float, show_symbol: bool = True) -> str:
+    """
+    Format amount with currency symbol.
+    
+    Args:
+        amount: Numeric amount to format
+        show_symbol: Whether to include currency symbol
+        
+    Returns:
+        Formatted string like "₹1,234.56" or "1,234.56"
+    """
+    try:
+        amt = float(amount)
+        formatted = f"{amt:,.2f}"
+        if show_symbol:
+            return f"{get_currency_symbol()}{formatted}"
+        return formatted
+    except (ValueError, TypeError):
+        if show_symbol:
+            return f"{get_currency_symbol()}0.00"
+        return "0.00"
+
 def get_supplier_list():
     """Get supplier list from database (Suppliers page)."""
     from travel_billing_software.database.db_manager import get_db_instance

@@ -11,6 +11,8 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
 from PyQt6.QtCore import Qt, QDate
 from PyQt6.QtGui import QColor, QFont
 from travel_billing_software.database.db_manager import get_db_instance
+from travel_billing_software.utils.custom_widgets import NoWheelDoubleSpinBox
+from travel_billing_software.config.config import format_currency, get_currency_symbol
 
 
 class SupplierBillingPage(QWidget):
@@ -253,10 +255,10 @@ class SupplierBillingPage(QWidget):
         amount_label.setMaximumWidth(180)
         amount_row.addWidget(amount_label)
         
-        self.payment_amount = QDoubleSpinBox()
+        self.payment_amount = NoWheelDoubleSpinBox()
         self.payment_amount.setRange(0, 9999999)
         self.payment_amount.setDecimals(2)
-        self.payment_amount.setPrefix("₹ ")
+        self.payment_amount.setPrefix(f"{get_currency_symbol()} ")
         self.payment_amount.setValue(0.0)
         self.payment_amount.setStyleSheet(custom_input_style)
         amount_row.addWidget(self.payment_amount)

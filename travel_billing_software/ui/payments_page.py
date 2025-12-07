@@ -11,6 +11,8 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
 from PyQt6.QtCore import Qt, QDate
 from PyQt6.QtGui import QColor
 from travel_billing_software.database.db_manager import get_db_instance
+from travel_billing_software.utils.custom_widgets import NoWheelDoubleSpinBox
+from travel_billing_software.config.config import format_currency, get_currency_symbol
 
 
 class AddPaymentDialog(QDialog):
@@ -43,14 +45,14 @@ class AddPaymentDialog(QDialog):
         
         customer_lbl = QLabel(f"<b>Customer:</b> {self.invoice_data.get('customer_name', 'N/A')}")
         invoice_lbl = QLabel(f"<b>Invoice:</b> {self.invoice_data['invoice_number']}")
-        total_lbl = QLabel(f"<b>Total Amount:</b> ₹{self.invoice_data.get('total_amount', 0):,.2f}")
+        total_lbl = QLabel(f"<b>Total Amount:</b> {format_currency(self.invoice_data.get('total_amount', 0))}")
         
         # Calculate already paid
         paid_amount = self.invoice_data.get('paid_amount', 0)
         balance = self.invoice_data.get('total_amount', 0) - paid_amount
         
-        paid_lbl = QLabel(f"<b>Already Paid:</b> ₹{paid_amount:,.2f}")
-        balance_lbl = QLabel(f"<b>Balance Due:</b> <span style='color: {self.colors['danger']}'>₹{balance:,.2f}</span>")
+        paid_lbl = QLabel(f"<b>Already Paid:</b> {format_currency(paid_amount)}")
+        balance_lbl = QLabel(f"<b>Balance Due:</b> <span style='color: {self.colors['danger']}'>{format_currency(balance)}</span>")
         
         info_layout.addWidget(customer_lbl)
         info_layout.addWidget(invoice_lbl)
@@ -72,11 +74,11 @@ class AddPaymentDialog(QDialog):
         form_layout.addRow("Date:", self.date_edit)
         
         # Amount
-        self.amount_spin = QDoubleSpinBox()
+        self.amount_spin = NoWheelDoubleSpinBox()
         self.amount_spin.setRange(0.01, balance)
         self.amount_spin.setValue(balance)
         self.amount_spin.setDecimals(2)
-        self.amount_spin.setPrefix("₹ ")
+        self.amount_spin.setPrefix(f"{get_currency_symbol()} ")
         self.amount_spin.setStyleSheet(f"padding: 8px; border: 1px solid #d0d0d0; border-radius: 4px;")
         form_layout.addRow("Amount:", self.amount_spin)
         
@@ -207,8 +209,8 @@ class PaymentsPage(QWidget):
         # Summary Cards
         cards_layout = QHBoxLayout()
         
-        self.pending_card = self._create_stat_card("Pending Amount", "₹0.00", self.colors['danger'])
-        self.received_card = self._create_stat_card("Received Today", "₹0.00", self.colors['success'])
+        self.pending_card = self._create_stat_card("Pending Amount", format_currency(0), self.colors['danger'])
+        self.received_card = self._create_stat_card("Received Today", format_currency(0), self.colors['success'])
         self.invoices_card = self._create_stat_card("Unpaid Invoices", "0", self.colors['warning'])
         
         cards_layout.addWidget(self.pending_card)
@@ -539,8 +541,8 @@ class PaymentsPage(QWidget):
         received_today = sum(p['amount'] for p in today_payments)
         
         # Update cards
-        self.pending_card.findChild(QLabel, "value_label").setText(f"₹{total_pending:,.2f}")
-        self.received_card.findChild(QLabel, "value_label").setText(f"₹{received_today:,.2f}")
+        self.pending_card.findChild(QLabel, "value_label").setText(format_currency(total_pending))
+        self.received_card.findChild(QLabel, "value_label").setText(format_currency(received_today))
         self.invoices_card.findChild(QLabel, "value_label").setText(str(len(self.unpaid_invoices)))
     
     def _populate_unpaid_table(self):
@@ -626,7 +628,7 @@ class PaymentsPage(QWidget):
             self.history_table.setItem(row, 3, QTableWidgetItem(str(payment.get('invoice_number') or 'N/A')))
             
             # Amount
-            amount_item = QTableWidgetItem(f"₹{payment.get('amount', 0):,.2f}")
+            amount_item = QTableWidgetItem(format_currency(payment.get('amount', 0)))
             amount_item.setForeground(QColor(self.colors['success']))
             self.history_table.setItem(row, 4, amount_item)
             

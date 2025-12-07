@@ -103,7 +103,11 @@ class PDFOperations:
                 "company": {
                     "name": self.company_info["name"],
                     "address": self.company_info.get("address", ""),
-                    "footer_note": self.invoice_config.get("footer_note", "")
+                    "footer_note": self.invoice_config.get("footer_note", ""),
+                    "tagline": self.company_info.get("tagline", ""),
+                    "email": self.company_info.get("email", ""),
+                    "phone": self.company_info.get("phone", ""),
+                    "gst_number": self.company_info.get("gst_number", "")
                 },
                 "invoice_meta": {
                     "number": invoice_data.get("invoice_number", invoice_number),
@@ -117,7 +121,8 @@ class PDFOperations:
                 },
                 "items": invoice_data.get("pdf_items", []),
                 "notes": "Generated from Travel Billing System",
-                "terms": self.invoice_config.get("terms", "Payment due within 7 days.")
+                "terms": self.invoice_config.get("terms", "Payment due within 7 days."),
+                "currency": self.get_currency_symbol()
             }
             
             # Generate PDF

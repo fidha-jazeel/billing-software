@@ -10,6 +10,12 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from utils.config_manager import ConfigManager
 from travel_billing_software.utils.api_key_manager import get_api_key_manager
+from travel_billing_software.utils.custom_widgets import NoWheelSpinBox, NoWheelDoubleSpinBox
+
+def get_currency_symbol():
+    """Get currency symbol from config."""
+    from travel_billing_software.config.config import get_currency_symbol as gcs
+    return gcs()
 
 class SettingsPage(QWidget):
     """Settings page for configuring company, invoice, and app appearance."""
@@ -112,7 +118,7 @@ class SettingsPage(QWidget):
         # Font Size
         lbl_font = QLabel("Global Font Size (px):")
         lbl_font.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size: 16px;")        
-        self.spin_font_size = QSpinBox()
+        self.spin_font_size = NoWheelSpinBox()
         self.spin_font_size.setRange(8, 24)
         self.spin_font_size.setValue(self.APP_SETTINGS.get('font_size', 12))
         self.spin_font_size.setStyleSheet(self.get_spinbox_style())
@@ -334,7 +340,7 @@ class SettingsPage(QWidget):
 
         # Tax
         layout.addWidget(QLabel("Default Tax Rate (%):", styleSheet=f"color:{self.COLORS['text_primary']}; font-weight:bold; font-size: 16px;"), 3, 0)
-        self.spin_tax = QDoubleSpinBox()
+        self.spin_tax = NoWheelDoubleSpinBox()
         self.spin_tax.setValue(float(self.INVOICE_CONFIG.get('default_tax_rate', 18.0)))
         self.spin_tax.setMaximum(100)
         self.spin_tax.setStyleSheet(self.get_spinbox_style())
@@ -426,8 +432,9 @@ class SettingsPage(QWidget):
     def _create_types_manager(self, parent_layout):
         """Create the Manage Types section - identical to Supplier style (Add & Delete only)."""
         # Section Title
-        lbl = QLabel("Manage Types:")
+        lbl = QLabel("Manage Types (Invoice Categories):")
         lbl.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size: 20px;")
+        lbl.setToolTip("These types will appear in the Type dropdown on invoices")
         parent_layout.addWidget(lbl)
         
         # Input and Add button row (same as Supplier)

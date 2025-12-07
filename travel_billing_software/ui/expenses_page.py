@@ -13,6 +13,8 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
 from PyQt6.QtCore import Qt, QDate
 from PyQt6.QtGui import QColor, QFont
 from travel_billing_software.database.db_manager import get_db_instance
+from travel_billing_software.utils.custom_widgets import NoWheelDoubleSpinBox
+from travel_billing_software.config.config import format_currency, get_currency_symbol
 
 
 class ExpenseDialog(QDialog):
@@ -104,10 +106,10 @@ class ExpenseDialog(QDialog):
         form_layout.addRow("Category: *", self.category_input)
         
         # Amount
-        self.amount_input = QDoubleSpinBox()
+        self.amount_input = NoWheelDoubleSpinBox()
         self.amount_input.setRange(0, 9999999)
         self.amount_input.setDecimals(2)
-        self.amount_input.setPrefix("₹ ")
+        self.amount_input.setPrefix(f"{get_currency_symbol()} ")
         self.amount_input.setStyleSheet(self.get_input_style() + """
             QDoubleSpinBox {
                 padding: 10px;
