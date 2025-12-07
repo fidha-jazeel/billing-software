@@ -1,6 +1,6 @@
 """
-Supplier Billing Page Module
-Manage supplier bills with items, payments, and automatic calculations.
+Supplier Payments Page Module
+Record and manage payments made to suppliers.
 Complete Dark Theme UI.
 """
 import os
@@ -9,14 +9,14 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QFrame, QScrollArea, QTableWidget, QPushButton,
                              QLineEdit, QTableWidgetItem, QMessageBox, 
                              QComboBox, QDoubleSpinBox, QDateEdit, QCheckBox,
-                             QHeaderView, QSpinBox)
+                             QHeaderView, QSpinBox, QTextEdit)
 from PyQt6.QtCore import Qt, QDate
 from PyQt6.QtGui import QColor, QFont, QIcon
 from travel_billing_software.database.db_manager import get_db_instance
 
 
 class SupplierBillingPage(QWidget):
-    """Supplier Billing Page with Complete Dark Theme UI."""
+    """Supplier Payments Page with Complete Dark Theme UI."""
     
     def __init__(self, colors, get_input_style, get_button_style, get_combobox_style, parent=None):
         super().__init__()
@@ -47,7 +47,7 @@ class SupplierBillingPage(QWidget):
         # Database connection
         self.db = get_db_instance()
         
-        self.bills = []
+        self.payments = []
         self.payment_rows = []
         
         self._load_bills()
@@ -101,7 +101,7 @@ class SupplierBillingPage(QWidget):
         header_layout.setContentsMargins(0, 0, 0, 0)
         header_layout.setSpacing(10)
         
-        title = QLabel("📋 Supplier Billing")
+        title = QLabel("💵 Supplier Payments")
         title.setStyleSheet(f"""
             QLabel {{
                 color: {self.dark_theme['text_primary']};
@@ -113,7 +113,7 @@ class SupplierBillingPage(QWidget):
         """)
         header_layout.addWidget(title)
         
-        subtitle = QLabel("Create and manage supplier bills")
+        subtitle = QLabel("Record payments made to suppliers")
         subtitle.setStyleSheet(f"""
             QLabel {{
                 color: {self.dark_theme['text_muted']};

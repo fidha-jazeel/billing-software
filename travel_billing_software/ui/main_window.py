@@ -112,7 +112,7 @@ class DashboardImproved(QMainWindow):
             ('payments', '💵 Payments', 'payments'),
             ('expenses', '💰 Expenses', 'expenses'),
             ('suppliers', '🏭 Suppliers', 'suppliers'),
-            ('supplier_billing', '📋 Supplier Billing', 'supplier_billing'),
+            ('supplier_billing', '💵 Supplier Payments', 'supplier_billing'),
             ('ai', '🤖 AI Features', 'ai'),
             ('settings', '⚙️ Settings', 'settings'),
             ('about', 'ℹ️ About', 'about'),
@@ -1800,7 +1800,7 @@ class DashboardImproved(QMainWindow):
         return SupplierPage(COLORS, get_table_style, get_button_style, get_input_style, self)
     
     def _create_supplier_billing_page(self) -> QWidget:
-        """Create the Supplier Billing page."""
+        """Create the Supplier Payments page."""
         return SupplierBillingPage(COLORS, get_input_style, get_button_style, get_combobox_style, self)
     
     def _create_payments_page(self) -> QWidget:

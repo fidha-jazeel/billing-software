@@ -407,12 +407,11 @@ class SupplierPage(QWidget):
         """)
         table_layout.addWidget(table_title)
         
-        # Create table
-        self.suppliers_table = QTableWidget(0, 13)
+        # Create table - Simplified for small business
+        self.suppliers_table = QTableWidget(0, 6)
         self.suppliers_table.setHorizontalHeaderLabels([
-            "Supplier Name", "Contact Person", "Phone", "Email", "Company", 
-            "Payment Terms", "Pending Amount", "Amount Paid", "Received from Supplier", 
-            "GST", "Created Date", "Actions", "ID"
+            "Supplier Name", "Phone", "Total Payable", "Amount Paid", 
+            "Pending Amount", "Actions"
         ])
         
         # Configure table
@@ -550,29 +549,19 @@ class SupplierPage(QWidget):
         # Enable sorting AFTER header is configured
         self.suppliers_table.setSortingEnabled(True)
         
-        # Set column widths
+        # Set column widths - Updated for simplified 6-column layout
         column_widths = {
-            0: 180,   # Supplier Name
-            1: 150,   # Contact Person
-            2: 120,   # Phone
-            3: 180,   # Email
-            4: 150,   # Company
-            5: 140,   # Payment Terms
-            6: 150,   # Pending Amount
-            7: 140,   # Amount Paid
-            8: 180,   # Received from Supplier
-            9: 110,   # GST
-            10: 120,  # Created Date
-            11: 220,  # Actions
-            12: 0     # ID (hidden)
+            0: 250,   # Supplier Name
+            1: 150,   # Phone
+            2: 180,   # Total Payable
+            3: 180,   # Amount Paid
+            4: 180,   # Pending Amount
+            5: 250,   # Actions
         }
         
         for col, width in column_widths.items():
-            if width == 0:
-                self.suppliers_table.setColumnHidden(col, True)
-            else:
-                self.suppliers_table.setColumnWidth(col, width)
-                header.setSectionResizeMode(col, QHeaderView.ResizeMode.Fixed)
+            self.suppliers_table.setColumnWidth(col, width)
+            header.setSectionResizeMode(col, QHeaderView.ResizeMode.Fixed)
         
         # Configure vertical header - hide row numbers
         self.suppliers_table.verticalHeader().setVisible(False)
@@ -657,7 +646,7 @@ class SupplierPage(QWidget):
         return True  # No-op, kept for compatibility
     
     def _populate_table(self, suppliers_list=None):
-        """Populate table with suppliers including financial data."""
+        """Populate table with suppliers - simplified view."""
         if suppliers_list is None:
             suppliers_list = self.suppliers
         
@@ -675,79 +664,45 @@ class SupplierPage(QWidget):
                 'amount_received': 0.0
             })
             
+            total_payable = financial.get('amount_received', 0.0)  # This is total_payable from invoice items
+            paid = financial.get('amount_paid', 0.0)
+            pending = financial.get('amount_pending', 0.0)
+            
             # Supplier Name
             name_item = QTableWidgetItem(supplier.get('name', ''))
             name_item.setFont(QFont('Arial', 14, QFont.Weight.Bold))
             self.suppliers_table.setItem(row, 0, name_item)
             
-            # Contact Person
-            self.suppliers_table.setItem(row, 1, QTableWidgetItem(supplier.get('contact_person', 'N/A')))
-            
             # Phone
             phone_item = QTableWidgetItem(supplier.get('phone', ''))
             phone_item.setForeground(QColor(self.colors['accent_primary']))
-            self.suppliers_table.setItem(row, 2, phone_item)
+            self.suppliers_table.setItem(row, 1, phone_item)
             
-            # Email
-            self.suppliers_table.setItem(row, 3, QTableWidgetItem(supplier.get('email', 'N/A')))
+            # Total Payable (from invoice items)
+            payable_item = QTableWidgetItem(f"₹{total_payable:,.2f}")
+            payable_item.setForeground(QColor(self.colors['text_primary']))
+            payable_item.setFont(QFont('Arial', 13, QFont.Weight.Bold))
+            self.suppliers_table.setItem(row, 2, payable_item)
             
-            # Company
-            self.suppliers_table.setItem(row, 4, QTableWidgetItem(supplier.get('company', 'N/A')))
-            
-            # Payment Terms
-            payment_item = QTableWidgetItem(supplier.get('payment_terms', 'Cash'))
-            if 'Credit' in supplier.get('payment_terms', ''):
-                payment_item.setForeground(QColor(self.colors['accent_gold']))
-            else:
-                payment_item.setForeground(QColor(self.colors['success']))
-            self.suppliers_table.setItem(row, 5, payment_item)
+            # Amount Paid
+            paid_item = QTableWidgetItem(f"₹{paid:,.2f}")
+            paid_item.setForeground(QColor(self.colors['success']))
+            paid_item.setFont(QFont('Arial', 13))
+            self.suppliers_table.setItem(row, 3, paid_item)
             
             # Pending Amount (Amount Not Yet Paid to Supplier)
-            pending = financial.get('amount_pending', 0.0)
             pending_item = QTableWidgetItem(f"₹{pending:,.2f}")
             if pending > 0:
                 pending_item.setForeground(QColor(self.colors['danger']))
                 pending_item.setFont(QFont('Arial', 13, QFont.Weight.Bold))
             else:
                 pending_item.setForeground(QColor(self.colors['success']))
-            self.suppliers_table.setItem(row, 6, pending_item)
-            
-            # Amount Paid
-            paid = financial.get('amount_paid', 0.0)
-            paid_item = QTableWidgetItem(f"₹{paid:,.2f}")
-            paid_item.setForeground(QColor(self.colors['success']))
-            self.suppliers_table.setItem(row, 7, paid_item)
-            
-            # Amount Received from Supplier
-            received = financial.get('amount_received', 0.0)
-            received_item = QTableWidgetItem(f"₹{received:,.2f}")
-            if received > 0:
-                received_item.setForeground(QColor(self.colors['accent_cyan']))
-                received_item.setFont(QFont('Arial', 13, QFont.Weight.Bold))
-            else:
-                received_item.setForeground(QColor(self.colors['text_secondary']))
-            self.suppliers_table.setItem(row, 8, received_item)
-            
-            # GST
-            self.suppliers_table.setItem(row, 9, QTableWidgetItem(supplier.get('gst', 'N/A')))
-            
-            # Created Date
-            created_date = supplier.get('created_date', '')
-            if created_date:
-                try:
-                    date_obj = datetime.strptime(created_date, '%Y-%m-%d %H:%M:%S')
-                    formatted_date = date_obj.strftime('%d-%m-%Y')
-                except:
-                    formatted_date = created_date
-            else:
-                formatted_date = 'N/A'
-            self.suppliers_table.setItem(row, 10, QTableWidgetItem(formatted_date))
+                pending_item.setFont(QFont('Arial', 13))
+            self.suppliers_table.setItem(row, 4, pending_item)
             
             # Actions
             actions_widget = self._create_action_buttons(supplier)
-            self.suppliers_table.setCellWidget(row, 11, actions_widget)
-            
-            # ID (hidden)
+            self.suppliers_table.setCellWidget(row, 5, actions_widget)
             self.suppliers_table.setItem(row, 12, QTableWidgetItem(supplier.get('id', '')))
         
         self.suppliers_table.setSortingEnabled(True)
@@ -925,11 +880,12 @@ class SupplierPage(QWidget):
                 QMessageBox.critical(self, "Error", "Failed to delete supplier")
     
     def _view_supplier(self, supplier):
-        """View supplier details in a dialog."""
+        """View supplier details with transaction history."""
         dialog = QDialog(self)
-        dialog.setWindowTitle("Supplier Details")
+        dialog.setWindowTitle(f"Supplier Details - {supplier.get('name', 'N/A')}")
         dialog.setModal(True)
-        dialog.setMinimumWidth(550)
+        dialog.setMinimumWidth(900)
+        dialog.setMinimumHeight(700)
         
         layout = QVBoxLayout(dialog)
         layout.setSpacing(20)
@@ -940,51 +896,212 @@ class SupplierPage(QWidget):
         title.setStyleSheet(f"""
             QLabel {{
                 color: {self.colors['accent_primary']};
-                font-size: 22px;
+                font-size: 24px;
                 font-weight: bold;
             }}
         """)
         layout.addWidget(title)
         
-        # Details
-        details_text = f"""
-        <table style='width:100%; border-collapse: collapse;'>
-            <tr><td style='padding:8px; font-weight:bold; width:40%;'>Contact Person:</td><td style='padding:8px;'>{supplier.get('contact_person', 'N/A')}</td></tr>
-            <tr style='background-color:#f5f5f5;'><td style='padding:8px; font-weight:bold;'>Phone:</td><td style='padding:8px;'>{supplier.get('phone', 'N/A')}</td></tr>
-            <tr><td style='padding:8px; font-weight:bold;'>Email:</td><td style='padding:8px;'>{supplier.get('email', 'N/A')}</td></tr>
-            <tr style='background-color:#f5f5f5;'><td style='padding:8px; font-weight:bold;'>Company:</td><td style='padding:8px;'>{supplier.get('company', 'N/A')}</td></tr>
-            <tr><td style='padding:8px; font-weight:bold;'>Address:</td><td style='padding:8px;'>{supplier.get('address', 'N/A')}</td></tr>
-            <tr style='background-color:#f5f5f5;'><td style='padding:8px; font-weight:bold;'>GST Number:</td><td style='padding:8px;'>{supplier.get('gst', 'N/A')}</td></tr>
-            <tr><td style='padding:8px; font-weight:bold;'>PAN Number:</td><td style='padding:8px;'>{supplier.get('pan', 'N/A')}</td></tr>
-            <tr style='background-color:#f5f5f5;'><td style='padding:8px; font-weight:bold;'>Payment Terms:</td><td style='padding:8px;'>{supplier.get('payment_terms', 'N/A')}</td></tr>
-            <tr><td style='padding:8px; font-weight:bold;'>Bank Name:</td><td style='padding:8px;'>{supplier.get('bank_name', 'N/A')}</td></tr>
-            <tr style='background-color:#f5f5f5;'><td style='padding:8px; font-weight:bold;'>Account Number:</td><td style='padding:8px;'>{supplier.get('account_number', 'N/A')}</td></tr>
-            <tr><td style='padding:8px; font-weight:bold;'>IFSC Code:</td><td style='padding:8px;'>{supplier.get('ifsc', 'N/A')}</td></tr>
-            <tr style='background-color:#f5f5f5;'><td style='padding:8px; font-weight:bold;'>Notes:</td><td style='padding:8px;'>{supplier.get('notes', 'N/A')}</td></tr>
-            <tr><td style='padding:8px; font-weight:bold;'>Created Date:</td><td style='padding:8px;'>{supplier.get('created_date', 'N/A')}</td></tr>
-            <tr style='background-color:#f5f5f5;'><td style='padding:8px; font-weight:bold;'>Modified Date:</td><td style='padding:8px;'>{supplier.get('modified_date', 'N/A')}</td></tr>
-        </table>
-        """
-        
-        details_label = QLabel(details_text)
-        details_label.setStyleSheet("""
-            QLabel {
-                background-color: white;
-                border: 1px solid #e0e0e0;
+        # Contact Info
+        contact_frame = QFrame()
+        contact_frame.setStyleSheet(f"""
+            QFrame {{
+                background-color: {self.colors['secondary_bg']};
                 border-radius: 8px;
                 padding: 15px;
-            }
+            }}
         """)
-        details_label.setWordWrap(True)
-        layout.addWidget(details_label)
+        contact_layout = QHBoxLayout(contact_frame)
         
-        # Close button
+        phone_label = QLabel(f"📞 {supplier.get('phone', 'N/A')}")
+        phone_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-size: 16px;")
+        contact_layout.addWidget(phone_label)
+        
+        if supplier.get('email'):
+            email_label = QLabel(f"✉️ {supplier.get('email', '')}")
+            email_label.setStyleSheet(f"color: {self.colors['text_secondary']}; font-size: 14px;")
+            contact_layout.addWidget(email_label)
+        
+        contact_layout.addStretch()
+        layout.addWidget(contact_frame)
+        
+        # Financial Summary
+        financial = supplier.get('financial', {})
+        total_payable = financial.get('amount_received', 0.0)
+        paid = financial.get('amount_paid', 0.0)
+        pending = financial.get('amount_pending', 0.0)
+        
+        summary_frame = QFrame()
+        summary_frame.setStyleSheet(f"""
+            QFrame {{
+                background-color: {self.colors['secondary_bg']};
+                border-radius: 8px;
+                padding: 15px;
+            }}
+        """)
+        summary_layout = QHBoxLayout(summary_frame)
+        
+        # Total Payable Card
+        payable_card = self._create_mini_card("Total Payable", f"₹{total_payable:,.2f}", self.colors['text_primary'])
+        summary_layout.addWidget(payable_card)
+        
+        # Paid Card
+        paid_card = self._create_mini_card("Amount Paid", f"₹{paid:,.2f}", self.colors['success'])
+        summary_layout.addWidget(paid_card)
+        
+        # Pending Card
+        pending_card = self._create_mini_card("Pending Amount", f"₹{pending:,.2f}", self.colors['danger'])
+        summary_layout.addWidget(pending_card)
+        
+        layout.addWidget(summary_frame)
+        
+        # Transaction History Section
+        history_label = QLabel("📊 Transaction History")
+        history_label.setStyleSheet(f"""
+            QLabel {{
+                color: {self.colors['accent_primary']};
+                font-size: 18px;
+                font-weight: bold;
+                margin-top: 10px;
+            }}
+        """)
+        layout.addWidget(history_label)
+        
+        # Load transactions from database
+        try:
+            # Get invoice items for this supplier
+            cur = self.db.conn.cursor()
+            cur.execute("""
+                SELECT ii.*, i.invoice_number, i.date, st.name as service_name, p.name as passenger_name
+                FROM invoice_items ii
+                JOIN invoices i ON ii.invoice_id = i.id
+                LEFT JOIN service_types st ON ii.service_type_id = st.id
+                LEFT JOIN passengers p ON ii.passenger_id = p.id
+                WHERE ii.supplier_id = ?
+                ORDER BY i.date DESC
+                LIMIT 100
+            """, (supplier['id'],))
+            invoice_items = [dict(row) for row in cur.fetchall()]
+            
+            # Get payments to this supplier
+            payments = self.db.get_supplier_payments(supplier['id'])
+            
+            # Create tabs for different views
+            from PyQt6.QtWidgets import QTabWidget
+            tabs = QTabWidget()
+            tabs.setStyleSheet(f"""
+                QTabWidget::pane {{
+                    border: 1px solid {self.colors['border']};
+                    border-radius: 4px;
+                    background-color: white;
+                }}
+                QTabBar::tab {{
+                    background-color: {self.colors['secondary_bg']};
+                    color: {self.colors['text_primary']};
+                    padding: 10px 20px;
+                    border: 1px solid {self.colors['border']};
+                    border-bottom: none;
+                    border-top-left-radius: 4px;
+                    border-top-right-radius: 4px;
+                }}
+                QTabBar::tab:selected {{
+                    background-color: white;
+                    color: {self.colors['accent_primary']};
+                    font-weight: bold;
+                }}
+            """)
+            
+            # Invoice Items Tab
+            items_table = QTableWidget(len(invoice_items), 6)
+            items_table.setHorizontalHeaderLabels(["Date", "Invoice #", "Service", "Passenger", "Cost Price", "Status"])
+            items_table.setStyleSheet(self.get_table_style())
+            
+            for row, item in enumerate(invoice_items):
+                items_table.setItem(row, 0, QTableWidgetItem(item.get('date', 'N/A')))
+                items_table.setItem(row, 1, QTableWidgetItem(item.get('invoice_number', 'N/A')))
+                items_table.setItem(row, 2, QTableWidgetItem(item.get('service_name', 'N/A')))
+                items_table.setItem(row, 3, QTableWidgetItem(item.get('passenger_name', 'N/A')))
+                
+                cost = item.get('cost_price', 0.0) or 0.0
+                qty = item.get('quantity', 1) or 1
+                total_cost = cost * qty
+                cost_item = QTableWidgetItem(f"₹{total_cost:,.2f}")
+                cost_item.setForeground(QColor(self.colors['text_primary']))
+                cost_item.setFont(QFont('Arial', 12, QFont.Weight.Bold))
+                items_table.setItem(row, 4, cost_item)
+                
+                items_table.setItem(row, 5, QTableWidgetItem("Payable"))
+            
+            items_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+            tabs.addTab(items_table, f"Invoice Items ({len(invoice_items)})")
+            
+            # Payments Tab
+            payments_table = QTableWidget(len(payments), 4)
+            payments_table.setHorizontalHeaderLabels(["Date", "Amount", "Mode", "Reference"])
+            payments_table.setStyleSheet(self.get_table_style())
+            
+            for row, payment in enumerate(payments):
+                payments_table.setItem(row, 0, QTableWidgetItem(payment.get('date', 'N/A')))
+                
+                amount_item = QTableWidgetItem(f"₹{payment.get('amount', 0.0):,.2f}")
+                amount_item.setForeground(QColor(self.colors['success']))
+                payments_table.setItem(row, 1, amount_item)
+                
+                payments_table.setItem(row, 2, QTableWidgetItem(payment.get('payment_mode', 'N/A')))
+                payments_table.setItem(row, 3, QTableWidgetItem(payment.get('reference_number', 'N/A')))
+            
+            payments_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+            tabs.addTab(payments_table, f"Payments ({len(payments)})")
+            
+            layout.addWidget(tabs)
+            
+        except Exception as e:
+            error_label = QLabel(f"⚠️ Error loading transactions: {str(e)}")
+            error_label.setStyleSheet(f"color: {self.colors['danger']}; padding: 20px;")
+            layout.addWidget(error_label)
+        
+        # Action Buttons
+        button_layout = QHBoxLayout()
+        
+        add_payment_btn = QPushButton("💵 Add Payment")
+        add_payment_btn.setStyleSheet(self.get_button_style('add'))
+        add_payment_btn.clicked.connect(lambda: self._manage_supplier_finances(supplier))
+        button_layout.addWidget(add_payment_btn)
+        
+        button_layout.addStretch()
+        
         close_btn = QPushButton("✖ Close")
         close_btn.setStyleSheet(self.get_button_style('cancel'))
         close_btn.clicked.connect(dialog.accept)
-        layout.addWidget(close_btn)
+        button_layout.addWidget(close_btn)
+        
+        layout.addLayout(button_layout)
         
         dialog.exec()
+    
+    def _create_mini_card(self, title, value, color):
+        """Create a mini stat card for supplier view."""
+        card = QFrame()
+        card.setStyleSheet(f"""
+            QFrame {{
+                background-color: white;
+                border-left: 4px solid {color};
+                border-radius: 6px;
+                padding: 15px;
+            }}
+        """)
+        card_layout = QVBoxLayout(card)
+        card_layout.setSpacing(5)
+        
+        title_label = QLabel(title)
+        title_label.setStyleSheet(f"color: {self.colors['text_secondary']}; font-size: 12px;")
+        card_layout.addWidget(title_label)
+        
+        value_label = QLabel(value)
+        value_label.setStyleSheet(f"color: {color}; font-size: 18px; font-weight: bold;")
+        card_layout.addWidget(value_label)
+        
+        return card
     
     def _filter_suppliers(self):
         """Filter suppliers based on search text."""
