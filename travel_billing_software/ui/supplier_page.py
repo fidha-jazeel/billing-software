@@ -826,6 +826,7 @@ class SupplierPage(QWidget):
                     self._load_suppliers()
                     self._calculate_all_supplier_financials()
                     self._populate_table()
+                    self._refresh_home_supplier_dropdowns()
                 else:
                     QMessageBox.critical(self, "Error", "Failed to add supplier")
     
@@ -854,6 +855,7 @@ class SupplierPage(QWidget):
                     self._load_suppliers()
                     self._calculate_all_supplier_financials()
                     self._populate_table()
+                    self._refresh_home_supplier_dropdowns()
                 else:
                     QMessageBox.critical(self, "Error", "Failed to update supplier")
     
@@ -876,6 +878,7 @@ class SupplierPage(QWidget):
                 self._load_suppliers()
                 self._calculate_all_supplier_financials()
                 self._populate_table()
+                self._refresh_home_supplier_dropdowns()
             else:
                 QMessageBox.critical(self, "Error", "Failed to delete supplier")
     
@@ -1511,5 +1514,15 @@ class SupplierPage(QWidget):
         self._populate_table()
         dialog.accept()
         QMessageBox.information(self, "Refreshed", "Financial data has been recalculated from invoices.")
+    
+    def _refresh_home_supplier_dropdowns(self):
+        """Refresh supplier dropdowns in Home page."""
+        try:
+            if self.parent_window and hasattr(self.parent_window, 'home_page'):
+                home_page = self.parent_window.home_page
+                if hasattr(home_page, 'items_table') and hasattr(home_page.items_table, 'refresh_supplier_dropdowns'):
+                    home_page.items_table.refresh_supplier_dropdowns()
+        except Exception as e:
+            print(f"Error refreshing home supplier dropdowns: {e}")
         # Reopen dialog with updated data
         self._manage_supplier_finances(supplier)

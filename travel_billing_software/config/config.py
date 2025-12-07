@@ -85,7 +85,15 @@ def get_invoice_prefix():
     return cm.get_invoice_config().get("prefix", "INV")
 
 def get_supplier_list():
-    return cm.get_dropdowns("suppliers")
+    """Get supplier list from database (Suppliers page)."""
+    from travel_billing_software.database.db_manager import get_db_instance
+    try:
+        db = get_db_instance()
+        suppliers = db.get_contacts('SUPPLIER')
+        return [s['name'] for s in suppliers if s.get('name')]
+    except Exception as e:
+        print(f"Error loading suppliers from database: {e}")
+        return []
 
 def get_sector_list():
     return cm.get_dropdowns("sectors")

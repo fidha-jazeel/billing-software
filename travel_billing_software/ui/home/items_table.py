@@ -216,6 +216,8 @@ class ItemsTableWidget(QFrame):
             supplier.addItems(self.get_supplier_list())
             supplier.setStyleSheet(combobox_style)
             supplier.setObjectName(f"supplier_{row}")
+            # Connect to handle custom supplier names
+            supplier.editTextChanged.connect(lambda text, r=row: self._handle_custom_supplier(text, r))
             
             passport_number = QLineEdit()
             passport_number.setPlaceholderText("Passport No.")
@@ -621,3 +623,101 @@ class ItemsTableWidget(QFrame):
             True if passport data exists
         """
         return passenger_name in self.passport_data_store
+    
+    def _handle_custom_supplier(self, text: str, row: int):
+        """
+        Handle when user enters a custom supplier name.
+        Prompt to add it to the Suppliers page.
+        """
+        from PyQt6.QtWidgets import QMessageBox
+        
+        if not text.strip():
+            return
+        
+        # Check if supplier exists in current list
+        existing_suppliers = self.get_supplier_list()
+        if text.strip() not in existing_suppliers and text.strip():
+            # Debounce - only show dialog after 1 second of no typing
+            if hasattr(self, '_supplier_timer'):
+                self._supplier_timer.stop()
+            
+            from PyQt6.QtCore import QTimer
+            self._supplier_timer = QTimer()
+            self._supplier_timer.setSingleShot(True)
+            self._supplier_timer.timeout.connect(
+                lambda: self._show_add_supplier_prompt(text.strip(), row)
+            )
+            self._supplier_timer.start(1000)  # 1 second delay
+    
+    def _show_add_supplier_prompt(self, supplier_name: str, row: int):
+        """Show dialog to add custom supplier to Suppliers page."""
+        from PyQt6.QtWidgets import QMessageBox
+        from travel_billing_software.database.db_manager import get_db_instance
+        
+        # Check again if supplier exists (user might have typed existing name)
+        existing_suppliers = self.get_supplier_list()
+        if supplier_name in existing_suppliers:
+            return
+        
+        reply = QMessageBox.question(
+            self.table,
+            "Add New Supplier",
+            f"Supplier '{supplier_name}' is not in your supplier list.\n\n"
+            f"Would you like to add it to your Suppliers directory?\n\n"
+            f"You can add phone and other details from the Suppliers page later.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.Yes
+        )
+        
+        if reply == QMessageBox.StandardButton.Yes:
+            try:
+                db = get_db_instance()
+                contact_id = db.add_contact(
+                    'SUPPLIER',
+                    supplier_name,
+                    phone='',  # Can be added later from Suppliers page
+                    email='',
+                    company_name='',
+                    address='',
+                    gstin='',
+                    opening_balance=0
+                )
+                
+                if contact_id > 0:
+                    QMessageBox.information(
+                        self.table,
+                        "Success",
+                        f"Supplier '{supplier_name}' has been added!\n\n"
+                        f"You can update phone and other details from the Suppliers page."
+                    )
+                    # Refresh the supplier dropdown for this row
+                    supplier_combo = self.table.cellWidget(row, 3)  # Column 3 is Supplier
+                    if supplier_combo:
+                        current_text = supplier_combo.currentText()
+                        supplier_combo.clear()
+                        supplier_combo.addItems(self.get_supplier_list())
+                        supplier_combo.setCurrentText(current_text)
+                else:
+                    QMessageBox.warning(
+                        self.table,
+                        "Error",
+                        f"Failed to add supplier '{supplier_name}'. Please try again."
+                    )
+            except Exception as e:
+                QMessageBox.critical(
+                    self.table,
+                    "Error",
+                    f"Failed to add supplier:\n{str(e)}"
+                )
+    
+    def refresh_supplier_dropdowns(self):
+        """Refresh all supplier dropdowns in the table."""
+        for row in range(self.table.rowCount()):
+            supplier_combo = self.table.cellWidget(row, 3)  # Column 3 is Supplier
+            if supplier_combo:
+                current_text = supplier_combo.currentText()
+                supplier_combo.blockSignals(True)
+                supplier_combo.clear()
+                supplier_combo.addItems(self.get_supplier_list())
+                supplier_combo.setCurrentText(current_text)
+                supplier_combo.blockSignals(False)

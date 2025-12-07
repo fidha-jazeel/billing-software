@@ -413,7 +413,8 @@ class SettingsPage(QWidget):
             btn_add.clicked.connect(add_item)
             btn_remove.clicked.connect(remove_item)
 
-        create_list_manager("Suppliers:", "suppliers")
+        # Note: Suppliers are now managed from Suppliers page only
+        # create_list_manager("Suppliers:", "suppliers")
         layout.addSpacing(10)
         
         # === MANAGE TYPES SECTION (Database-backed, identical to Supplier style) ===
