@@ -1,43 +1,23 @@
 """
 Supplier Payments Page Module
-Record and manage payments made to suppliers.
-Complete Dark Theme UI.
+Record payments made to suppliers.
 """
-import os
 from datetime import datetime
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                              QFrame, QScrollArea, QTableWidget, QPushButton,
                              QLineEdit, QTableWidgetItem, QMessageBox, 
-                             QComboBox, QDoubleSpinBox, QDateEdit, QCheckBox,
-                             QHeaderView, QSpinBox, QTextEdit)
+                             QComboBox, QDoubleSpinBox, QDateEdit, QTextEdit,
+                             QHeaderView, QFormLayout)
 from PyQt6.QtCore import Qt, QDate
-from PyQt6.QtGui import QColor, QFont, QIcon
+from PyQt6.QtGui import QColor, QFont
 from travel_billing_software.database.db_manager import get_db_instance
 
 
 class SupplierBillingPage(QWidget):
-    """Supplier Payments Page with Complete Dark Theme UI."""
+    """Supplier Payments Page - Record payments to suppliers."""
     
     def __init__(self, colors, get_input_style, get_button_style, get_combobox_style, parent=None):
         super().__init__()
-        # Dark theme color palette
-        self.dark_theme = {
-            'bg_primary': '#121212',
-            'bg_secondary': '#1E1E1E',
-            'bg_tertiary': '#161616',
-            'bg_hover': '#3A3A3A',
-            'border': '#333333',
-            'text_primary': '#FFFFFF',
-            'text_secondary': '#EEEEEE',
-            'text_muted': '#AAAAAA',
-            'accent_blue': '#4A9EFF',
-            'accent_blue_hover': '#3A8EEF',
-            'accent_green': '#10B981',
-            'accent_red': '#FF4444',
-            'accent_purple': '#A78BFA',
-            'button_bg': '#2D2D2D',
-            'button_hover': '#3A3A3A'
-        }
         self.colors = colors
         self.get_input_style = get_input_style
         self.get_button_style = get_button_style
@@ -47,47 +27,19 @@ class SupplierBillingPage(QWidget):
         # Database connection
         self.db = get_db_instance()
         
-        self.payments = []
-        self.payment_rows = []
-        
-        self._load_bills()
         self._init_ui()
     
     def _init_ui(self):
-        """Initialize the UI with complete dark theme."""
+        """Initialize the UI."""
         # Main layout
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
         
-        # Set dark background for entire widget
-        self.setStyleSheet(f"QWidget {{ background-color: {self.dark_theme['bg_primary']}; }}")
-        
-        # Scroll area with dark theme
+        # Scroll area
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setStyleSheet(f"""
-            QScrollArea {{ 
-                border: none; 
-                background-color: {self.dark_theme['bg_primary']}; 
-            }}
-            QScrollBar:vertical {{
-                background-color: {self.dark_theme['bg_secondary']};
-                width: 12px;
-                border: none;
-            }}
-            QScrollBar::handle:vertical {{
-                background-color: {self.dark_theme['button_bg']};
-                border-radius: 6px;
-                min-height: 30px;
-            }}
-            QScrollBar::handle:vertical:hover {{
-                background-color: {self.dark_theme['button_hover']};
-            }}
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
-                height: 0px;
-            }}
-        """)
+        scroll.setStyleSheet("QScrollArea { border: none; }")
         
         content = QWidget()
         layout = QVBoxLayout(content)
@@ -96,19 +48,22 @@ class SupplierBillingPage(QWidget):
         
         # Header Section
         header_frame = QFrame()
-        header_frame.setStyleSheet(f"QFrame {{ background-color: transparent; border: none; }}")
+        header_frame.setStyleSheet(f"""
+            QFrame {{
+                background-color: {self.colors['secondary_bg']};
+                border-radius: 10px;
+                padding: 20px;
+            }}
+        """)
         header_layout = QVBoxLayout(header_frame)
-        header_layout.setContentsMargins(0, 0, 0, 0)
         header_layout.setSpacing(10)
         
         title = QLabel("💵 Supplier Payments")
         title.setStyleSheet(f"""
             QLabel {{
-                color: {self.dark_theme['text_primary']};
-                font-size: 32px;
+                color: {self.colors['accent_primary']};
+                font-size: 28px;
                 font-weight: bold;
-                letter-spacing: 0.5px;
-                background-color: transparent;
             }}
         """)
         header_layout.addWidget(title)
@@ -116,649 +71,226 @@ class SupplierBillingPage(QWidget):
         subtitle = QLabel("Record payments made to suppliers")
         subtitle.setStyleSheet(f"""
             QLabel {{
-                color: {self.dark_theme['text_muted']};
+                color: {self.colors['text_secondary']};
                 font-size: 16px;
-                background-color: transparent;
             }}
         """)
         header_layout.addWidget(subtitle)
         
         layout.addWidget(header_frame)
         
-        # Main Content Frame with dark theme
-        content_frame = QFrame()
-        content_frame.setStyleSheet(f"""
+        # Payment Form Section
+        form_frame = QFrame()
+        form_frame.setStyleSheet(f"""
             QFrame {{
-                background-color: {self.dark_theme['bg_secondary']};
+                background-color: {self.colors['secondary_bg']};
                 border-radius: 10px;
-                border: 1px solid {self.dark_theme['border']};
                 padding: 25px;
             }}
         """)
-        content_layout = QVBoxLayout(content_frame)
-        content_layout.setSpacing(20)
+        form_layout = QVBoxLayout(form_frame)
+        form_layout.setSpacing(20)
         
-        # TOP ROW - Supplier Details (Dark Theme)
-        top_row = QHBoxLayout()
-        top_row.setSpacing(15)
-        
-        # Dark theme input style
-        dark_input_style = f"""
-            QLineEdit, QDateEdit, QComboBox {{
-                background-color: {self.dark_theme['bg_secondary']};
-                color: {self.dark_theme['text_primary']};
-                border: 1px solid {self.dark_theme['border']};
-                border-radius: 6px;
-                padding: 10px;
-                font-size: 16px;
-            }}
-            QLineEdit:focus, QDateEdit:focus, QComboBox:focus {{
-                border: 1px solid {self.dark_theme['accent_blue']};
-                background-color: {self.dark_theme['bg_tertiary']};
-            }}
-            QLineEdit:read-only {{
-                background-color: {self.dark_theme['bg_tertiary']};
-                color: {self.dark_theme['text_muted']};
-            }}
-            QComboBox::drop-down {{
-                border: none;
-                background-color: transparent;
-                width: 30px;
-            }}
-            QComboBox::down-arrow {{
-                image: none;
-                border: none;
-                width: 0px;
-            }}
-            QDateEdit::drop-down {{
-                border: none;
-                background-color: transparent;
-                width: 30px;
-            }}
-        """
-        
-        # Supplier ComboBox
-        supplier_container = QVBoxLayout()
-        supplier_label = QLabel("Supplier *")
-        supplier_label.setStyleSheet(f"""
+        # Form Title
+        form_title = QLabel("Payment Details")
+        form_title.setStyleSheet(f"""
             QLabel {{
-                color: {self.dark_theme['text_primary']}; 
-                font-weight: bold; 
-                font-size: 15px;
-                background-color: transparent;
+                color: {self.colors['accent_primary']};
+                font-size: 20px;
+                font-weight: bold;
             }}
         """)
+        form_layout.addWidget(form_title)
+        
+        # Form Fields
+        fields_layout = QFormLayout()
+        fields_layout.setSpacing(15)
+        fields_layout.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
+        
+        # Supplier Selection
+        supplier_label = QLabel("Select Supplier: *")
+        supplier_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 15px;")
+        
         self.supplier_combo = QComboBox()
         self.supplier_combo.setEditable(True)
         self.supplier_combo.addItems(self._get_supplier_list())
-        self.supplier_combo.setStyleSheet(dark_input_style + f"""
-            QComboBox {{
-                min-width: 250px;
-            }}
-            QComboBox QAbstractItemView {{
-                background-color: {self.dark_theme['bg_secondary']};
-                color: {self.dark_theme['text_primary']};
-                selection-background-color: {self.dark_theme['accent_blue']};
-                border: 1px solid {self.dark_theme['border']};
-            }}
-        """)
+        self.supplier_combo.setStyleSheet(self.get_combobox_style())
         self.supplier_combo.currentTextChanged.connect(self._on_supplier_changed)
-        supplier_container.addWidget(supplier_label)
-        supplier_container.addWidget(self.supplier_combo)
-        top_row.addLayout(supplier_container)
+        fields_layout.addRow(supplier_label, self.supplier_combo)
         
-        # Phone Number
-        phone_container = QVBoxLayout()
-        phone_label = QLabel("Phone No.")
-        phone_label.setStyleSheet(f"""
+        # Supplier Balance Info (Read-only labels)
+        balance_info_layout = QHBoxLayout()
+        
+        self.total_payable_label = QLabel("Total Payable: ₹0.00")
+        self.total_payable_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-size: 14px; font-weight: bold;")
+        balance_info_layout.addWidget(self.total_payable_label)
+        
+        self.already_paid_label = QLabel("Already Paid: ₹0.00")
+        self.already_paid_label.setStyleSheet(f"color: {self.colors['success']}; font-size: 14px; font-weight: bold;")
+        balance_info_layout.addWidget(self.already_paid_label)
+        
+        self.pending_label = QLabel("Pending: ₹0.00")
+        self.pending_label.setStyleSheet(f"color: {self.colors['danger']}; font-size: 14px; font-weight: bold;")
+        balance_info_layout.addWidget(self.pending_label)
+        
+        balance_info_layout.addStretch()
+        
+        fields_layout.addRow("", balance_info_layout)
+        
+        # Payment Date
+        date_label = QLabel("Payment Date: *")
+        date_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 15px;")
+        
+        self.payment_date = QDateEdit()
+        self.payment_date.setCalendarPopup(True)
+        self.payment_date.setDate(QDate.currentDate())
+        self.payment_date.setDisplayFormat("dd/MM/yyyy")
+        self.payment_date.setStyleSheet(self.get_input_style())
+        fields_layout.addRow(date_label, self.payment_date)
+        
+        # Payment Amount
+        amount_label = QLabel("Payment Amount: *")
+        amount_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 15px;")
+        
+        self.payment_amount = QDoubleSpinBox()
+        self.payment_amount.setRange(0, 9999999)
+        self.payment_amount.setDecimals(2)
+        self.payment_amount.setPrefix("₹ ")
+        self.payment_amount.setValue(0.0)
+        self.payment_amount.setStyleSheet(self.get_input_style())
+        fields_layout.addRow(amount_label, self.payment_amount)
+        
+        # Payment Mode
+        mode_label = QLabel("Payment Mode: *")
+        mode_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 15px;")
+        
+        self.payment_mode = QComboBox()
+        self.payment_mode.addItems(["CASH", "BANK", "UPI", "CHEQUE", "CARD"])
+        self.payment_mode.setStyleSheet(self.get_combobox_style())
+        fields_layout.addRow(mode_label, self.payment_mode)
+        
+        # Reference Number
+        ref_label = QLabel("Reference Number:")
+        ref_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 15px;")
+        
+        self.reference_number = QLineEdit()
+        self.reference_number.setPlaceholderText("Transaction ID / Cheque No / Reference")
+        self.reference_number.setStyleSheet(self.get_input_style())
+        fields_layout.addRow(ref_label, self.reference_number)
+        
+        # Notes
+        notes_label = QLabel("Notes:")
+        notes_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-weight: bold; font-size: 15px;")
+        
+        self.notes_input = QTextEdit()
+        self.notes_input.setPlaceholderText("Additional notes (optional)")
+        self.notes_input.setMaximumHeight(80)
+        self.notes_input.setStyleSheet(self.get_input_style())
+        fields_layout.addRow(notes_label, self.notes_input)
+        
+        form_layout.addLayout(fields_layout)
+        
+        # Buttons
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()
+        
+        save_btn = QPushButton("💾 Save Payment")
+        save_btn.setStyleSheet(self.get_button_style('add'))
+        save_btn.clicked.connect(self._save_payment)
+        button_layout.addWidget(save_btn)
+        
+        reset_btn = QPushButton("🔄 Reset")
+        reset_btn.setStyleSheet(self.get_button_style('cancel'))
+        reset_btn.clicked.connect(self._reset_form)
+        button_layout.addWidget(reset_btn)
+        
+        form_layout.addLayout(button_layout)
+        
+        layout.addWidget(form_frame)
+        
+        # Recent Payments Table
+        table_frame = QFrame()
+        table_frame.setStyleSheet(f"""
+            QFrame {{
+                background-color: {self.colors['secondary_bg']};
+                border-radius: 10px;
+                padding: 20px;
+            }}
+        """)
+        table_layout = QVBoxLayout(table_frame)
+        table_layout.setSpacing(15)
+        
+        table_title = QLabel("📋 Recent Payments")
+        table_title.setStyleSheet(f"""
             QLabel {{
-                color: {self.dark_theme['text_primary']}; 
-                font-weight: bold; 
-                font-size: 15px;
-                background-color: transparent;
+                color: {self.colors['accent_primary']};
+                font-size: 18px;
+                font-weight: bold;
             }}
         """)
-        self.phone_input = QLineEdit()
-        self.phone_input.setPlaceholderText("Phone number")
-        self.phone_input.setMaxLength(15)  # Allow up to 15 digits for international numbers
-        self.phone_input.setStyleSheet(dark_input_style + """
-            QLineEdit {
-                min-width: 180px;
-            }
-        """)
-        phone_container.addWidget(phone_label)
-        phone_container.addWidget(self.phone_input)
-        top_row.addLayout(phone_container)
+        table_layout.addWidget(table_title)
         
-        # Bill Number
-        bill_num_container = QVBoxLayout()
-        bill_num_label = QLabel("Bill Number")
-        bill_num_label.setStyleSheet(f"""
-            QLabel {{
-                color: {self.dark_theme['text_primary']}; 
-                font-weight: bold; 
-                font-size: 15px;
-                background-color: transparent;
-            }}
-        """)
-        self.bill_number_input = QLineEdit()
-        self.bill_number_input.setPlaceholderText("Auto-generated")
-        self.bill_number_input.setText(self._generate_bill_number())
-        self.bill_number_input.setStyleSheet(dark_input_style + """
-            QLineEdit {
-                min-width: 180px;
-            }
-        """)
-        bill_num_container.addWidget(bill_num_label)
-        bill_num_container.addWidget(self.bill_number_input)
-        top_row.addLayout(bill_num_container)
+        # Create table
+        self.payments_table = QTableWidget(0, 7)
+        self.payments_table.setHorizontalHeaderLabels([
+            "Date", "Supplier", "Amount", "Mode", "Reference", "Notes", "Actions"
+        ])
         
-        # Bill Date
-        date_container = QVBoxLayout()
-        date_label = QLabel("Bill Date")
-        date_label.setStyleSheet(f"""
-            QLabel {{
-                color: {self.dark_theme['text_primary']}; 
-                font-weight: bold; 
-                font-size: 15px;
-                background-color: transparent;
-            }}
-        """)
-        self.bill_date = QDateEdit()
-        self.bill_date.setCalendarPopup(True)
-        self.bill_date.setDate(QDate.currentDate())
-        self.bill_date.setDisplayFormat("dd/MM/yyyy")
-        self.bill_date.setStyleSheet(dark_input_style + f"""
-            QDateEdit {{
-                min-width: 160px;
-            }}
-            QCalendarWidget {{
-                background-color: {self.dark_theme['bg_secondary']};
-                color: {self.dark_theme['text_primary']};
-            }}
-            QCalendarWidget QToolButton {{
-                background-color: {self.dark_theme['button_bg']};
-                color: {self.dark_theme['text_primary']};
-                border: 1px solid {self.dark_theme['border']};
-                border-radius: 4px;
-            }}
-            QCalendarWidget QToolButton:hover {{
-                background-color: {self.dark_theme['button_hover']};
-            }}
-            QCalendarWidget QMenu {{
-                background-color: {self.dark_theme['bg_secondary']};
-                color: {self.dark_theme['text_primary']};
-            }}
-            QCalendarWidget QSpinBox {{
-                background-color: {self.dark_theme['bg_secondary']};
-                color: {self.dark_theme['text_primary']};
-                border: 1px solid {self.dark_theme['border']};
-            }}
-            QCalendarWidget QAbstractItemView {{
-                background-color: {self.dark_theme['bg_secondary']};
-                color: {self.dark_theme['text_primary']};
-                selection-background-color: {self.dark_theme['accent_blue']};
-            }}
-        """)
-        date_container.addWidget(date_label)
-        date_container.addWidget(self.bill_date)
-        top_row.addLayout(date_container)
-        
-        top_row.addStretch()
-        content_layout.addLayout(top_row)
-        
-        # ITEM TABLE AREA (Dark Theme)
-        table_section = QVBoxLayout()
-        table_section.setSpacing(10)
-        
-        table_label = QLabel("Items")
-        table_label.setStyleSheet(f"""
-            QLabel {{
-                color: {self.dark_theme['text_primary']}; 
-                font-weight: bold; 
-                font-size: 16px;
-                background-color: transparent;
-            }}
-        """)
-        table_section.addWidget(table_label)
-        
-
-        # Items Table with Dark Theme
-        self.items_table = QTableWidget(0, 4)
-        self.items_table.setHorizontalHeaderLabels(["#", "Item Description", "Amount", "Actions"])
-        
-        # Configure table styling - matching expenses page
-        self.items_table.setAlternatingRowColors(True)
-        self.items_table.setStyleSheet(f"""
+        # Use standard table styling
+        self.payments_table.setStyleSheet(f"""
             QTableWidget {{
-                background-color: #1E1E1E;
-                color: #FFFFFF;
-                border: 1px solid {self.dark_theme['border']};
-                border-radius: 5px;
-                gridline-color: #444444;
-                font-size: 15px;
-                selection-background-color: #2A2A2A;
-                selection-color: #FFFFFF;
+                background-color: {self.colors['secondary_bg']};
+                color: {self.colors['text_primary']};
+                gridline-color: #3a3a3a;
+                font-size: 14px;
+                selection-background-color: {self.colors['accent_primary']};
+                selection-color: white;
+                border: 1px solid #3a3a3a;
             }}
             QHeaderView::section {{
-                background-color: #202020;
-                color: #FFFFFF;
+                background-color: {self.colors['accent_primary']};
+                color: white;
+                padding: 8px;
+                border: 1px solid {self.colors['primary_bg']};
                 font-weight: bold;
-                font-size: 15px;
-                border: 1px solid #444444;
-                padding: 6px;
-                text-align: center;
-                min-height: 45px;
-            }}
-            QHeaderView::section:hover {{
-                background-color: #2A2A2A;
+                font-size: 14px;
             }}
             QTableWidget::item {{
-                padding: 8px 10px;
-                border: none;
-                background-color: #1E1E1E;
-                color: #FFFFFF;
-            }}
-            QTableWidget::item:alternate {{
-                background-color: #161616;
-                color: #FFFFFF;
-            }}
-            QTableWidget::item:selected {{
-                background-color: #2A2A2A;
-                color: #FFFFFF;
-            }}
-            QTableWidget::item:hover {{
-                background-color: #252525;
+                padding: 8px;
             }}
         """)
         
-        # Configure header
-        header = self.items_table.horizontalHeader()
-        header.setVisible(True)
-        header.setMinimumHeight(45)
-        header.setMaximumHeight(100)
-        header.setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
+        # Configure table
+        header = self.payments_table.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.Fixed)
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.Fixed)
         header.setSectionResizeMode(3, QHeaderView.ResizeMode.Fixed)
+        header.setSectionResizeMode(4, QHeaderView.ResizeMode.Fixed)
+        header.setSectionResizeMode(5, QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(6, QHeaderView.ResizeMode.Fixed)
         
-        self.items_table.setColumnWidth(0, 60)   # #
-        self.items_table.setColumnWidth(2, 150)  # AMOUNT
-        self.items_table.setColumnWidth(3, 100)  # DELETE
+        self.payments_table.setColumnWidth(0, 100)
+        self.payments_table.setColumnWidth(2, 120)
+        self.payments_table.setColumnWidth(3, 100)
+        self.payments_table.setColumnWidth(4, 150)
+        self.payments_table.setColumnWidth(6, 100)
         
-        # Hide vertical header (row numbers)
-        self.items_table.verticalHeader().setVisible(False)
-        self.items_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        self.items_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
-        self.items_table.setMinimumHeight(250)
-        self.items_table.setMaximumHeight(400)
+        self.payments_table.verticalHeader().setVisible(False)
+        self.payments_table.setAlternatingRowColors(True)
+        self.payments_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.payments_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.payments_table.setMinimumHeight(300)
         
-        # HARD RESET STYLE - Forces flat design and perfect alignment
-        self.items_table.setStyleSheet(f"""
-            /* 1. RESET THE MAIN TABLE */
-            QTableWidget {{
-                background-color: #1E1E1E;
-                color: #FFFFFF;
-                border: 1px solid {self.dark_theme['border']};
-                border-radius: 4px;
-                gridline-color: #333333;
-                selection-background-color: {self.dark_theme['accent_blue']};
-                selection-color: #FFFFFF;
-                outline: none; /* Removes focus dotted line */
-            }}
-
-            /* 2. FORCE THE HEADER CONTAINER TO BE FLAT */
-            QHeaderView {{
-                background-color: #202020;
-                border: none;
-                border-bottom: 1px solid {self.dark_theme['border']};
-                margin: 0px;
-                padding: 0px;
-            }}
-
-            /* 3. STYLE THE INDIVIDUAL SECTIONS (COLUMNS) */
-            QHeaderView::section {{
-                background-color: #202020;
-                color: #FFFFFF;
-                padding: 4px;
-                border: none; /* KEY: Removes the box around every header */
-                border-right: 1px solid #333333; /* separator between columns */
-                margin: 0px;  /* KEY: Removes the gap causing misalignment */
-                border-radius: 0px; /* KEY: Removes rounded corners */
-                font-weight: bold;
-                font-size: 15px;
-                min-height: 40px;
-            }}
-
-            /* Remove border for the last header column to look cleaner */
-            QHeaderView::section:last {{
-                border-right: none;
-            }}
-
-            /* 4. ALIGN THE DATA CELLS TO MATCH HEADERS */
-            QTableWidget::item {{
-                padding-left: 5px; /* Adjust to match Header text alignment */
-                border-bottom: 1px solid #252525;
-            }}
-            
-            /* 5. FIX THE TOP-LEFT CORNER BUTTON */
-            QTableCornerButton::section {{
-                background-color: #202020;
-                border: none;
-                border-bottom: 1px solid {self.dark_theme['border']};
-                border-right: 1px solid {self.dark_theme['border']};
-            }}
-        """)
+        table_layout.addWidget(self.payments_table)
         
-        table_section.addWidget(self.items_table)
-        
-        # Add Row Button (Dark Theme)
-        add_row_btn = QPushButton("➕ ADD ROW")
-        add_row_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {self.dark_theme['button_bg']};
-                color: {self.dark_theme['text_primary']};
-                border: none;
-                border-radius: 6px;
-                padding: 10px 20px;
-                font-weight: bold;
-                font-size: 15px;
-            }}
-            QPushButton:hover {{
-                background-color: {self.dark_theme['button_hover']};
-            }}
-            QPushButton:pressed {{
-                background-color: {self.dark_theme['bg_tertiary']};
-            }}
-        """)
-        add_row_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        add_row_btn.clicked.connect(self._add_item_row)
-        table_section.addWidget(add_row_btn, alignment=Qt.AlignmentFlag.AlignLeft)
-        
-        content_layout.addLayout(table_section)
-        
-        # BOTTOM SECTION - Payments and Summary (Dark Theme)
-        bottom_section = QHBoxLayout()
-        bottom_section.setSpacing(30)
-        
-        # LEFT SIDE - Payment Section (Dark Theme)
-        payment_section = QVBoxLayout()
-        payment_section.setSpacing(10)
-        
-        payment_label = QLabel("Payments")
-        payment_label.setStyleSheet(f"""
-            QLabel {{
-                color: {self.dark_theme['text_primary']}; 
-                font-weight: bold; 
-                font-size: 16px;
-                background-color: transparent;
-            }}
-        """)
-        payment_section.addWidget(payment_label)
-        
-        # Payment rows container
-        self.payment_container = QVBoxLayout()
-        self.payment_container.setSpacing(10)
-        payment_section.addLayout(self.payment_container)
-        
-        # Add first two payment rows by default
-        self._add_payment_row()
-        self._add_payment_row()
-        
-        # Add Payment Row Button (Dark Theme)
-        add_payment_btn = QPushButton("➕ Add Payment")
-        add_payment_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {self.dark_theme['accent_green']};
-                color: {self.dark_theme['text_primary']};
-                border: none;
-                border-radius: 6px;
-                padding: 8px 15px;
-                font-weight: bold;
-                font-size: 14px;
-            }}
-            QPushButton:hover {{
-                background-color: #0EA472;
-            }}
-            QPushButton:pressed {{
-                background-color: #0C8A5F;
-            }}
-        """)
-        add_payment_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        add_payment_btn.clicked.connect(self._add_payment_row)
-        payment_section.addWidget(add_payment_btn, alignment=Qt.AlignmentFlag.AlignLeft)
-        
-        payment_section.addStretch()
-        bottom_section.addLayout(payment_section, 1)
-        
-        # RIGHT SIDE - Summary Panel (Dark Theme)
-        summary_section = QVBoxLayout()
-        summary_section.setSpacing(15)
-        
-        summary_frame = QFrame()
-        summary_frame.setStyleSheet(f"""
-            QFrame {{
-                background-color: {self.dark_theme['bg_secondary']};
-                border: 2px solid {self.dark_theme['accent_blue']};
-                border-radius: 8px;
-                padding: 20px;
-            }}
-        """)
-        summary_layout = QVBoxLayout(summary_frame)
-        summary_layout.setSpacing(12)
-        
-        summary_title = QLabel("Summary")
-        summary_title.setStyleSheet(f"""
-            QLabel {{
-                color: {self.dark_theme['accent_blue']}; 
-                font-weight: bold; 
-                font-size: 17px;
-                background-color: transparent;
-            }}
-        """)
-        summary_layout.addWidget(summary_title)
-        
-        # Round Off Checkbox and Input (Dark Theme)
-        roundoff_layout = QHBoxLayout()
-        self.roundoff_checkbox = QCheckBox("Round Off")
-        self.roundoff_checkbox.setStyleSheet(f"""
-            QCheckBox {{
-                color: {self.dark_theme['text_primary']};
-                font-size: 15px;
-                font-weight: bold;
-                background-color: transparent;
-                spacing: 8px;
-            }}
-            QCheckBox::indicator {{
-                width: 18px;
-                height: 18px;
-                border: 1px solid {self.dark_theme['border']};
-                border-radius: 4px;
-                background-color: {self.dark_theme['bg_tertiary']};
-            }}
-            QCheckBox::indicator:checked {{
-                background-color: {self.dark_theme['accent_blue']};
-                border: 1px solid {self.dark_theme['accent_blue']};
-            }}
-            QCheckBox::indicator:hover {{
-                border: 1px solid {self.dark_theme['accent_blue']};
-            }}
-        """)
-        self.roundoff_checkbox.stateChanged.connect(self._calculate_totals)
-        roundoff_layout.addWidget(self.roundoff_checkbox)
-        
-        self.roundoff_input = QLineEdit("0.00")
-        self.roundoff_input.setReadOnly(True)
-        self.roundoff_input.setStyleSheet(f"""
-            QLineEdit {{
-                background-color: {self.dark_theme['bg_tertiary']};
-                color: {self.dark_theme['text_muted']};
-                border: 1px solid {self.dark_theme['border']};
-                border-radius: 5px;
-                padding: 8px;
-                font-size: 15px;
-                max-width: 100px;
-            }}
-        """)
-        roundoff_layout.addWidget(self.roundoff_input)
-        roundoff_layout.addStretch()
-        summary_layout.addLayout(roundoff_layout)
-        
-        # Total (Dark Theme)
-        total_layout = QHBoxLayout()
-        total_label = QLabel("Total:")
-        total_label.setStyleSheet(f"""
-            QLabel {{
-                color: {self.dark_theme['text_primary']}; 
-                font-weight: bold; 
-                font-size: 16px;
-                background-color: transparent;
-            }}
-        """)
-        total_layout.addWidget(total_label)
-        
-        self.total_input = QLineEdit("₹0.00")
-        self.total_input.setReadOnly(True)
-        self.total_input.setStyleSheet(f"""
-            QLineEdit {{
-                background-color: {self.dark_theme['bg_tertiary']};
-                color: {self.dark_theme['accent_blue']};
-                border: 2px solid {self.dark_theme['accent_blue']};
-                border-radius: 6px;
-                padding: 10px;
-                font-size: 18px;
-                font-weight: bold;
-            }}
-        """)
-        total_layout.addWidget(self.total_input)
-        summary_layout.addLayout(total_layout)
-        
-        # Paid (Dark Theme)
-        paid_layout = QHBoxLayout()
-        paid_label = QLabel("Paid:")
-        paid_label.setStyleSheet(f"""
-            QLabel {{
-                color: {self.dark_theme['text_primary']}; 
-                font-weight: bold; 
-                font-size: 16px;
-                background-color: transparent;
-            }}
-        """)
-        paid_layout.addWidget(paid_label)
-        
-        self.paid_input = QLineEdit("₹0.00")
-        self.paid_input.setReadOnly(True)
-        self.paid_input.setStyleSheet(f"""
-            QLineEdit {{
-                background-color: {self.dark_theme['bg_tertiary']};
-                color: {self.dark_theme['accent_green']};
-                border: 2px solid {self.dark_theme['accent_green']};
-                border-radius: 6px;
-                padding: 10px;
-                font-size: 16px;
-                font-weight: bold;
-            }}
-        """)
-        paid_layout.addWidget(self.paid_input)
-        summary_layout.addLayout(paid_layout)
-        
-        # Balance (Dark Theme)
-        balance_layout = QHBoxLayout()
-        balance_label = QLabel("Balance:")
-        balance_label.setStyleSheet(f"""
-            QLabel {{
-                color: {self.dark_theme['text_primary']}; 
-                font-weight: bold; 
-                font-size: 14px;
-                background-color: transparent;
-            }}
-        """)
-        balance_layout.addWidget(balance_label)
-        
-        self.balance_input = QLineEdit("₹0.00")
-        self.balance_input.setReadOnly(True)
-        self.balance_input.setStyleSheet(f"""
-            QLineEdit {{
-                background-color: {self.dark_theme['bg_tertiary']};
-                color: {self.dark_theme['accent_red']};
-                border: 2px solid {self.dark_theme['accent_red']};
-                border-radius: 6px;
-                padding: 10px;
-                font-size: 18px;
-                font-weight: bold;
-            }}
-        """)
-        balance_layout.addWidget(self.balance_input)
-        summary_layout.addLayout(balance_layout)
-        
-        summary_section.addWidget(summary_frame)
-        summary_section.addStretch()
-        
-        bottom_section.addLayout(summary_section, 1)
-        
-        content_layout.addLayout(bottom_section)
-        
-        # BOTTOM BUTTONS (Dark Theme)
-        button_layout = QHBoxLayout()
-        button_layout.setSpacing(15)
-        button_layout.addStretch()
-        
-        # Share Button (Dark Theme - Purple Accent)
-        share_btn = QPushButton("📤 Share")
-        share_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {self.dark_theme['accent_purple']};
-                color: {self.dark_theme['text_primary']};
-                border: none;
-                border-radius: 6px;
-                padding: 12px 30px;
-                font-weight: bold;
-                font-size: 16px;
-            }}
-            QPushButton:hover {{
-                background-color: #9370DB;
-            }}
-            QPushButton:pressed {{
-                background-color: #7B68BC;
-            }}
-        """)
-        share_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        share_btn.clicked.connect(self._share_bill)
-        button_layout.addWidget(share_btn)
-        
-        # Save Button (Dark Theme - Blue Primary)
-        save_btn = QPushButton("💾 Save")
-        save_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {self.dark_theme['accent_blue']};
-                color: {self.dark_theme['text_primary']};
-                border: none;
-                border-radius: 6px;
-                padding: 12px 40px;
-                font-weight: bold;
-                font-size: 16px;
-            }}
-            QPushButton:hover {{
-                background-color: #3A8EEF;
-            }}
-            QPushButton:pressed {{
-                background-color: #2A7ECF;
-            }}
-        """)
-        save_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        save_btn.clicked.connect(self._save_bill)
-        button_layout.addWidget(save_btn)
-        
-        content_layout.addLayout(button_layout)
-        
-        layout.addWidget(content_frame)
+        layout.addWidget(table_frame)
         
         scroll.setWidget(content)
         main_layout.addWidget(scroll)
         
-        # Add first item row
-        self._add_item_row()
+        # Load recent payments
+        self._load_recent_payments()
     
     def _get_supplier_list(self):
         """Get list of suppliers from database."""
@@ -769,317 +301,52 @@ class SupplierBillingPage(QWidget):
             return []
     
     def _on_supplier_changed(self):
-        """Update phone number when supplier is selected."""
-        supplier_name = self.supplier_combo.currentText()
+        """Update supplier balance info when supplier is selected."""
+        supplier_name = self.supplier_combo.currentText().strip()
+        
+        if not supplier_name:
+            self.total_payable_label.setText("Total Payable: ₹0.00")
+            self.already_paid_label.setText("Already Paid: ₹0.00")
+            self.pending_label.setText("Pending: ₹0.00")
+            return
         
         try:
-            suppliers = self.db.get_contacts('SUPPLIER')
-            for supplier in suppliers:
-                if supplier.get('name') == supplier_name:
-                    self.phone_input.setText(supplier.get('phone', ''))
-                    return
-        except:
-            pass
-        
-        self.phone_input.setText('')
+            # Get supplier balance from database
+            balance_data = self.db.get_supplier_balance(supplier_name)
+            
+            if balance_data:
+                total_payable = balance_data.get('total_payable', 0.0)
+                amount_paid = balance_data.get('amount_paid', 0.0)
+                pending = balance_data.get('pending', 0.0)
+                
+                self.total_payable_label.setText(f"Total Payable: ₹{total_payable:,.2f}")
+                self.already_paid_label.setText(f"Already Paid: ₹{amount_paid:,.2f}")
+                self.pending_label.setText(f"Pending: ₹{pending:,.2f}")
+                
+                # Auto-fill payment amount with pending amount if positive
+                if pending > 0:
+                    self.payment_amount.setValue(pending)
+            else:
+                self.total_payable_label.setText("Total Payable: ₹0.00")
+                self.already_paid_label.setText("Already Paid: ₹0.00")
+                self.pending_label.setText("Pending: ₹0.00")
+        except Exception as e:
+            print(f"Error loading supplier balance: {e}")
+            self.total_payable_label.setText("Total Payable: ₹0.00")
+            self.already_paid_label.setText("Already Paid: ₹0.00")
+            self.pending_label.setText("Pending: ₹0.00")
     
-    def _generate_bill_number(self):
-        """Generate unique bill number."""
-        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
-        return f"SBILL-{timestamp}"
-    
-    def _add_item_row(self):
-        """Add a new item row to the table."""
-        row = self.items_table.rowCount()
-        self.items_table.insertRow(row)
-        
-        # Column 0: # (Serial Number)
-        serial_item = QTableWidgetItem(str(row + 1))
-        serial_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-        serial_item.setFlags(Qt.ItemFlag.ItemIsEnabled)
-        self.items_table.setItem(row, 0, serial_item)
-        
-        # Column 1: ITEM (LineEdit - Dark Theme)
-        item_input = QLineEdit()
-        item_input.setPlaceholderText("Enter item description")
-        item_input.setStyleSheet(f"""
-            QLineEdit {{
-                border: none;
-                padding: 8px;
-                font-size: 13px;
-                background-color: transparent;
-                color: {self.dark_theme['text_primary']};
-            }}
-            QLineEdit:focus {{
-                background-color: {self.dark_theme['bg_tertiary']};
-            }}
-        """)
-        self.items_table.setCellWidget(row, 1, item_input)
-        
-        # Column 2: AMOUNT (DoubleSpinBox - Dark Theme)
-        amount_input = QDoubleSpinBox()
-        amount_input.setRange(0, 9999999)
-        amount_input.setDecimals(2)
-        amount_input.setPrefix("₹ ")
-        amount_input.setValue(0.0)
-        amount_input.setStyleSheet(f"""
-            QDoubleSpinBox {{
-                border: none;
-                padding: 8px;
-                font-size: 13px;
-                background-color: transparent;
-                color: {self.dark_theme['text_primary']};
-            }}
-            QDoubleSpinBox:focus {{
-                background-color: {self.dark_theme['bg_tertiary']};
-            }}
-            QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {{
-                background-color: {self.dark_theme['button_bg']};
-                border: none;
-            }}
-            QDoubleSpinBox::up-button:hover, QDoubleSpinBox::down-button:hover {{
-                background-color: {self.dark_theme['button_hover']};
-            }}
-        """)
-        amount_input.valueChanged.connect(self._calculate_totals)
-        self.items_table.setCellWidget(row, 2, amount_input)
-        
-        # Column 3: DELETE (Button - Dark Theme)
-        delete_btn = QPushButton("🗑️")
-        delete_btn.setToolTip("Delete Row")
-        delete_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {self.dark_theme['accent_red']};
-                color: {self.dark_theme['text_primary']};
-                border: none;
-                border-radius: 3px;
-                padding: 5px;
-                font-weight: bold;
-            }}
-            QPushButton:hover {{
-                background-color: #DD3333;
-            }}
-            QPushButton:pressed {{
-                background-color: #CC2222;
-            }}
-        """)
-        delete_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        delete_btn.clicked.connect(lambda: self._delete_item_row(row))
-        self.items_table.setCellWidget(row, 3, delete_btn)
-        
-        self.items_table.setRowHeight(row, 45)
-    
-    def _delete_item_row(self, row):
-        """Delete an item row from the table."""
-        self.items_table.removeRow(row)
-        # Update serial numbers
-        for i in range(self.items_table.rowCount()):
-            item = self.items_table.item(i, 0)
-            if item:
-                item.setText(str(i + 1))
-        self._calculate_totals()
-    
-    def _add_payment_row(self):
-        """Add a new payment row."""
-        payment_row_layout = QHBoxLayout()
-        payment_row_layout.setSpacing(10)
-        
-        # Payment Type ComboBox (Dark Theme)
-        payment_type = QComboBox()
-        payment_type.addItems(["Cash", "Bank Transfer", "Credit Card", "Debit Card", "UPI", "Cheque"])
-        payment_type.setStyleSheet(f"""
-            QComboBox {{
-                background-color: {self.dark_theme['bg_tertiary']};
-                color: {self.dark_theme['text_primary']};
-                border: 1px solid {self.dark_theme['border']};
-                border-radius: 5px;
-                padding: 8px;
-                font-size: 13px;
-                min-width: 150px;
-            }}
-            QComboBox:focus {{
-                border: 1px solid {self.dark_theme['accent_blue']};
-            }}
-            QComboBox::drop-down {{
-                border: none;
-                background-color: transparent;
-            }}
-            QComboBox::down-arrow {{
-                image: none;
-                border-left: 5px solid transparent;
-                border-right: 5px solid transparent;
-                border-top: 5px solid {self.dark_theme['text_primary']};
-                margin-right: 8px;
-            }}
-            QComboBox QAbstractItemView {{
-                background-color: {self.dark_theme['bg_secondary']};
-                color: {self.dark_theme['text_primary']};
-                selection-background-color: {self.dark_theme['accent_blue']};
-                border: 1px solid {self.dark_theme['border']};
-            }}
-        """)
-        payment_row_layout.addWidget(payment_type)
-        
-        # Amount Input (Dark Theme)
-        amount_input = QDoubleSpinBox()
-        amount_input.setRange(0, 9999999)
-        amount_input.setDecimals(2)
-        amount_input.setPrefix("₹ ")
-        amount_input.setValue(0.0)
-        amount_input.setStyleSheet(f"""
-            QDoubleSpinBox {{
-                background-color: {self.dark_theme['bg_tertiary']};
-                color: {self.dark_theme['text_primary']};
-                border: 1px solid {self.dark_theme['border']};
-                border-radius: 5px;
-                padding: 8px;
-                font-size: 13px;
-                min-width: 150px;
-            }}
-            QDoubleSpinBox:focus {{
-                border: 1px solid {self.dark_theme['accent_blue']};
-            }}
-            QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {{
-                background-color: {self.dark_theme['button_bg']};
-                border: none;
-                width: 16px;
-            }}
-            QDoubleSpinBox::up-button:hover, QDoubleSpinBox::down-button:hover {{
-                background-color: {self.dark_theme['button_hover']};
-            }}
-        """)
-        amount_input.valueChanged.connect(self._calculate_totals)
-        payment_row_layout.addWidget(amount_input)
-        
-        # Delete Button (Dark Theme)
-        delete_btn = QPushButton("🗑️")
-        delete_btn.setToolTip("Remove Payment")
-        delete_btn.setFixedSize(35, 35)
-        delete_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {self.dark_theme['accent_red']};
-                color: {self.dark_theme['text_primary']};
-                border: none;
-                border-radius: 4px;
-                font-weight: bold;
-            }}
-            QPushButton:hover {{
-                background-color: #DD3333;
-            }}
-            QPushButton:pressed {{
-                background-color: #CC2222;
-            }}
-        """)
-        delete_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        delete_btn.clicked.connect(lambda: self._delete_payment_row(payment_row_layout))
-        payment_row_layout.addWidget(delete_btn)
-        
-        payment_row_layout.addStretch()
-        
-        # Store reference
-        payment_row = {
-            'layout': payment_row_layout,
-            'type': payment_type,
-            'amount': amount_input,
-            'delete_btn': delete_btn
-        }
-        self.payment_rows.append(payment_row)
-        
-        self.payment_container.addLayout(payment_row_layout)
-    
-    def _delete_payment_row(self, layout):
-        """Delete a payment row."""
-        # Find and remove from payment_rows list
-        for payment_row in self.payment_rows:
-            if payment_row['layout'] == layout:
-                self.payment_rows.remove(payment_row)
-                break
-        
-        # Remove widgets from layout
-        while layout.count():
-            item = layout.takeAt(0)
-            widget = item.widget()
-            if widget:
-                widget.deleteLater()
-        
-        # Remove layout from container
-        self.payment_container.removeItem(layout)
-        layout.deleteLater()
-        
-        self._calculate_totals()
-    
-    def _calculate_totals(self):
-        """Calculate total, paid, and balance amounts."""
-        # Calculate total from items
-        total = 0.0
-        for row in range(self.items_table.rowCount()):
-            amount_widget = self.items_table.cellWidget(row, 2)
-            if amount_widget:
-                total += amount_widget.value()
-        
-        # Apply round off if checked
-        roundoff = 0.0
-        if self.roundoff_checkbox.isChecked():
-            rounded_total = round(total)
-            roundoff = rounded_total - total
-            total = rounded_total
-        
-        self.roundoff_input.setText(f"{roundoff:.2f}")
-        
-        # Calculate paid from payments
-        paid = 0.0
-        for payment_row in self.payment_rows:
-            paid += payment_row['amount'].value()
-        
-        # Calculate balance
-        balance = total - paid
-        
-        # Update display
-        self.total_input.setText(f"₹{total:,.2f}")
-        self.paid_input.setText(f"₹{paid:,.2f}")
-        self.balance_input.setText(f"₹{balance:,.2f}")
-        
-        # Update balance color
-        if balance > 0:
-            self.balance_input.setStyleSheet(self.get_input_style() + f"""
-                QLineEdit {{
-                    padding: 10px;
-                    font-size: 16px;
-                    font-weight: bold;
-                    color: {self.colors['danger']};
-                    background-color: #fff0f0;
-                    border: 2px solid {self.colors['danger']};
-                }}
-            """)
-        elif balance < 0:
-            self.balance_input.setStyleSheet(self.get_input_style() + f"""
-                QLineEdit {{
-                    padding: 10px;
-                    font-size: 16px;
-                    font-weight: bold;
-                    color: {self.colors['warning']};
-                    background-color: #fff8f0;
-                    border: 2px solid {self.colors['warning']};
-                }}
-            """)
-        else:
-            self.balance_input.setStyleSheet(self.get_input_style() + f"""
-                QLineEdit {{
-                    padding: 10px;
-                    font-size: 16px;
-                    font-weight: bold;
-                    color: {self.colors['success']};
-                    background-color: #f0fff0;
-                    border: 2px solid {self.colors['success']};
-                }}
-            """)
-    
-    def _save_bill(self):
-        """Save supplier bill to database."""
+    def _save_payment(self):
+        """Save payment to database."""
         supplier_name = self.supplier_combo.currentText().strip()
         
         if not supplier_name:
             QMessageBox.warning(self, "Validation Error", "Please select a supplier!")
+            return
+        
+        amount = self.payment_amount.value()
+        if amount <= 0:
+            QMessageBox.warning(self, "Validation Error", "Please enter a valid payment amount!")
             return
         
         # Get supplier_id from database
@@ -1098,141 +365,127 @@ class SupplierBillingPage(QWidget):
             QMessageBox.critical(self, "Error", f"Failed to get supplier: {str(e)}")
             return
         
-        # Collect items
-        items = []
-        for row in range(self.items_table.rowCount()):
-            item_widget = self.items_table.cellWidget(row, 1)
-            amount_widget = self.items_table.cellWidget(row, 2)
-            
-            if item_widget and amount_widget:
-                item_name = item_widget.text().strip()
-                amount = amount_widget.value()
-                
-                if item_name and amount > 0:
-                    items.append({
-                        'description': item_name,
-                        'amount': amount
-                    })
-        
-        if not items:
-            QMessageBox.warning(self, "Validation Error", "Please add at least one item with amount!")
-            return
-        
-        # Calculate totals
-        total = sum(item['amount'] for item in items)
-        if self.roundoff_checkbox.isChecked():
-            roundoff = round(total) - total
-            total = round(total)
-        else:
-            roundoff = 0.0
-        
-        # Get bill details
-        bill_number = self.bill_number_input.text()
-        bill_date = self.bill_date.date().toString("yyyy-MM-dd")
+        # Get payment details
+        payment_date = self.payment_date.date().toString("yyyy-MM-dd")
+        payment_mode = self.payment_mode.currentText()
+        reference = self.reference_number.text().strip()
+        notes = self.notes_input.toPlainText().strip()
         
         # Save to database
         try:
-            bill_id = self.db.add_purchase_bill(
+            payment_id = self.db.add_supplier_payment(
                 supplier_id=supplier_id,
-                date=bill_date,
-                total_amount=total,
-                items=items,
-                bill_number=bill_number
+                amount=amount,
+                payment_mode=payment_mode,
+                date=payment_date,
+                reference=reference,
+                notes=notes
             )
             
-            if bill_id > 0:
-                # Save payments as supplier payments
-                for payment_row in self.payment_rows:
-                    payment_type = payment_row['type'].currentText()
-                    amount = payment_row['amount'].value()
-                    
-                    if amount > 0:
-                        self.db.add_supplier_payment(
-                            supplier_id=supplier_id,
-                            amount=amount,
-                            payment_mode=payment_type,
-                            date=bill_date,
-                            notes=f"Payment for bill {bill_number}"
-                        )
-                
-                # Calculate paid and balance
-                paid = sum(p['amount'].value() for p in self.payment_rows if p['amount'].value() > 0)
-                balance = total - paid
-                
+            if payment_id > 0:
                 QMessageBox.information(
                     self, 
                     "Success", 
-                    f"Supplier bill saved successfully!\n\nBill Number: {bill_number}\nTotal: ₹{total:,.2f}\nPaid: ₹{paid:,.2f}\nBalance: ₹{balance:,.2f}"
+                    f"Payment recorded successfully!\n\nSupplier: {supplier_name}\nAmount: ₹{amount:,.2f}\nMode: {payment_mode}"
                 )
                 
-                # Reload bills and reset form
-                self._load_bills()
-                self._reset_form()
+                # Refresh supplier balance
+                self._on_supplier_changed()
+                
+                # Reload recent payments
+                self._load_recent_payments()
+                
+                # Reset form except supplier selection
+                self.payment_amount.setValue(0.0)
+                self.reference_number.clear()
+                self.notes_input.clear()
+                self.payment_date.setDate(QDate.currentDate())
             else:
-                QMessageBox.critical(self, "Error", "Failed to save supplier bill to database!")
+                QMessageBox.critical(self, "Error", "Failed to save payment to database!")
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to save supplier bill:\n{str(e)}")
+            QMessageBox.critical(self, "Error", f"Failed to save payment:\n{str(e)}")
     
     def _reset_form(self):
         """Reset form to default state."""
         self.supplier_combo.setCurrentIndex(-1)
-        self.phone_input.clear()
-        self.bill_number_input.setText(self._generate_bill_number())
-        self.bill_date.setDate(QDate.currentDate())
+        self.payment_date.setDate(QDate.currentDate())
+        self.payment_amount.setValue(0.0)
+        self.payment_mode.setCurrentIndex(0)
+        self.reference_number.clear()
+        self.notes_input.clear()
         
-        # Clear items table
-        self.items_table.setRowCount(0)
-        self._add_item_row()
-        
-        # Clear payment rows
-        for payment_row in self.payment_rows[:]:
-            self._delete_payment_row(payment_row['layout'])
-        
-        self.payment_rows = []
-        self._add_payment_row()
-        self._add_payment_row()
-        
-        self.roundoff_checkbox.setChecked(False)
-        self._calculate_totals()
+        self.total_payable_label.setText("Total Payable: ₹0.00")
+        self.already_paid_label.setText("Already Paid: ₹0.00")
+        self.pending_label.setText("Pending: ₹0.00")
     
-    def _share_bill(self):
-        """Share bill (placeholder for future implementation)."""
-        QMessageBox.information(
-            self, 
-            "Share Bill", 
-            "Share functionality will be implemented soon!\n\nYou can export the bill as PDF or send via email/WhatsApp."
-        )
-    
-    def _load_bills(self):
-        """Load bills from database with items."""
+    def _load_recent_payments(self, limit=50):
+        """Load recent payments from database."""
         try:
-            db_bills = self.db.get_purchase_bills()
-            self.bills = []
+            self.payments_table.setRowCount(0)
             
-            for bill in db_bills:
-                # Get bill with items
-                bill_with_items = self.db.get_purchase_bill_with_items(bill['id'])
+            # Get recent payments from database
+            payments = self.db.get_supplier_payments(limit=limit)
+            
+            for payment in payments:
+                row = self.payments_table.rowCount()
+                self.payments_table.insertRow(row)
                 
-                if bill_with_items:
-                    bill_data = {
-                        'id': bill_with_items['id'],
-                        'bill_number': bill_with_items.get('bill_number', ''),
-                        'supplier': bill_with_items.get('supplier_name', ''),
-                        'phone': bill_with_items.get('supplier_phone', ''),
-                        'bill_date': bill_with_items.get('date', ''),
-                        'due_date': bill_with_items.get('due_date', ''),
-                        'total': float(bill_with_items.get('total_amount', 0.0)),
-                        'notes': bill_with_items.get('notes', ''),
-                        'items': bill_with_items.get('items', []),
-                        'created_date': bill_with_items.get('created_at', '')
-                    }
-                    self.bills.append(bill_data)
+                # Date
+                date_item = QTableWidgetItem(payment.get('date', ''))
+                date_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                self.payments_table.setItem(row, 0, date_item)
+                
+                # Supplier
+                supplier_item = QTableWidgetItem(payment.get('supplier_name', ''))
+                self.payments_table.setItem(row, 1, supplier_item)
+                
+                # Amount
+                amount = payment.get('amount', 0.0)
+                amount_item = QTableWidgetItem(f"₹{amount:,.2f}")
+                amount_item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+                self.payments_table.setItem(row, 2, amount_item)
+                
+                # Mode
+                mode_item = QTableWidgetItem(payment.get('payment_mode', ''))
+                mode_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                self.payments_table.setItem(row, 3, mode_item)
+                
+                # Reference
+                ref_item = QTableWidgetItem(payment.get('reference', '-'))
+                self.payments_table.setItem(row, 4, ref_item)
+                
+                # Notes
+                notes_item = QTableWidgetItem(payment.get('notes', '-'))
+                self.payments_table.setItem(row, 5, notes_item)
+                
+                # Delete button
+                delete_btn = QPushButton("🗑️ Delete")
+                delete_btn.setStyleSheet(self.get_button_style('delete'))
+                delete_btn.clicked.connect(lambda checked, pid=payment['id']: self._delete_payment(pid))
+                self.payments_table.setCellWidget(row, 6, delete_btn)
+                
         except Exception as e:
-            print(f"Error loading bills: {e}")
+            print(f"Error loading recent payments: {e}")
             import traceback
             traceback.print_exc()
-            self.bills = []
     
-    def _save_bills(self):
-        """Bills are saved directly to database."""
-        return True  # No-op, kept for compatibility
+    def _delete_payment(self, payment_id):
+        """Delete a payment record."""
+        reply = QMessageBox.question(
+            self,
+            "Confirm Delete",
+            "Are you sure you want to delete this payment record?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+        
+        if reply == QMessageBox.StandardButton.Yes:
+            try:
+                success = self.db.delete_supplier_payment(payment_id)
+                if success:
+                    QMessageBox.information(self, "Success", "Payment record deleted successfully!")
+                    self._load_recent_payments()
+                    self._on_supplier_changed()  # Refresh balance if same supplier selected
+                else:
+                    QMessageBox.critical(self, "Error", "Failed to delete payment record!")
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to delete payment:\n{str(e)}")

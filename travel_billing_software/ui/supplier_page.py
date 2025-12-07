@@ -615,8 +615,8 @@ class SupplierPage(QWidget):
                 # Get supplier balance from database
                 try:
                     balance_info = self.db.get_supplier_balance(contact['id'])
-                    financial_data['amount_pending'] = float(balance_info.get('balance', 0.0))
-                    financial_data['amount_paid'] = float(balance_info.get('total_paid', 0.0))
+                    financial_data['amount_pending'] = float(balance_info.get('pending', 0.0))
+                    financial_data['amount_paid'] = float(balance_info.get('amount_paid', 0.0))
                     financial_data['amount_received'] = float(balance_info.get('total_payable', 0.0))
                 except Exception as e:
                     print(f"Error getting supplier balance for {contact['name']}: {e}")
@@ -1224,8 +1224,8 @@ class SupplierPage(QWidget):
                     balance_info = self.db.get_supplier_balance(supplier['id'])
                     supplier['financial'] = {
                         'total_payable': balance_info.get('total_payable', 0.0),
-                        'amount_paid': balance_info.get('total_paid', 0.0),
-                        'amount_pending': balance_info.get('balance', 0.0),
+                        'amount_paid': balance_info.get('amount_paid', 0.0),
+                        'amount_pending': balance_info.get('pending', 0.0),
                         'amount_received': 0.0,
                         'transactions': []
                     }

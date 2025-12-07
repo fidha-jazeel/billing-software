@@ -1144,24 +1144,70 @@ class DatabaseManager:
             print(f"✗ Error adding supplier payment: {e}")
             return -1
     
-    def get_supplier_payments(self, supplier_id: int) -> List[Dict[str, Any]]:
-        """Get all payments for a supplier."""
+    def get_supplier_payments(self, supplier_id: int = None, limit: int = None) -> List[Dict[str, Any]]:
+        """Get all payments for a supplier, or all recent payments if supplier_id is None."""
         try:
             cur = self.conn.cursor()
-            cur.execute("""
-                SELECT * FROM supplier_payments 
-                WHERE supplier_id = ?
-                ORDER BY date DESC
-            """, (supplier_id,))
+            
+            if supplier_id is not None:
+                # Get payments for specific supplier
+                cur.execute("""
+                    SELECT sp.*, c.name as supplier_name 
+                    FROM supplier_payments sp
+                    JOIN contacts c ON sp.supplier_id = c.id
+                    WHERE sp.supplier_id = ?
+                    ORDER BY sp.date DESC
+                """, (supplier_id,))
+            else:
+                # Get all recent payments
+                if limit:
+                    cur.execute("""
+                        SELECT sp.*, c.name as supplier_name 
+                        FROM supplier_payments sp
+                        JOIN contacts c ON sp.supplier_id = c.id
+                        ORDER BY sp.date DESC, sp.id DESC
+                        LIMIT ?
+                    """, (limit,))
+                else:
+                    cur.execute("""
+                        SELECT sp.*, c.name as supplier_name 
+                        FROM supplier_payments sp
+                        JOIN contacts c ON sp.supplier_id = c.id
+                        ORDER BY sp.date DESC, sp.id DESC
+                    """)
+            
             return [dict(row) for row in cur.fetchall()]
         except Exception as e:
             print(f"✗ Error getting supplier payments: {e}")
             return []
     
-    def get_supplier_balance(self, supplier_id: int) -> Dict[str, float]:
-        """Calculate supplier balance (payable - paid)."""
+    def delete_supplier_payment(self, payment_id: int) -> bool:
+        """Delete a supplier payment record."""
         try:
             cur = self.conn.cursor()
+            cur.execute("DELETE FROM supplier_payments WHERE id = ?", (payment_id,))
+            self.conn.commit()
+            return cur.rowcount > 0
+        except Exception as e:
+            print(f"✗ Error deleting supplier payment: {e}")
+            return False
+    
+    def get_supplier_balance(self, supplier_id_or_name) -> Dict[str, float]:
+        """Calculate supplier balance (payable - paid). Accepts supplier ID or name."""
+        try:
+            cur = self.conn.cursor()
+            
+            # Determine if input is ID or name
+            if isinstance(supplier_id_or_name, str):
+                # It's a name, get the ID first
+                cur.execute("SELECT id FROM contacts WHERE name = ? AND type = 'SUPPLIER'", (supplier_id_or_name,))
+                result = cur.fetchone()
+                if not result:
+                    return {'total_payable': 0.0, 'amount_paid': 0.0, 'pending': 0.0}
+                supplier_id = result['id']
+            else:
+                # It's an ID
+                supplier_id = supplier_id_or_name
             
             # Total cost from invoice items
             cur.execute("""
@@ -1181,12 +1227,14 @@ class DatabaseManager:
             
             return {
                 'total_payable': total_payable,
-                'total_paid': total_paid,
-                'balance': total_payable - total_paid
+                'amount_paid': total_paid,
+                'pending': total_payable - total_paid
             }
         except Exception as e:
             print(f"✗ Error calculating supplier balance: {e}")
-            return {'total_payable': 0, 'total_paid': 0, 'balance': 0}
+            import traceback
+            traceback.print_exc()
+            return {'total_payable': 0.0, 'amount_paid': 0.0, 'pending': 0.0}
     
     # ===================================================================================
     # EXPENSES METHODS
