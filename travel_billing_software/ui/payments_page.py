@@ -146,7 +146,49 @@ class PaymentsPage(QWidget):
     
     def _init_ui(self):
         """Initialize the UI."""
-        main_layout = QVBoxLayout(self)
+        # Main container layout
+        container_layout = QVBoxLayout(self)
+        container_layout.setContentsMargins(0, 0, 0, 0)
+        container_layout.setSpacing(0)
+        
+        # Scroll area for entire page
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setFrameShape(QFrame.Shape.NoFrame)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll_area.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background: transparent;
+            }
+            /* Custom dark grey scrollbar styling */
+            QScrollBar:vertical {
+                border: none;
+                background: #2b2b2b;
+                width: 10px;
+                margin: 0px;
+                border-radius: 5px;
+            }
+            QScrollBar::handle:vertical {
+                background: #444444;
+                min-height: 30px;
+                border-radius: 5px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background: #555555;
+            }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                height: 0px;
+            }
+            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+                background: #2b2b2b;
+            }
+        """)
+        
+        # Content widget inside scroll area
+        content_widget = QWidget()
+        main_layout = QVBoxLayout(content_widget)
         main_layout.setContentsMargins(20, 20, 20, 20)
         main_layout.setSpacing(20)
         
@@ -230,6 +272,28 @@ class PaymentsPage(QWidget):
                 padding: 12px 10px;
                 border-bottom: 1px solid {self.colors.get('border', '#3a3a3a')};
             }}
+            /* Custom dark grey scrollbar styling */
+            QScrollBar:vertical {{
+                border: none;
+                background: #2b2b2b;
+                width: 10px;
+                margin: 0px;
+                border-radius: 5px;
+            }}
+            QScrollBar::handle:vertical {{
+                background: #444444;
+                min-height: 30px;
+                border-radius: 5px;
+            }}
+            QScrollBar::handle:vertical:hover {{
+                background: #555555;
+            }}
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+                height: 0px;
+            }}
+            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{
+                background: #2b2b2b;
+            }}
         """)
         
         # Configure header with better height and styling
@@ -270,10 +334,9 @@ class PaymentsPage(QWidget):
         # Set last column to stretch for full width utilization
         header.setSectionResizeMode(6, QHeaderView.ResizeMode.Stretch)
         
-        # Table display settings with proper scrolling
-        self.unpaid_table.setMinimumHeight(450)
-        self.unpaid_table.setMaximumHeight(550)  # Set max height to enable scrolling
-        self.unpaid_table.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        # Table display settings - Remove max height to allow full expansion within scroll area
+        self.unpaid_table.setMinimumHeight(400)
+        self.unpaid_table.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
         self.unpaid_table.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.unpaid_table.setSizeAdjustPolicy(QTableWidget.SizeAdjustPolicy.AdjustToContents)
         self.unpaid_table.setShowGrid(True)
@@ -297,6 +360,28 @@ class PaymentsPage(QWidget):
             QTableWidget::item {{
                 padding: 12px 10px;
                 border-bottom: 1px solid {self.colors.get('border', '#3a3a3a')};
+            }}
+            /* Custom dark grey scrollbar styling */
+            QScrollBar:vertical {{
+                border: none;
+                background: #2b2b2b;
+                width: 10px;
+                margin: 0px;
+                border-radius: 5px;
+            }}
+            QScrollBar::handle:vertical {{
+                background: #444444;
+                min-height: 30px;
+                border-radius: 5px;
+            }}
+            QScrollBar::handle:vertical:hover {{
+                background: #555555;
+            }}
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+                height: 0px;
+            }}
+            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{
+                background: #2b2b2b;
             }}
         """)
         
@@ -337,10 +422,9 @@ class PaymentsPage(QWidget):
         # Set last column to stretch for full width utilization
         history_header.setSectionResizeMode(5, QHeaderView.ResizeMode.Stretch)
         
-        # Table display settings with proper scrolling
-        self.history_table.setMinimumHeight(450)
-        self.history_table.setMaximumHeight(550)  # Set max height to enable scrolling
-        self.history_table.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        # Table display settings - Remove max height to allow full expansion within scroll area
+        self.history_table.setMinimumHeight(400)
+        self.history_table.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
         self.history_table.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.history_table.setSizeAdjustPolicy(QTableWidget.SizeAdjustPolicy.AdjustToContents)
         self.history_table.setShowGrid(True)
@@ -348,6 +432,10 @@ class PaymentsPage(QWidget):
         self.history_table.setWordWrap(False)
         self.history_table.hide()
         main_layout.addWidget(self.history_table)
+        
+        # Set content widget to scroll area and add to container
+        scroll_area.setWidget(content_widget)
+        container_layout.addWidget(scroll_area)
         
         self.current_view = 'unpaid'
     
