@@ -454,8 +454,8 @@ class ExpensesPage(QWidget):
         table_title.setAlignment(Qt.AlignmentFlag.AlignLeft)
         table_layout.addWidget(table_title)
 
-        # Create table with 11 columns
-        self.expenses_table = QTableWidget(0, 11)
+        # Create table with 6 columns (Date, Category, Amount, Payment Method, Actions, ID)
+        self.expenses_table = QTableWidget(0, 6)
         self.expenses_table.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         
         # Configure table
@@ -511,10 +511,9 @@ class ExpensesPage(QWidget):
     
     def _configure_table(self):
         """Configure table appearance and behavior."""
-        # Set column headers
+        # Set column headers - only showing essential columns
         self.expenses_table.setHorizontalHeaderLabels([
-            "Date", "Category", "Description", "Vendor", "Amount",
-            "Payment Method", "Reference", "Added By", "Created Date", "Actions", "ID"
+            "Date", "Category", "Amount", "Payment Method", "Actions", "ID"
         ])
         
         # Enable sorting
@@ -524,8 +523,8 @@ class ExpensesPage(QWidget):
         header = self.expenses_table.horizontalHeader()
         header.setVisible(True)
         header.setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
-        header.setMinimumHeight(35)
-        header.setMaximumHeight(35)
+        header.setMinimumHeight(45)
+        header.setMaximumHeight(45)
         
         header.setStyleSheet("""
             QHeaderView::section {
@@ -534,9 +533,9 @@ class ExpensesPage(QWidget):
                 font-weight: bold;
                 font-size: 13px;
                 border: 1px solid #444444;
-                padding: 4px;
+                padding: 8px;
                 text-align: center;
-                min-height: 35px;
+                min-height: 45px;
             }
             QHeaderView::section:hover {
                 background-color: #2A2A2A;
@@ -547,17 +546,12 @@ class ExpensesPage(QWidget):
         from PyQt6.QtWidgets import QHeaderView
         
         column_config = {
-            0: (100, QHeaderView.ResizeMode.Interactive),    # Date
-            1: (150, QHeaderView.ResizeMode.Stretch),        # Category
-            2: (200, QHeaderView.ResizeMode.Stretch),        # Description
-            3: (130, QHeaderView.ResizeMode.Stretch),        # Vendor
-            4: (110, QHeaderView.ResizeMode.Interactive),    # Amount
-            5: (140, QHeaderView.ResizeMode.Interactive),    # Payment Method
-            6: (110, QHeaderView.ResizeMode.Interactive),    # Reference
-            7: (140, QHeaderView.ResizeMode.Stretch),        # Added By
-            8: (130, QHeaderView.ResizeMode.Interactive),    # Created Date
-            9: (150, QHeaderView.ResizeMode.Interactive),    # Actions
-            10: (0, None)                                     # ID (hidden)
+            0: (120, QHeaderView.ResizeMode.Interactive),    # Date
+            1: (200, QHeaderView.ResizeMode.Stretch),        # Category
+            2: (150, QHeaderView.ResizeMode.Interactive),    # Amount
+            3: (150, QHeaderView.ResizeMode.Interactive),    # Payment Method
+            4: (150, QHeaderView.ResizeMode.Interactive),    # Actions
+            5: (0, None)                                     # ID (hidden)
         }
 
         for col, (min_width, resize_mode) in column_config.items():
@@ -572,11 +566,11 @@ class ExpensesPage(QWidget):
         header.setSectionsMovable(False)
         header.setSectionsClickable(True)
 
-        # Configure vertical header with compact row height
+        # Configure vertical header with increased row height
         self.expenses_table.verticalHeader().setVisible(True)
-        self.expenses_table.verticalHeader().setDefaultSectionSize(35)
+        self.expenses_table.verticalHeader().setDefaultSectionSize(45)
 
-        # Table styling - Clean dark theme with compact rows
+        # Table styling - Clean dark theme with taller rows
         self.expenses_table.setAlternatingRowColors(True)
         self.expenses_table.setStyleSheet(self.get_table_style() + f"""
             QTableWidget {{
@@ -589,7 +583,7 @@ class ExpensesPage(QWidget):
                 border: 1.2px solid #FFFFFF;
             }}
             QTableWidget::item {{
-                padding: 4px 8px;
+                padding: 10px 8px;
                 border: none;
                 background-color: #1E1E1E;
                 color: #FFFFFF;
@@ -620,6 +614,11 @@ class ExpensesPage(QWidget):
             QMessageBox.critical(self, "Error", f"Failed to load expenses:\n{str(e)}")
             self.expenses = []
     
+    def refresh_data(self):
+        """Refresh expenses data from database."""
+        self._load_expenses()
+        self._populate_table()
+        
     def _save_expenses(self):
         """Save expenses is now handled by individual add/update operations."""
         return True  # No-op, kept for compatibility
@@ -656,21 +655,12 @@ class ExpensesPage(QWidget):
             category_item.setFont(QFont('Arial', 13, QFont.Weight.Bold))
             self.expenses_table.setItem(row, 1, category_item)
             
-            # Description
-            description = expense.get('description', 'N/A')
-            if len(description) > 50:
-                description = description[:47] + "..."
-            self.expenses_table.setItem(row, 2, QTableWidgetItem(description))
-            
-            # Vendor
-            self.expenses_table.setItem(row, 3, QTableWidgetItem(expense.get('vendor', 'N/A')))
-            
             # Amount
             amount = expense.get('amount', 0.0)
             amount_item = QTableWidgetItem(f"₹{amount:,.2f}")
             amount_item.setForeground(QColor(self.colors['danger']))
             amount_item.setFont(QFont('Arial', 12, QFont.Weight.Bold))
-            self.expenses_table.setItem(row, 4, amount_item)
+            self.expenses_table.setItem(row, 2, amount_item)
             
             # Payment Method
             payment_item = QTableWidgetItem(expense.get('payment_mode', 'Cash'))
@@ -678,32 +668,14 @@ class ExpensesPage(QWidget):
                 payment_item.setForeground(QColor(self.colors['success']))
             else:
                 payment_item.setForeground(QColor(self.colors['accent_secondary']))
-            self.expenses_table.setItem(row, 5, payment_item)
-            
-            # Reference
-            self.expenses_table.setItem(row, 6, QTableWidgetItem(expense.get('reference', 'N/A')))
-            
-            # Person Responsible
-            self.expenses_table.setItem(row, 7, QTableWidgetItem(expense.get('responsible_person', 'N/A')))
-            
-            # Created Date
-            created_date = expense.get('created_date', '')
-            if created_date:
-                try:
-                    date_obj = datetime.strptime(created_date, '%Y-%m-%d %H:%M:%S')
-                    formatted_date = date_obj.strftime('%d-%m-%Y %H:%M')
-                except:
-                    formatted_date = created_date
-            else:
-                formatted_date = 'N/A'
-            self.expenses_table.setItem(row, 8, QTableWidgetItem(formatted_date))
+            self.expenses_table.setItem(row, 3, payment_item)
             
             # Actions
             actions_widget = self._create_action_buttons(expense)
-            self.expenses_table.setCellWidget(row, 9, actions_widget)
+            self.expenses_table.setCellWidget(row, 4, actions_widget)
             
             # ID (hidden)
-            self.expenses_table.setItem(row, 10, QTableWidgetItem(expense.get('id', '')))
+            self.expenses_table.setItem(row, 5, QTableWidgetItem(expense.get('id', '')))
         
         self.expenses_table.setSortingEnabled(True)
         self._update_statistics(expenses_list)
@@ -954,12 +926,13 @@ class ExpensesPage(QWidget):
         details_layout.setSpacing(12)
         details_layout.setContentsMargins(20, 20, 20, 20)
         
-        # Create detail fields with clear labels and values
+        # Create detail fields with clear labels and values - ALL fields visible
         details_data = [
             ("Date", formatted_date),
             ("Category", expense.get('category', 'N/A')),
+            ("Amount", f"₹{expense.get('amount', 0.0):,.2f}"),
             ("Payment Method", expense.get('payment_mode', 'N/A')),
-            ("Paid To (Vendor)", expense.get('vendor', 'N/A')),
+            ("Vendor (Paid To)", expense.get('vendor', 'N/A')),
             ("Person Responsible", expense.get('responsible_person', 'N/A')),
             ("Reference Number", expense.get('reference', 'N/A')),
             ("Description", expense.get('description', 'N/A')),
@@ -988,19 +961,19 @@ class ExpensesPage(QWidget):
             """)
             field_layout.addWidget(label)
             
-            # Value field with clear background and full width
+            # Value field with black background and white text
             value = QLabel(str(value_text))
             value.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
             value.setMinimumHeight(40)
             value.setMaximumWidth(16777215)
             value.setStyleSheet("""
                 QLabel {
-                    color: #000000;
+                    color: #FFFFFF;
                     font-size: 13px;
-                    background-color: #F4F4F4;
+                    background-color: #000000;
                     padding: 10px 15px;
                     border-radius: 6px;
-                    border: 1px solid #CCCCCC;
+                    border: 1px solid #555555;
                 }
             """)
             value.setWordWrap(True)
