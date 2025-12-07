@@ -34,7 +34,8 @@ class SaleReportView(QWidget):
         self,
         colors: dict,
         get_button_style: callable,
-        export_callback: callable
+        export_callback: callable,
+        is_admin: bool = True
     ):
         """
         Initialize Sale Report view.
@@ -43,12 +44,14 @@ class SaleReportView(QWidget):
             colors: Color scheme dictionary
             get_button_style: Function to get button stylesheet
             export_callback: Callback for export operations (report_type, format)
+            is_admin: Whether current user is admin (controls Net Profit visibility)
         """
         super().__init__()
         self.colors = colors
         self.get_button_style = get_button_style
         self.export_callback = export_callback
         self.refresh_callback = None  # Will be set by parent
+        self.is_admin = is_admin  # Store admin status
         
         self._init_ui()
         log_info("SaleReportView initialized", 'billing_app')
@@ -85,12 +88,23 @@ class SaleReportView(QWidget):
         self.payment_summary_placeholder.setVisible(False)
         layout.addWidget(self.payment_summary_placeholder)
         
-        # Summary Cards
+        # Summary Cards - Will show 6 cards (or 5 for non-admin users)
+        # Total Sales, Total Invoices, Avg Invoice Value, Total Received, Total Due, Net Profit (admin only)
         self.summary_frame = SummaryCardManager.create_summary_cards(
-            ['Total Sales', 'Total Invoices', 'Avg Invoice Value'],
+            ['Total Sales', 'Total Invoices', 'Avg Invoice Value', 'Total Received', 'Total Due', 'Net Profit'],
             self.colors
         )
         layout.addWidget(self.summary_frame)
+        
+        # Store reference to Net Profit card for visibility control
+        self.net_profit_card = None
+        if hasattr(self.summary_frame, 'layout'):
+            layout_obj = self.summary_frame.layout()
+            if layout_obj and layout_obj.count() >= 6:
+                self.net_profit_card = layout_obj.itemAt(5).widget()
+                # Hide Net Profit card if not admin
+                if self.net_profit_card and not self.is_admin:
+                    self.net_profit_card.setVisible(False)
         
         # Export buttons
         export_row = QHBoxLayout()
@@ -206,20 +220,38 @@ class SaleReportView(QWidget):
                 log_warning("No records found for sale report with current filters", 'billing_app')
                 show_no_records_message(self, "Sale Report")
                 
-                # Update summary with zeros
+                # Update summary with zeros (6 cards)
                 SummaryCardManager.update_summary_cards(self.summary_frame, [
-                    "₹0.00",
-                    "0",
-                    "₹0.00"
+                    "₹0.00",  # Total Sales
+                    "0",      # Total Invoices
+                    "₹0.00",  # Avg Invoice Value
+                    "₹0.00",  # Total Received
+                    "₹0.00",  # Total Due
+                    "₹0.00"   # Net Profit
                 ])
                 return
             
             total_sales = 0.0
+            total_received = 0.0
+            net_profit = 0.0
             
             for invoice in invoices:
                 try:
                     row = self.sale_table.rowCount()
                     self.sale_table.insertRow(row)
+                    
+                    # Calculate payments received for this invoice
+                    paid_amount = float(invoice.get('paid_amount', 0))
+                    total_received += paid_amount
+                    
+                    # Calculate net profit from tickets (total_amount - cost_price * quantity)
+                    tickets = invoice.get('tickets', [])
+                    for ticket in tickets:
+                        sale_price = float(ticket.get('total_amount', 0))
+                        cost_price = float(ticket.get('supplier_amount', 0))
+                        quantity = int(ticket.get('quantity', 1))
+                        profit = sale_price - (cost_price * quantity)
+                        net_profit += profit
                     
                     # Invoice Number
                     self.sale_table.setItem(row, 0, QTableWidgetItem(invoice.get('invoice_number', '')))
@@ -270,17 +302,23 @@ class SaleReportView(QWidget):
                     )
                     continue
             
-            # Update summary
+            # Update summary with all metrics
             avg_value = total_sales / len(invoices) if invoices else 0.0
+            total_due = total_sales - total_received
+            
             SummaryCardManager.update_summary_cards(self.summary_frame, [
-                f"₹{total_sales:,.2f}",
-                str(len(invoices)),
-                f"₹{avg_value:,.2f}"
+                f"₹{total_sales:,.2f}",      # Total Sales
+                str(len(invoices)),           # Total Invoices
+                f"₹{avg_value:,.2f}",        # Avg Invoice Value
+                f"₹{total_received:,.2f}",   # Total Received
+                f"₹{total_due:,.2f}",        # Total Due
+                f"₹{net_profit:,.2f}"        # Net Profit
             ])
             
             log_info(
                 f"Sale report populated successfully with {len(invoices)} records, "
-                f"Total: ₹{total_sales:,.2f}",
+                f"Total Sales: ₹{total_sales:,.2f}, Received: ₹{total_received:,.2f}, "
+                f"Due: ₹{total_due:,.2f}, Net Profit: ₹{net_profit:,.2f}",
                 'billing_app'
             )
             

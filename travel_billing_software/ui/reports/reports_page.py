@@ -85,7 +85,8 @@ class ReportsPage(QWidget):
         self.filter_widgets = {}
         
         # Initialize all 8 sub-page views
-        self.sale_report = SaleReportView(colors, get_button_style, self._export_report)
+        # Note: is_admin defaults to True for now (can be updated later with proper auth)
+        self.sale_report = SaleReportView(colors, get_button_style, self._export_report, is_admin=True)
         self.purchase_report = PurchaseReportView(colors, get_button_style, self._export_report)
         self.all_transactions = AllTransactionsView(colors, get_button_style, self._export_report)
         self.day_book = DayBookView(colors, get_button_style, self._export_report)

@@ -852,7 +852,7 @@ class SummaryCardManager:
     @staticmethod
     def create_summary_cards(titles: List[str], colors: dict) -> QFrame:
         """
-        Create a row of summary cards with titles.
+        Create summary cards with titles. If 6 cards, arranged in 2 rows of 3.
         
         Args:
             titles: List of card titles
@@ -870,13 +870,29 @@ class SummaryCardManager:
                 padding: 15px;
             }
         """)
-        summary_layout = QHBoxLayout(summary_frame)
-        summary_layout.setContentsMargins(15, 15, 15, 15)
-        summary_layout.setSpacing(20)
         
-        for title in titles:
-            card = SummaryCardManager._create_single_card(title, colors)
-            summary_layout.addWidget(card)
+        # Use grid layout if 6 cards, otherwise horizontal layout
+        if len(titles) == 6:
+            from PyQt6.QtWidgets import QGridLayout
+            summary_layout = QGridLayout(summary_frame)
+            summary_layout.setContentsMargins(15, 15, 15, 15)
+            summary_layout.setSpacing(20)
+            
+            # Add cards in 2 rows of 3
+            for i, title in enumerate(titles):
+                card = SummaryCardManager._create_single_card(title, colors)
+                row = i // 3  # 0 for first 3 cards, 1 for next 3
+                col = i % 3   # 0, 1, 2 repeating
+                summary_layout.addWidget(card, row, col)
+        else:
+            # Original horizontal layout for other card counts
+            summary_layout = QHBoxLayout(summary_frame)
+            summary_layout.setContentsMargins(15, 15, 15, 15)
+            summary_layout.setSpacing(20)
+            
+            for title in titles:
+                card = SummaryCardManager._create_single_card(title, colors)
+                summary_layout.addWidget(card)
         
         return summary_frame
     
@@ -919,27 +935,47 @@ class SummaryCardManager:
     @staticmethod
     def update_summary_cards(frame: QFrame, values: List[str]):
         """
-        Update summary card values.
+        Update summary card values. Works with both HBoxLayout and GridLayout.
         
         Args:
             frame: Summary cards container frame
             values: List of new values to display
         """
-        # Get direct child frames from layout (not recursive findChildren)
+        from PyQt6.QtWidgets import QGridLayout
+        
         layout = frame.layout()
         if not layout:
             return
         
-        for i in range(min(layout.count(), len(values))):
-            item = layout.itemAt(i)
-            if item and item.widget():
-                card = item.widget()
-                if isinstance(card, QFrame):
-                    # Find the value label in this specific card
-                    for label in card.findChildren(QLabel):
-                        if label.property('summary_value'):
-                            label.setText(values[i])
-                            break
+        # Handle grid layout (used for 6 cards)
+        if isinstance(layout, QGridLayout):
+            value_index = 0
+            for row in range(layout.rowCount()):
+                for col in range(layout.columnCount()):
+                    if value_index >= len(values):
+                        return
+                    item = layout.itemAtPosition(row, col)
+                    if item and item.widget():
+                        card = item.widget()
+                        if isinstance(card, QFrame):
+                            # Find the value label in this specific card
+                            for label in card.findChildren(QLabel):
+                                if label.property('summary_value'):
+                                    label.setText(values[value_index])
+                                    break
+                    value_index += 1
+        else:
+            # Handle horizontal layout (original behavior)
+            for i in range(min(layout.count(), len(values))):
+                item = layout.itemAt(i)
+                if item and item.widget():
+                    card = item.widget()
+                    if isinstance(card, QFrame):
+                        # Find the value label in this specific card
+                        for label in card.findChildren(QLabel):
+                            if label.property('summary_value'):
+                                label.setText(values[i])
+                                break
 
 
 def create_report_header(title: str, description: str, colors: dict) -> QWidget:
