@@ -105,7 +105,7 @@ class SupplierBillingPage(QWidget):
         title.setStyleSheet(f"""
             QLabel {{
                 color: {self.dark_theme['text_primary']};
-                font-size: 28px;
+                font-size: 32px;
                 font-weight: bold;
                 letter-spacing: 0.5px;
                 background-color: transparent;
@@ -117,7 +117,7 @@ class SupplierBillingPage(QWidget):
         subtitle.setStyleSheet(f"""
             QLabel {{
                 color: {self.dark_theme['text_muted']};
-                font-size: 14px;
+                font-size: 16px;
                 background-color: transparent;
             }}
         """)
@@ -150,7 +150,7 @@ class SupplierBillingPage(QWidget):
                 border: 1px solid {self.dark_theme['border']};
                 border-radius: 6px;
                 padding: 10px;
-                font-size: 14px;
+                font-size: 16px;
             }}
             QLineEdit:focus, QDateEdit:focus, QComboBox:focus {{
                 border: 1px solid {self.dark_theme['accent_blue']};
@@ -184,7 +184,7 @@ class SupplierBillingPage(QWidget):
             QLabel {{
                 color: {self.dark_theme['text_primary']}; 
                 font-weight: bold; 
-                font-size: 13px;
+                font-size: 15px;
                 background-color: transparent;
             }}
         """)
@@ -214,7 +214,7 @@ class SupplierBillingPage(QWidget):
             QLabel {{
                 color: {self.dark_theme['text_primary']}; 
                 font-weight: bold; 
-                font-size: 13px;
+                font-size: 15px;
                 background-color: transparent;
             }}
         """)
@@ -237,7 +237,7 @@ class SupplierBillingPage(QWidget):
             QLabel {{
                 color: {self.dark_theme['text_primary']}; 
                 font-weight: bold; 
-                font-size: 13px;
+                font-size: 15px;
                 background-color: transparent;
             }}
         """)
@@ -260,7 +260,7 @@ class SupplierBillingPage(QWidget):
             QLabel {{
                 color: {self.dark_theme['text_primary']}; 
                 font-weight: bold; 
-                font-size: 13px;
+                font-size: 15px;
                 background-color: transparent;
             }}
         """)
@@ -316,7 +316,7 @@ class SupplierBillingPage(QWidget):
             QLabel {{
                 color: {self.dark_theme['text_primary']}; 
                 font-weight: bold; 
-                font-size: 14px;
+                font-size: 16px;
                 background-color: transparent;
             }}
         """)
@@ -336,7 +336,7 @@ class SupplierBillingPage(QWidget):
                 border: 1px solid {self.dark_theme['border']};
                 border-radius: 5px;
                 gridline-color: #444444;
-                font-size: 13px;
+                font-size: 15px;
                 selection-background-color: #2A2A2A;
                 selection-color: #FFFFFF;
             }}
@@ -344,7 +344,7 @@ class SupplierBillingPage(QWidget):
                 background-color: #202020;
                 color: #FFFFFF;
                 font-weight: bold;
-                font-size: 13px;
+                font-size: 15px;
                 border: 1px solid #444444;
                 padding: 6px;
                 text-align: center;
@@ -427,7 +427,7 @@ class SupplierBillingPage(QWidget):
                 margin: 0px;  /* KEY: Removes the gap causing misalignment */
                 border-radius: 0px; /* KEY: Removes rounded corners */
                 font-weight: bold;
-                font-size: 13px;
+                font-size: 15px;
                 min-height: 40px;
             }}
 
@@ -463,7 +463,7 @@ class SupplierBillingPage(QWidget):
                 border-radius: 6px;
                 padding: 10px 20px;
                 font-weight: bold;
-                font-size: 13px;
+                font-size: 15px;
             }}
             QPushButton:hover {{
                 background-color: {self.dark_theme['button_hover']};
@@ -491,7 +491,7 @@ class SupplierBillingPage(QWidget):
             QLabel {{
                 color: {self.dark_theme['text_primary']}; 
                 font-weight: bold; 
-                font-size: 14px;
+                font-size: 16px;
                 background-color: transparent;
             }}
         """)
@@ -516,7 +516,7 @@ class SupplierBillingPage(QWidget):
                 border-radius: 6px;
                 padding: 8px 15px;
                 font-weight: bold;
-                font-size: 12px;
+                font-size: 14px;
             }}
             QPushButton:hover {{
                 background-color: #0EA472;
@@ -553,7 +553,7 @@ class SupplierBillingPage(QWidget):
             QLabel {{
                 color: {self.dark_theme['accent_blue']}; 
                 font-weight: bold; 
-                font-size: 15px;
+                font-size: 17px;
                 background-color: transparent;
             }}
         """)
@@ -565,7 +565,7 @@ class SupplierBillingPage(QWidget):
         self.roundoff_checkbox.setStyleSheet(f"""
             QCheckBox {{
                 color: {self.dark_theme['text_primary']};
-                font-size: 13px;
+                font-size: 15px;
                 font-weight: bold;
                 background-color: transparent;
                 spacing: 8px;
@@ -597,7 +597,7 @@ class SupplierBillingPage(QWidget):
                 border: 1px solid {self.dark_theme['border']};
                 border-radius: 5px;
                 padding: 8px;
-                font-size: 13px;
+                font-size: 15px;
                 max-width: 100px;
             }}
         """)
@@ -612,7 +612,7 @@ class SupplierBillingPage(QWidget):
             QLabel {{
                 color: {self.dark_theme['text_primary']}; 
                 font-weight: bold; 
-                font-size: 14px;
+                font-size: 16px;
                 background-color: transparent;
             }}
         """)
@@ -627,7 +627,7 @@ class SupplierBillingPage(QWidget):
                 border: 2px solid {self.dark_theme['accent_blue']};
                 border-radius: 6px;
                 padding: 10px;
-                font-size: 16px;
+                font-size: 18px;
                 font-weight: bold;
             }}
         """)
@@ -641,7 +641,7 @@ class SupplierBillingPage(QWidget):
             QLabel {{
                 color: {self.dark_theme['text_primary']}; 
                 font-weight: bold; 
-                font-size: 14px;
+                font-size: 16px;
                 background-color: transparent;
             }}
         """)
@@ -685,7 +685,7 @@ class SupplierBillingPage(QWidget):
                 border: 2px solid {self.dark_theme['accent_red']};
                 border-radius: 6px;
                 padding: 10px;
-                font-size: 16px;
+                font-size: 18px;
                 font-weight: bold;
             }}
         """)
@@ -714,7 +714,7 @@ class SupplierBillingPage(QWidget):
                 border-radius: 6px;
                 padding: 12px 30px;
                 font-weight: bold;
-                font-size: 14px;
+                font-size: 16px;
             }}
             QPushButton:hover {{
                 background-color: #9370DB;
@@ -737,7 +737,7 @@ class SupplierBillingPage(QWidget):
                 border-radius: 6px;
                 padding: 12px 40px;
                 font-weight: bold;
-                font-size: 14px;
+                font-size: 16px;
             }}
             QPushButton:hover {{
                 background-color: #3A8EEF;

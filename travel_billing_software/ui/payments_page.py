@@ -155,7 +155,7 @@ class PaymentsPage(QWidget):
         header.setStyleSheet(f"""
             QLabel {{
                 color: {self.colors['accent_primary']};
-                font-size: 24px;
+                font-size: 28px;
                 font-weight: bold;
                 padding: 10px 0px;
             }}
@@ -224,6 +224,7 @@ class PaymentsPage(QWidget):
             QTableWidget {{
                 border: 1px solid {self.colors.get('border', '#3a3a3a')};
                 gridline-color: {self.colors.get('border', '#3a3a3a')};
+                font-size: 15px;
             }}
             QTableWidget::item {{
                 padding: 12px 10px;
@@ -243,7 +244,7 @@ class PaymentsPage(QWidget):
                 border: none;
                 border-right: 1px solid {self.colors.get('primary_bg', '#1a1a1a')};
                 font-weight: 600;
-                font-size: 14px;
+                font-size: 16px;
                 text-align: left;
             }}
             QHeaderView::section:hover {{
@@ -288,6 +289,7 @@ class PaymentsPage(QWidget):
             QTableWidget {{
                 border: 1px solid {self.colors.get('border', '#3a3a3a')};
                 gridline-color: {self.colors.get('border', '#3a3a3a')};
+                font-size: 15px;
             }}
             QTableWidget::item {{
                 padding: 12px 10px;
@@ -307,7 +309,7 @@ class PaymentsPage(QWidget):
                 border: none;
                 border-right: 1px solid {self.colors.get('primary_bg', '#1a1a1a')};
                 font-weight: 600;
-                font-size: 14px;
+                font-size: 16px;
                 text-align: left;
             }}
             QHeaderView::section:hover {{
@@ -358,10 +360,10 @@ class PaymentsPage(QWidget):
         layout = QVBoxLayout(card)
         
         title_lbl = QLabel(title)
-        title_lbl.setStyleSheet(f"color: {self.colors['text_secondary']}; font-size: 12px;")
+        title_lbl.setStyleSheet(f"color: {self.colors['text_secondary']}; font-size: 14px;")
         
         value_lbl = QLabel(value)
-        value_lbl.setStyleSheet(f"color: {color}; font-size: 24px; font-weight: bold;")
+        value_lbl.setStyleSheet(f"color: {color}; font-size: 28px; font-weight: bold;")
         value_lbl.setObjectName("value_label")
         
         layout.addWidget(title_lbl)

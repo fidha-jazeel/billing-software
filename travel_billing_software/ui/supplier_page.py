@@ -45,7 +45,7 @@ class SupplierDialog(QDialog):
         title.setStyleSheet(f"""
             QLabel {{
                 color: {self.colors['accent_primary']};
-                font-size: 20px;
+                font-size: 22px;
                 font-weight: bold;
                 margin-bottom: 10px;
             }}
@@ -140,7 +140,7 @@ class SupplierDialog(QDialog):
         
         # Required fields note
         required_note = QLabel("* Required fields")
-        required_note.setStyleSheet(f"color: {self.colors['danger']}; font-size: 11px; font-style: italic;")
+        required_note.setStyleSheet(f"color: {self.colors['danger']}; font-size: 13px; font-style: italic;")
         layout.addWidget(required_note)
         
         # Buttons
@@ -283,7 +283,7 @@ class SupplierPage(QWidget):
         title.setStyleSheet(f"""
             QLabel {{
                 color: {self.colors['accent_primary']};
-                font-size: 28px;
+                font-size: 32px;
                 font-weight: bold;
                 letter-spacing: 0.5px;
             }}
@@ -294,7 +294,7 @@ class SupplierPage(QWidget):
         subtitle.setStyleSheet(f"""
             QLabel {{
                 color: {self.colors['text_secondary']};
-                font-size: 14px;
+                font-size: 16px;
             }}
         """)
         header_layout.addWidget(subtitle)
@@ -319,7 +319,7 @@ class SupplierPage(QWidget):
         self.search_input.setStyleSheet(self.get_input_style() + """
             QLineEdit {
                 padding: 12px 15px;
-                font-size: 14px;
+                font-size: 16px;
                 min-width: 400px;
             }
         """)
@@ -333,7 +333,7 @@ class SupplierPage(QWidget):
         add_btn.setStyleSheet(self.get_button_style('add') + """
             QPushButton {
                 padding: 12px 25px;
-                font-size: 14px;
+                font-size: 16px;
                 font-weight: 600;
             }
         """)
@@ -346,7 +346,7 @@ class SupplierPage(QWidget):
         export_btn.setStyleSheet(self.get_button_style('primary') + """
             QPushButton {
                 padding: 12px 25px;
-                font-size: 14px;
+                font-size: 16px;
             }
         """)
         export_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -401,7 +401,7 @@ class SupplierPage(QWidget):
         table_title.setStyleSheet(f"""
             QLabel {{
                 color: {self.colors['accent_primary']};
-                font-size: 16px;
+                font-size: 18px;
                 font-weight: bold;
             }}
         """)
@@ -446,7 +446,7 @@ class SupplierPage(QWidget):
         title_label.setStyleSheet(f"""
             QLabel {{
                 color: {self.colors['text_secondary']};
-                font-size: 13px;
+                font-size: 15px;
                 font-weight: 500;
             }}
         """)
@@ -456,7 +456,7 @@ class SupplierPage(QWidget):
         value_label.setStyleSheet(f"""
             QLabel {{
                 color: {color};
-                font-size: 28px;
+                font-size: 32px;
                 font-weight: bold;
             }}
         """)
@@ -518,7 +518,7 @@ class SupplierPage(QWidget):
                 margin: 0px;  /* KEY: Removes the gap causing misalignment */
                 border-radius: 0px; /* KEY: Removes rounded corners */
                 font-weight: bold;
-                font-size: 13px;
+                font-size: 15px;
                 min-height: 40px;
             }}
 
@@ -585,7 +585,7 @@ class SupplierPage(QWidget):
                 background-color: {self.colors['secondary_bg']};
                 color: {self.colors['text_primary']};
                 gridline-color: #3a3a3a;
-                font-size: 13px;
+                font-size: 15px;
                 selection-background-color: {self.colors['accent_primary']};
                 selection-color: white;
                 border: 1px solid #3a3a3a;
@@ -658,7 +658,7 @@ class SupplierPage(QWidget):
             
             # Supplier Name
             name_item = QTableWidgetItem(supplier.get('name', ''))
-            name_item.setFont(QFont('Arial', 12, QFont.Weight.Bold))
+            name_item.setFont(QFont('Arial', 14, QFont.Weight.Bold))
             self.suppliers_table.setItem(row, 0, name_item)
             
             # Contact Person
@@ -688,7 +688,7 @@ class SupplierPage(QWidget):
             pending_item = QTableWidgetItem(f"₹{pending:,.2f}")
             if pending > 0:
                 pending_item.setForeground(QColor(self.colors['danger']))
-                pending_item.setFont(QFont('Arial', 11, QFont.Weight.Bold))
+                pending_item.setFont(QFont('Arial', 13, QFont.Weight.Bold))
             else:
                 pending_item.setForeground(QColor(self.colors['success']))
             self.suppliers_table.setItem(row, 6, pending_item)
@@ -704,7 +704,7 @@ class SupplierPage(QWidget):
             received_item = QTableWidgetItem(f"₹{received:,.2f}")
             if received > 0:
                 received_item.setForeground(QColor(self.colors['accent_cyan']))
-                received_item.setFont(QFont('Arial', 11, QFont.Weight.Bold))
+                received_item.setFont(QFont('Arial', 13, QFont.Weight.Bold))
             else:
                 received_item.setForeground(QColor(self.colors['text_secondary']))
             self.suppliers_table.setItem(row, 8, received_item)

@@ -45,7 +45,7 @@ class ExpenseDialog(QDialog):
         title.setStyleSheet(f"""
             QLabel {{
                 color: {self.colors['accent_primary']};
-                font-size: 20px;
+                font-size: 22px;
                 font-weight: bold;
                 margin-bottom: 10px;
             }}
@@ -65,7 +65,7 @@ class ExpenseDialog(QDialog):
         self.date_input.setStyleSheet(self.get_input_style() + """
             QDateEdit {
                 padding: 10px;
-                font-size: 14px;
+                font-size: 16px;
             }
         """)
         form_layout.addRow("Expense Date: *", self.date_input)
@@ -98,7 +98,7 @@ class ExpenseDialog(QDialog):
         self.category_input.setStyleSheet(self.get_input_style() + """
             QComboBox {
                 padding: 10px;
-                font-size: 14px;
+                font-size: 16px;
             }
         """)
         form_layout.addRow("Category: *", self.category_input)
@@ -111,7 +111,7 @@ class ExpenseDialog(QDialog):
         self.amount_input.setStyleSheet(self.get_input_style() + """
             QDoubleSpinBox {
                 padding: 10px;
-                font-size: 14px;
+                font-size: 16px;
             }
         """)
         form_layout.addRow("Amount: *", self.amount_input)
@@ -130,7 +130,7 @@ class ExpenseDialog(QDialog):
         self.payment_method.setStyleSheet(self.get_input_style() + """
             QComboBox {
                 padding: 10px;
-                font-size: 14px;
+                font-size: 16px;
             }
         """)
         form_layout.addRow("Payment Method: *", self.payment_method)
@@ -164,7 +164,7 @@ class ExpenseDialog(QDialog):
         
         # Required fields note
         required_note = QLabel("* Required fields")
-        required_note.setStyleSheet(f"color: {self.colors['danger']}; font-size: 11px; font-style: italic;")
+        required_note.setStyleSheet(f"color: {self.colors['danger']}; font-size: 13px; font-style: italic;")
         layout.addWidget(required_note)
         
         # Buttons
@@ -281,7 +281,7 @@ class ExpensesPage(QWidget):
         title.setStyleSheet(f"""
             QLabel {{
                 color: {self.colors['accent_primary']};
-                font-size: 28px;
+                font-size: 32px;
                 font-weight: bold;
                 letter-spacing: 0.5px;
             }}
@@ -292,7 +292,7 @@ class ExpensesPage(QWidget):
         subtitle.setStyleSheet(f"""
             QLabel {{
                 color: {self.colors['text_secondary']};
-                font-size: 14px;
+                font-size: 16px;
             }}
         """)
         header_layout.addWidget(subtitle)
@@ -325,7 +325,7 @@ class ExpensesPage(QWidget):
         self.start_date.setStyleSheet(self.get_input_style() + """
             QDateEdit {
                 padding: 10px;
-                font-size: 13px;
+                font-size: 15px;
                 min-width: 140px;
             }
         """)
@@ -343,7 +343,7 @@ class ExpensesPage(QWidget):
         self.end_date.setStyleSheet(self.get_input_style() + """
             QDateEdit {
                 padding: 10px;
-                font-size: 13px;
+                font-size: 15px;
                 min-width: 140px;
             }
         """)
@@ -356,7 +356,7 @@ class ExpensesPage(QWidget):
         self.search_input.setStyleSheet(self.get_input_style() + """
             QLineEdit {
                 padding: 12px 15px;
-                font-size: 14px;
+                font-size: 16px;
                 min-width: 300px;
             }
         """)
@@ -370,7 +370,7 @@ class ExpensesPage(QWidget):
         add_btn.setStyleSheet(self.get_button_style('add') + """
             QPushButton {
                 padding: 12px 25px;
-                font-size: 14px;
+                font-size: 16px;
                 font-weight: 600;
             }
         """)
@@ -383,7 +383,7 @@ class ExpensesPage(QWidget):
         export_btn.setStyleSheet(self.get_button_style('primary') + """
             QPushButton {
                 padding: 12px 25px;
-                font-size: 14px;
+                font-size: 16px;
             }
         """)
         export_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -431,7 +431,7 @@ class ExpensesPage(QWidget):
         table_title.setStyleSheet(f"""
             QLabel {{
                 color: #FFFFFF;
-                font-size: 18px;
+                font-size: 20px;
                 font-weight: bold;
                 padding: 5px 0px;
                 background-color: transparent;
@@ -479,7 +479,7 @@ class ExpensesPage(QWidget):
         title_label.setStyleSheet(f"""
             QLabel {{
                 color: {self.colors['text_secondary']};
-                font-size: 13px;
+                font-size: 15px;
                 font-weight: 500;
             }}
         """)
@@ -489,7 +489,7 @@ class ExpensesPage(QWidget):
         value_label.setStyleSheet(f"""
             QLabel {{
                 color: {color};
-                font-size: 28px;
+                font-size: 32px;
                 font-weight: bold;
             }}
         """)
@@ -524,7 +524,7 @@ class ExpensesPage(QWidget):
 
 
                 font-weight: bold;
-                font-size: 13px;
+                font-size: 15px;
                 border: 1px solid #444444;
                 padding: 6px;
                 text-align: center;
@@ -583,7 +583,7 @@ class ExpensesPage(QWidget):
             QTableWidget {{
                 background-color: #1E1E1E;
                 gridline-color: #444444;
-                font-size: 13px;
+                font-size: 15px;
                 selection-background-color: #2A2A2A;
                 selection-color: #FFFFFF;
 
@@ -649,13 +649,13 @@ class ExpensesPage(QWidget):
             else:
                 formatted_date = 'N/A'
             date_item = QTableWidgetItem(formatted_date)
-            date_item.setFont(QFont('Arial', 11, QFont.Weight.Bold))
+            date_item.setFont(QFont('Arial', 13, QFont.Weight.Bold))
             self.expenses_table.setItem(row, 0, date_item)
             
             # Category
             category_item = QTableWidgetItem(expense.get('category', ''))
             category_item.setForeground(QColor(self.colors['accent_primary']))
-            category_item.setFont(QFont('Arial', 11, QFont.Weight.Bold))
+            category_item.setFont(QFont('Arial', 13, QFont.Weight.Bold))
             self.expenses_table.setItem(row, 1, category_item)
             
             # Description

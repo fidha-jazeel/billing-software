@@ -45,7 +45,7 @@ class SettingsPage(QWidget):
         main_layout.setSpacing(15)
 
         # Header
-        heading = QLabel(f"<h2 style='color:{self.COLORS['accent_secondary']};'>⚙️ Settings</h2>")
+        heading = QLabel(f"<h2 style='color:{self.COLORS['accent_secondary']}; font-size: 28px;'>⚙️ Settings</h2>")
         main_layout.addWidget(heading)
         
         # Scroll area
@@ -101,12 +101,12 @@ class SettingsPage(QWidget):
         frame.setStyleSheet(self._create_frame_style())
         layout = QGridLayout(frame)
         
-        title = QLabel(f"<b style='color:{self.COLORS['accent_primary']}; font-size:18px;'>🎨 Appearance</b>")
+        title = QLabel(f"<b style='color:{self.COLORS['accent_primary']}; font-size:20px;'>🎨 Appearance</b>")
         layout.addWidget(title, 0, 0, 1, 2)
 
         # Font Size
         lbl_font = QLabel("Global Font Size (px):")
-        lbl_font.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold;")
+        lbl_font.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size: 14px;")
         
         self.spin_font_size = QSpinBox()
         self.spin_font_size.setRange(8, 24)
@@ -118,7 +118,7 @@ class SettingsPage(QWidget):
 
         # Theme Accent (Simple Dropdown for now)
         lbl_theme = QLabel("Accent Color:")
-        lbl_theme.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold;")
+        lbl_theme.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size: 14px;")
         
         self.combo_theme = QComboBox()
         self.combo_theme.addItems(["Purple", "Blue", "Green", "Orange", "Red"])
@@ -144,7 +144,7 @@ class SettingsPage(QWidget):
         
         # Note
         lbl_note = QLabel("<i>Note: Some appearance changes may require a restart.</i>")
-        lbl_note.setStyleSheet("color: #888;")
+        lbl_note.setStyleSheet("color: #888; font-size: 13px;")
         layout.addWidget(lbl_note, 3, 0, 1, 2)
 
         self.content_layout.addWidget(frame)
@@ -154,7 +154,7 @@ class SettingsPage(QWidget):
         frame.setStyleSheet(self._create_frame_style())
         layout = QGridLayout(frame)
         
-        title = QLabel(f"<b style='color:{self.COLORS['accent_primary']}; font-size:18px;'>🏢 Company Information</b>")
+        title = QLabel(f"<b style='color:{self.COLORS['accent_primary']}; font-size:20px;'>🏢 Company Information</b>")
         layout.addWidget(title, 0, 0, 1, 2)
         
         fields = [
@@ -169,7 +169,7 @@ class SettingsPage(QWidget):
         
         for i, (label_text, key) in enumerate(fields, 1):
             lbl = QLabel(label_text)
-            lbl.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold;")
+            lbl.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size: 14px;")
             
             inp = QLineEdit(str(self.COMPANY_INFO.get(key, "")))
             inp.setStyleSheet(self.get_input_style())
@@ -185,23 +185,23 @@ class SettingsPage(QWidget):
         frame.setStyleSheet(self._create_frame_style())
         layout = QGridLayout(frame)
         
-        title = QLabel(f"<b style='color:{self.COLORS['accent_primary']}; font-size:18px;'>📝 Invoice Configuration</b>")
+        title = QLabel(f"<b style='color:{self.COLORS['accent_primary']}; font-size:20px;'>📝 Invoice Configuration</b>")
         layout.addWidget(title, 0, 0, 1, 2)
         
         # Prefix
-        layout.addWidget(QLabel("Invoice Prefix:", styleSheet=f"color:{self.COLORS['text_primary']}; font-weight:bold;"), 1, 0)
+        layout.addWidget(QLabel("Invoice Prefix:", styleSheet=f"color:{self.COLORS['text_primary']}; font-weight:bold; font-size: 14px;"), 1, 0)
         self.inp_prefix = QLineEdit(self.INVOICE_CONFIG.get('prefix', 'INV'))
         self.inp_prefix.setStyleSheet(self.get_input_style())
         layout.addWidget(self.inp_prefix, 1, 1)
 
         # Currency
-        layout.addWidget(QLabel("Currency Symbol:", styleSheet=f"color:{self.COLORS['text_primary']}; font-weight:bold;"), 2, 0)
+        layout.addWidget(QLabel("Currency Symbol:", styleSheet=f"color:{self.COLORS['text_primary']}; font-weight:bold; font-size: 14px;"), 2, 0)
         self.inp_currency = QLineEdit(self.INVOICE_CONFIG.get('currency_symbol', '₹'))
         self.inp_currency.setStyleSheet(self.get_input_style())
         layout.addWidget(self.inp_currency, 2, 1)
 
         # Tax
-        layout.addWidget(QLabel("Default Tax Rate (%):", styleSheet=f"color:{self.COLORS['text_primary']}; font-weight:bold;"), 3, 0)
+        layout.addWidget(QLabel("Default Tax Rate (%):", styleSheet=f"color:{self.COLORS['text_primary']}; font-weight:bold; font-size: 14px;"), 3, 0)
         self.spin_tax = QDoubleSpinBox()
         self.spin_tax.setValue(float(self.INVOICE_CONFIG.get('default_tax_rate', 18.0)))
         self.spin_tax.setMaximum(100)
@@ -215,12 +215,12 @@ class SettingsPage(QWidget):
         frame.setStyleSheet(self._create_frame_style())
         layout = QVBoxLayout(frame)
         
-        layout.addWidget(QLabel(f"<b style='color:{self.COLORS['accent_primary']}; font-size:18px;'>📋 Dropdown Management</b>"))
+        layout.addWidget(QLabel(f"<b style='color:{self.COLORS['accent_primary']}; font-size:20px;'>📋 Dropdown Management</b>"))
 
         # Helper to create list sections
         def create_list_manager(title, key):
             lbl = QLabel(title)
-            lbl.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size: 16px;")
+            lbl.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size: 18px;")
             layout.addWidget(lbl)
             
             row = QHBoxLayout()
@@ -293,7 +293,7 @@ class SettingsPage(QWidget):
         """Create the Manage Types section - identical to Supplier style (Add & Delete only)."""
         # Section Title
         lbl = QLabel("Manage Types:")
-        lbl.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size: 16px;")
+        lbl.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size: 18px;")
         parent_layout.addWidget(lbl)
         
         # Input and Add button row (same as Supplier)
