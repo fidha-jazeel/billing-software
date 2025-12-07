@@ -116,6 +116,7 @@ class DashboardImproved(QMainWindow):
             ('ai', '🤖 AI Features', 'ai'),
             ('settings', '⚙ Settings', 'settings'),
             ('about', 'ℹ About', 'about'),
+            ('check_updates', '🔄 Check for Updates', 'updates'),
         ]:
             btn = self._create_sidebar_button(label, page_id)
             sidebar_layout.addWidget(btn)
@@ -215,6 +216,8 @@ class DashboardImproved(QMainWindow):
             self.content_stack.setCurrentWidget(self.settings_page)
         elif page_id == 'about':
             self.content_stack.setCurrentWidget(self.about_page)
+        elif page_id == 'check_updates':
+            self.check_for_updates_manually()
 
     def _create_home_page(self) -> QWidget:
         """Create the Home/Dashboard page."""
@@ -1953,6 +1956,48 @@ class DashboardImproved(QMainWindow):
             }
         """
         self.setStyleSheet(dark_stylesheet)
+
+    def check_for_updates_manually(self):
+        """Manually check for updates when user clicks the button"""
+        from travel_billing_software.utils.auto_updater import AutoUpdater
+        from travel_billing_software.ui.update_dialog import UpdateDialog, CheckingUpdateDialog
+        from PyQt6.QtCore import QThread, pyqtSignal
+        
+        class UpdateCheckThread(QThread):
+            """Background thread for checking updates"""
+            result = pyqtSignal(bool, object, str, str)  # available, updater, version, url
+            
+            def __init__(self):
+                super().__init__()
+                self.updater = AutoUpdater()
+            
+            def run(self):
+                update_available, latest_version, download_url = self.updater.check_for_updates()
+                self.result.emit(update_available, self.updater, latest_version or "", download_url or "")
+        
+        # Show checking dialog
+        checking_dialog = CheckingUpdateDialog(self)
+        checking_dialog.show()
+        
+        # Start check thread
+        def on_check_complete(available, updater, version, url):
+            checking_dialog.close()
+            if available:
+                dialog = UpdateDialog(updater, version, url, self)
+                dialog.exec()
+            else:
+                QMessageBox.information(
+                    self,
+                    "No Updates",
+                    f"You are already running the latest version ({updater.get_current_version()})."
+                )
+        
+        check_thread = UpdateCheckThread()
+        check_thread.result.connect(on_check_complete)
+        check_thread.start()
+        
+        # Store thread reference to prevent garbage collection
+        self._update_check_thread = check_thread
 
 
 if __name__ == '__main__':
