@@ -627,3 +627,18 @@ class InvoiceFormWidget(QFrame):
                 exception=e,
                 logger_name="invoice_form_errors"
             )
+    
+    def refresh_ui(self):
+        """Refresh UI elements to reflect updated configuration."""
+        try:
+            # Refresh type dropdown
+            self.refresh_type_dropdown()
+            
+            log_info("Invoice form UI refreshed", "invoice_form")
+            
+        except Exception as e:
+            log_error(
+                "Error refreshing invoice form UI",
+                exception=e,
+                logger_name="invoice_form_errors"
+            )

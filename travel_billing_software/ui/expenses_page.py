@@ -620,6 +620,14 @@ class ExpensesPage(QWidget):
         """Refresh expenses data from database."""
         self._load_expenses()
         self._populate_table()
+    
+    def refresh_ui(self):
+        """Refresh UI elements to reflect updated configuration (e.g., currency changes)."""
+        try:
+            # Reload data which will update all currency displays
+            self.refresh_data()
+        except Exception as e:
+            print(f"Error refreshing expenses page UI: {e}")
         
     def _save_expenses(self):
         """Save expenses is now handled by individual add/update operations."""

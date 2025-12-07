@@ -624,3 +624,42 @@ class HomePage(QWidget):
             log_error("Error in generate_invoice_number compatibility method", exception=e, logger_name="home_page_errors")
             from datetime import datetime
             return f"INV-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+    
+    def refresh_ui(self):
+        """Refresh UI elements to reflect updated configuration (e.g., currency changes)."""
+        try:
+            log_info("Refreshing home page UI", "home_page")
+            
+            # Reload config functions to get latest values
+            from travel_billing_software.config.config import (
+                get_currency_symbol, get_invoice_prefix,
+                get_supplier_list, COMPANY_INFO
+            )
+            
+            # Update stored references
+            self.get_currency_symbol = get_currency_symbol
+            self.get_invoice_prefix = get_invoice_prefix
+            self.get_supplier_list = get_supplier_list
+            self.company_info = COMPANY_INFO
+            
+            # Refresh calculations widget (updates currency symbols in labels)
+            if hasattr(self.calculations, 'refresh_ui'):
+                self.calculations.refresh_ui()
+            
+            # Refresh items table headers (currency symbols)
+            if hasattr(self.items_table, 'refresh_ui'):
+                self.items_table.refresh_ui()
+            
+            # Refresh supplier dropdowns in table
+            if hasattr(self.items_table, 'refresh_supplier_dropdowns'):
+                self.items_table.refresh_supplier_dropdowns()
+            
+            # Update invoice form if needed
+            if hasattr(self.invoice_form, 'refresh_ui'):
+                self.invoice_form.refresh_ui()
+            
+            log_info("Home page UI refreshed successfully", "home_page")
+            
+        except Exception as e:
+            log_error("Error refreshing home page UI", exception=e, logger_name="home_page_errors")
+

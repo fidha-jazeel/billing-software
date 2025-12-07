@@ -634,4 +634,30 @@ class ReportsPage(QWidget):
         except Exception as e:
             log_error(f"Failed to export {report_type} report", exception=e, logger_name='billing_errors')
             QMessageBox.critical(self, "Export Error", f"Failed to export report:\n{str(e)}")
+    
+    def refresh_ui(self):
+        """Refresh UI elements to reflect updated configuration (e.g., currency changes)."""
+        try:
+            log_info("Refreshing reports page UI", "reports_page")
+            
+            # Reload current report data with new currency settings
+            self.load_report_data()
+            
+            # Refresh filter dropdowns (suppliers, types, etc.)
+            self.refresh_suppliers()
+            self.refresh_types()
+            
+            # Refresh all sub-pages
+            for view in [
+                self.sale_report, self.purchase_report, self.all_transactions,
+                self.day_book, self.profit_loss, self.bill_wise_profit,
+                self.cash_transactions, self.balance_report
+            ]:
+                if hasattr(view, 'refresh_ui'):
+                    view.refresh_ui()
+            
+            log_info("Reports page UI refreshed successfully", "reports_page")
+            
+        except Exception as e:
+            log_error("Error refreshing reports page UI", exception=e, logger_name="reports_errors")
 

@@ -142,3 +142,7 @@ class AboutPage(QWidget):
         # Set scroll content
         scroll.setWidget(scroll_content)
         layout.addWidget(scroll)
+    
+    def refresh_ui(self):
+        """Refresh UI elements (About page doesn't need much refresh)."""
+        pass  # About page doesn't display currency or dynamic config data

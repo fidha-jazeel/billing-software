@@ -530,6 +530,14 @@ class PaymentsPage(QWidget):
         """Refresh payment data from database."""
         self._load_data()
     
+    def refresh_ui(self):
+        """Refresh UI elements to reflect updated configuration (e.g., currency changes)."""
+        try:
+            # Reload data which will update all currency displays
+            self.refresh_data()
+        except Exception as e:
+            print(f"Error refreshing payments page UI: {e}")
+    
     def _update_statistics(self):
         """Update the statistics cards."""
         # Total pending

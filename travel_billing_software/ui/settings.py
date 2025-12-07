@@ -620,3 +620,11 @@ class SettingsPage(QWidget):
 
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to save settings: {e}")
+    
+    def refresh_ui(self):
+        """Refresh UI elements to reflect updated configuration."""
+        try:
+            # Reload the entire settings UI to show latest values
+            self.init_ui()
+        except Exception as e:
+            print(f"Error refreshing settings page UI: {e}")

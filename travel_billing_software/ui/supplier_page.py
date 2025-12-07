@@ -653,6 +653,14 @@ class SupplierPage(QWidget):
         self._calculate_all_supplier_financials()
         self._populate_table()
     
+    def refresh_ui(self):
+        """Refresh UI elements to reflect updated configuration (e.g., currency changes)."""
+        try:
+            # Reload data which will update all currency displays
+            self.refresh_data()
+        except Exception as e:
+            print(f"Error refreshing supplier page UI: {e}")
+    
     def _populate_table(self, suppliers_list=None):
         """Populate table with suppliers - simplified view."""
         if suppliers_list is None:

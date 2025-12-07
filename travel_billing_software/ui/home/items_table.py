@@ -770,3 +770,32 @@ class ItemsTableWidget(QFrame):
                 supplier_combo.addItems(self.get_supplier_list())
                 supplier_combo.setCurrentText(current_text)
                 supplier_combo.blockSignals(False)
+    
+    def refresh_ui(self):
+        """Refresh UI elements like currency symbols in table headers."""
+        try:
+            # Update table headers with current currency symbol
+            self.table.setHorizontalHeaderLabels([
+                "Passenger Name", "PNR", "Sector", "Supplier",
+                "Passport No.", "Qty", f"Supp. Amt ({get_currency_symbol()})", f"Cust. Amt ({get_currency_symbol()})", "Actions"
+            ])
+            
+            # Refresh all amount fields in existing rows
+            for row in range(self.table.rowCount()):
+                # Update Supplier Amount spinbox
+                supp_amt_widget = self.table.cellWidget(row, 6)
+                if supp_amt_widget and isinstance(supp_amt_widget, (QDoubleSpinBox, NoWheelDoubleSpinBox)):
+                    current_value = supp_amt_widget.value()
+                    supp_amt_widget.setPrefix(f"{get_currency_symbol()} ")
+                    supp_amt_widget.setValue(current_value)
+                
+                # Update Customer Amount spinbox
+                cust_amt_widget = self.table.cellWidget(row, 7)
+                if cust_amt_widget and isinstance(cust_amt_widget, (QDoubleSpinBox, NoWheelDoubleSpinBox)):
+                    current_value = cust_amt_widget.value()
+                    cust_amt_widget.setPrefix(f"{get_currency_symbol()} ")
+                    cust_amt_widget.setValue(current_value)
+            
+            log_info("Items table UI refreshed", "items_table")
+        except Exception as e:
+            log_error("Error refreshing items table UI", exception=e, logger_name="items_table_errors")

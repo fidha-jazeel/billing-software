@@ -199,33 +199,51 @@ class DashboardImproved(QMainWindow):
                 btn.style().unpolish(btn)
                 btn.style().polish(btn)
 
-        # Switch pages and refresh data
+        # Switch pages and refresh data AND UI
         if page_id == 'home':
             self.content_stack.setCurrentWidget(self.home_page)
+            if hasattr(self.home_page, 'refresh_ui'):
+                self.home_page.refresh_ui()
         elif page_id == 'reports':
             self.content_stack.setCurrentWidget(self.reports_page)
+            if hasattr(self.reports_page, 'refresh_ui'):
+                self.reports_page.refresh_ui()
         elif page_id == 'payments':
             self.content_stack.setCurrentWidget(self.payments_page)
-            if hasattr(self.payments_page, 'refresh_data'):
+            if hasattr(self.payments_page, 'refresh_ui'):
+                self.payments_page.refresh_ui()
+            elif hasattr(self.payments_page, 'refresh_data'):
                 self.payments_page.refresh_data()
         elif page_id == 'expenses':
             self.content_stack.setCurrentWidget(self.expenses_page)
-            if hasattr(self.expenses_page, 'refresh_data'):
+            if hasattr(self.expenses_page, 'refresh_ui'):
+                self.expenses_page.refresh_ui()
+            elif hasattr(self.expenses_page, 'refresh_data'):
                 self.expenses_page.refresh_data()
         elif page_id == 'suppliers':
             self.content_stack.setCurrentWidget(self.suppliers_page)
-            if hasattr(self.suppliers_page, 'refresh_data'):
+            if hasattr(self.suppliers_page, 'refresh_ui'):
+                self.suppliers_page.refresh_ui()
+            elif hasattr(self.suppliers_page, 'refresh_data'):
                 self.suppliers_page.refresh_data()
         elif page_id == 'supplier_billing':
             self.content_stack.setCurrentWidget(self.supplier_billing_page)
-            if hasattr(self.supplier_billing_page, 'refresh_data'):
+            if hasattr(self.supplier_billing_page, 'refresh_ui'):
+                self.supplier_billing_page.refresh_ui()
+            elif hasattr(self.supplier_billing_page, 'refresh_data'):
                 self.supplier_billing_page.refresh_data()
         elif page_id == 'ai':
             self.content_stack.setCurrentWidget(self.ai_page)
+            if hasattr(self.ai_page, 'refresh_ui'):
+                self.ai_page.refresh_ui()
         elif page_id == 'settings':
             self.content_stack.setCurrentWidget(self.settings_page)
+            if hasattr(self.settings_page, 'refresh_ui'):
+                self.settings_page.refresh_ui()
         elif page_id == 'about':
             self.content_stack.setCurrentWidget(self.about_page)
+            if hasattr(self.about_page, 'refresh_ui'):
+                self.about_page.refresh_ui()
         elif page_id == 'check_updates':
             self.check_for_updates_manually()
 

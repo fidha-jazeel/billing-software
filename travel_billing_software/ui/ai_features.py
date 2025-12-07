@@ -369,3 +369,7 @@ class AIFeaturesPage(QWidget):
         )
         self.ask_button.setEnabled(True)
         self.ask_button.setText("Ask AI")
+    
+    def refresh_ui(self):
+        """Refresh UI elements (AI page doesn't need much refresh)."""
+        pass  # AI features page doesn't display currency or config-dependent data

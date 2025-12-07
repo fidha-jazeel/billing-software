@@ -609,6 +609,14 @@ class SupplierBillingPage(QWidget):
         # Update supplier balance display
         self._on_supplier_changed()
     
+    def refresh_ui(self):
+        """Refresh UI elements to reflect updated configuration (e.g., currency changes)."""
+        try:
+            # Reload data which will update all currency displays
+            self.refresh_data()
+        except Exception as e:
+            print(f"Error refreshing supplier billing page UI: {e}")
+    
     def _on_supplier_changed(self):
         """Update supplier balance info when supplier is selected."""
         supplier_name = self.supplier_combo.currentText().strip()

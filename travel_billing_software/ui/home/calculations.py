@@ -356,3 +356,25 @@ class CalculationsWidget(QFrame):
     def get_payment_mode_widget(self):
         # Get payment mode widget for tab order
         return self.payment_mode
+    
+    def refresh_ui(self):
+        """Refresh UI elements like currency symbols in labels."""
+        try:
+            # Get current currency symbol
+            currency = self.get_currency_symbol()
+            
+            # Update all labels with current values but new currency symbol
+            self.lbl_total.setText(f"{currency}{self._total:.2f}")
+            self.lbl_balance.setText(f"{currency}{self._balance:.2f}")
+            
+            # Update placeholder for received input
+            self.txt_received.setPlaceholderText(f"{currency}0.00")
+            
+            log_info("Calculations UI refreshed", "calculations")
+            
+        except Exception as e:
+            log_error(
+                "Error refreshing calculations UI",
+                exception=e,
+                logger_name="calculations_errors"
+            )
