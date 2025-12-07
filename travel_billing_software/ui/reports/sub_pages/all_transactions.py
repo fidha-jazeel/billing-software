@@ -186,7 +186,7 @@ class AllTransactionsView(QWidget):
                 format_currency(avg_transaction)
             ])
             
-            log_info(f"All transactions populated: {transaction_count} transactions, Total: ₹{total_value:,.2f}", 'billing_app')
+            log_info(f"All transactions populated: {transaction_count} transactions, Total: {get_currency_symbol()}{total_value:,.2f}", 'billing_app')
             
         except Exception as e:
             log_error("Error populating all transactions report", exception=e, logger_name='billing_errors')

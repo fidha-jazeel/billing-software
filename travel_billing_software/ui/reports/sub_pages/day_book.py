@@ -195,7 +195,7 @@ class DayBookView(QWidget):
                 format_currency(total_profit)
             ])
             
-            log_info(f"Day book populated: {len(daily_data)} days, Profit: ₹{total_profit:,.2f}", 'billing_app')
+            log_info(f"Day book populated: {len(daily_data)} days, Profit: {get_currency_symbol()}{total_profit:,.2f}", 'billing_app')
             
         except Exception as e:
             log_error("Error populating day book report", exception=e, logger_name='billing_errors')

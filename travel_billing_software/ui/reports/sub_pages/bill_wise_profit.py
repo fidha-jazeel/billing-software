@@ -223,7 +223,7 @@ class BillWiseProfitView(QWidget):
                 format_currency(total_profit)
             ])
             
-            log_info(f"Bill wise profit populated: {self.bill_wise_profit_table.rowCount()} items, Profit: ₹{total_profit:,.2f}", 'billing_app')
+            log_info(f"Bill wise profit populated: {self.bill_wise_profit_table.rowCount()} items, Profit: {get_currency_symbol()}{total_profit:,.2f}", 'billing_app')
             
         except Exception as e:
             log_error("Error populating bill wise profit report", exception=e, logger_name='billing_errors')

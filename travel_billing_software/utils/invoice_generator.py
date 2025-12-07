@@ -22,6 +22,7 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from travel_billing_software.utils.path_loader import resource_path
 from travel_billing_software.utils.config_manager import ConfigManager
+from travel_billing_software.config.config import get_currency_symbol
 import os
 from datetime import datetime
 import math
@@ -86,9 +87,9 @@ def _get_default_currency():
     """Get currency symbol from config settings."""
     try:
         cm = ConfigManager()
-        return cm.get_invoice_config().get('currency_symbol', '₹')
+        return cm.get_invoice_config().get('currency_symbol', f'{get_currency_symbol()}')
     except:
-        return '₹'
+        return f'{get_currency_symbol()}'
 
 DEFAULT_CURRENCY = _get_default_currency()
 

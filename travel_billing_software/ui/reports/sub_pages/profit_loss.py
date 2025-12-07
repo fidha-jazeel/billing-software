@@ -195,7 +195,7 @@ class ProfitLossView(QWidget):
                 format_currency(total_profit)
             ])
             
-            log_info(f"Profit & loss populated: {len(invoices)} invoices, Profit: ₹{total_profit:,.2f}", 'billing_app')
+            log_info(f"Profit & loss populated: {len(invoices)} invoices, Profit: {get_currency_symbol()}{total_profit:,.2f}", 'billing_app')
             
         except Exception as e:
             log_error("Error populating profit & loss report", exception=e, logger_name='billing_errors')

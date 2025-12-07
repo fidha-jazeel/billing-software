@@ -256,7 +256,7 @@ class CashTransactionsView(QWidget):
             
             log_info(
                 f"Cash transactions populated: {len(all_transactions)} transactions, "
-                f"Received: ₹{total_received:,.2f}, Paid: ₹{total_paid:,.2f}, Net: ₹{net_cash_flow:,.2f}",
+                f"Received: {get_currency_symbol()}{total_received:,.2f}, Paid: {get_currency_symbol()}{total_paid:,.2f}, Net: {get_currency_symbol()}{net_cash_flow:,.2f}",
                 'billing_app'
             )
             

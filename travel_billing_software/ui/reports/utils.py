@@ -757,9 +757,9 @@ class ReportExporter:
                     cell_value = item.text() if item else ''
                     
                     # Try to convert to number for better Excel formatting
-                    if cell_value.startswith('₹'):
+                    if cell_value.startswith(f"{get_currency_symbol()}"):
                         # Remove currency symbol and commas for numeric values
-                        numeric_value = cell_value.replace('₹', '').replace(',', '').strip()
+                        numeric_value = cell_value.replace(get_currency_symbol(), '').replace(',', '').strip()
                         try:
                             cell_value = float(numeric_value)
                         except ValueError:
@@ -772,7 +772,7 @@ class ReportExporter:
                     
                     # Format currency cells
                     if isinstance(cell_value, (int, float)):
-                        cell.number_format = '₹#,##0.00'
+                        cell.number_format = f'"{get_currency_symbol()}"#,##0.00'
             
             # Auto-adjust column widths
             for col in range(1, table.columnCount() + 1):

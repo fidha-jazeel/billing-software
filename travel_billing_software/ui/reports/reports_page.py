@@ -527,7 +527,7 @@ class ReportsPage(QWidget):
             if hasattr(self, 'lbl_total_bank'):
                 self.lbl_total_bank.setText(format_currency(total_bank))
             
-            log_info(f"Payment summary updated - Cash: ₹{total_cash:,.2f}, Bank: ₹{total_bank:,.2f}", 'billing_app')
+            log_info(f"Payment summary updated - Cash: {get_currency_symbol()}{total_cash:,.2f}, Bank: {get_currency_symbol()}{total_bank:,.2f}", 'billing_app')
             
         except Exception as e:
             log_error("Error updating payment summary", exception=e, logger_name='billing_errors')

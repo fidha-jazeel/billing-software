@@ -237,7 +237,7 @@ class BalanceReportView(QWidget):
                 format_currency(overall_invoiced)
             ])
             
-            log_info(f"Balance report populated: {len(customer_balances)} customers, Balance: ₹{overall_balance:,.2f}", 'billing_app')
+            log_info(f"Balance report populated: {len(customer_balances)} customers, Balance: {overall_balance:,.2f}", 'billing_app')
             
         except Exception as e:
             log_error("Error populating balance report", exception=e, logger_name='billing_errors')
