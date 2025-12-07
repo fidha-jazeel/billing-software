@@ -47,7 +47,7 @@ class SettingsPage(QWidget):
         main_layout.setSpacing(15)
 
         # Header
-        heading = QLabel(f"<h2 style='color:{self.COLORS['accent_secondary']}; font-size: 28px;'>⚙️ Settings</h2>")        
+        heading = QLabel(f"<h2 style='color:{self.COLORS['accent_secondary']}; font-size: 32px;'>⚙️ Settings</h2>")        
         main_layout.addWidget(heading)
         
         # Scroll area
@@ -106,12 +106,12 @@ class SettingsPage(QWidget):
         frame.setStyleSheet(self._create_frame_style())
         layout = QGridLayout(frame)
         
-        title = QLabel(f"<b style='color:{self.COLORS['accent_primary']}; font-size:20px;'>🎨 Appearance</b>")        
+        title = QLabel(f"<b style='color:{self.COLORS['accent_primary']}; font-size:22px;'>🎨 Appearance</b>")        
         layout.addWidget(title, 0, 0, 1, 2)
 
         # Font Size
         lbl_font = QLabel("Global Font Size (px):")
-        lbl_font.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size: 14px;")        
+        lbl_font.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size: 16px;")        
         self.spin_font_size = QSpinBox()
         self.spin_font_size.setRange(8, 24)
         self.spin_font_size.setValue(self.APP_SETTINGS.get('font_size', 12))
@@ -122,7 +122,7 @@ class SettingsPage(QWidget):
 
         # Theme Accent (Simple Dropdown for now)
         lbl_theme = QLabel("Accent Color:")
-        lbl_theme.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size: 14px;")
+        lbl_theme.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size: 16px;")
         
         self.combo_theme = QComboBox()
         self.combo_theme.addItems(["Purple", "Blue", "Green", "Orange", "Red"])
@@ -159,14 +159,14 @@ class SettingsPage(QWidget):
         frame.setStyleSheet(self._create_frame_style())
         layout = QVBoxLayout(frame)
         
-        title = QLabel(f"<b style='color:{self.COLORS['accent_primary']}; font-size:18px;'>🤖 AI Configuration</b>")
+        title = QLabel(f"<b style='color:{self.COLORS['accent_primary']}; font-size:20px;'>🤖 AI Configuration</b>")
         layout.addWidget(title)
         
         description = QLabel(
             "Configure your Google AI API key for AI Features.\n"
             "Get your free API key from: https://aistudio.google.com/app/apikey"
         )
-        description.setStyleSheet(f"color: {self.COLORS['text_secondary']}; font-size: 14px; margin-bottom: 10px;")
+        description.setStyleSheet(f"color: {self.COLORS['text_secondary']}; font-size: 16px; margin-bottom: 10px;")
         description.setWordWrap(True)
         layout.addWidget(description)
         
@@ -219,10 +219,10 @@ class SettingsPage(QWidget):
         # Update status based on existing key
         if existing_key:
             self.lbl_api_status.setText("✅ API key is configured")
-            self.lbl_api_status.setStyleSheet(f"color: #10b981; font-size: 12px; margin-left: 155px;")
+            self.lbl_api_status.setStyleSheet(f"color: #10b981; font-size: 14px; margin-left: 155px;")
         else:
             self.lbl_api_status.setText("⚠️ No API key configured - AI features will be disabled")
-            self.lbl_api_status.setStyleSheet(f"color: #f97316; font-size: 12px; margin-left: 155px;")
+            self.lbl_api_status.setStyleSheet(f"color: #f97316; font-size: 14px; margin-left: 155px;")
         
         self.content_layout.addWidget(frame)
     
@@ -245,7 +245,7 @@ class SettingsPage(QWidget):
         
         # Show testing message
         self.lbl_api_status.setText("🔄 Testing API key...")
-        self.lbl_api_status.setStyleSheet(f"color: {self.COLORS['text_secondary']}; font-size: 12px; margin-left: 155px;")
+        self.lbl_api_status.setStyleSheet(f"color: {self.COLORS['text_secondary']}; font-size: 14px; margin-left: 155px;")
         QApplication.processEvents()
         
         try:
@@ -263,14 +263,14 @@ class SettingsPage(QWidget):
             
             if response:
                 self.lbl_api_status.setText("✅ API key is valid and working!")
-                self.lbl_api_status.setStyleSheet(f"color: #10b981; font-size: 12px; margin-left: 155px;")
+                self.lbl_api_status.setStyleSheet(f"color: #10b981; font-size: 14px; margin-left: 155px;")
                 QMessageBox.information(self, "Success", "API key is valid and working!\n\nYou can now use AI features.")
             else:
                 raise Exception("No response from API")
                 
         except Exception as e:
             self.lbl_api_status.setText("❌ API key test failed")
-            self.lbl_api_status.setStyleSheet(f"color: #ef4444; font-size: 12px; margin-left: 155px;")
+            self.lbl_api_status.setStyleSheet(f"color: #ef4444; font-size: 14px; margin-left: 155px;")
             QMessageBox.warning(
                 self, 
                 "API Key Test Failed", 
@@ -286,7 +286,7 @@ class SettingsPage(QWidget):
         frame.setStyleSheet(self._create_frame_style())
         layout = QGridLayout(frame)
         
-        title = QLabel(f"<b style='color:{self.COLORS['accent_primary']}; font-size:20px;'>🏢 Company Information</b>")
+        title = QLabel(f"<b style='color:{self.COLORS['accent_primary']}; font-size:22px;'>🏢 Company Information</b>")
         layout.addWidget(title, 0, 0, 1, 2)
         
         fields = [
@@ -301,7 +301,7 @@ class SettingsPage(QWidget):
         
         for i, (label_text, key) in enumerate(fields, 1):
             lbl = QLabel(label_text)
-            lbl.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size: 14px;")
+            lbl.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size: 16px;")
             
             inp = QLineEdit(str(self.COMPANY_INFO.get(key, "")))
             inp.setStyleSheet(self.get_input_style())
@@ -317,23 +317,23 @@ class SettingsPage(QWidget):
         frame.setStyleSheet(self._create_frame_style())
         layout = QGridLayout(frame)
         
-        title = QLabel(f"<b style='color:{self.COLORS['accent_primary']}; font-size:20px;'>📝 Invoice Configuration</b>")        
+        title = QLabel(f"<b style='color:{self.COLORS['accent_primary']}; font-size:22px;'>📝 Invoice Configuration</b>")        
         layout.addWidget(title, 0, 0, 1, 2)
         
         # Prefix
-        layout.addWidget(QLabel("Invoice Prefix:", styleSheet=f"color:{self.COLORS['text_primary']}; font-weight:bold; font-size: 14px;"), 1, 0)        
+        layout.addWidget(QLabel("Invoice Prefix:", styleSheet=f"color:{self.COLORS['text_primary']}; font-weight:bold; font-size: 16px;"), 1, 0)        
         self.inp_prefix = QLineEdit(self.INVOICE_CONFIG.get('prefix', 'INV'))
         self.inp_prefix.setStyleSheet(self.get_input_style())
         layout.addWidget(self.inp_prefix, 1, 1)
 
         # Currency
-        layout.addWidget(QLabel("Currency Symbol:", styleSheet=f"color:{self.COLORS['text_primary']}; font-weight:bold; font-size: 14px;"), 2, 0)
+        layout.addWidget(QLabel("Currency Symbol:", styleSheet=f"color:{self.COLORS['text_primary']}; font-weight:bold; font-size: 16px;"), 2, 0)
         self.inp_currency = QLineEdit(self.INVOICE_CONFIG.get('currency_symbol', '₹'))
         self.inp_currency.setStyleSheet(self.get_input_style())
         layout.addWidget(self.inp_currency, 2, 1)
 
         # Tax
-        layout.addWidget(QLabel("Default Tax Rate (%):", styleSheet=f"color:{self.COLORS['text_primary']}; font-weight:bold; font-size: 14px;"), 3, 0)
+        layout.addWidget(QLabel("Default Tax Rate (%):", styleSheet=f"color:{self.COLORS['text_primary']}; font-weight:bold; font-size: 16px;"), 3, 0)
         self.spin_tax = QDoubleSpinBox()
         self.spin_tax.setValue(float(self.INVOICE_CONFIG.get('default_tax_rate', 18.0)))
         self.spin_tax.setMaximum(100)
@@ -347,12 +347,12 @@ class SettingsPage(QWidget):
         frame.setStyleSheet(self._create_frame_style())
         layout = QVBoxLayout(frame)
         
-        layout.addWidget(QLabel(f"<b style='color:{self.COLORS['accent_primary']}; font-size:20px;'>📋 Dropdown Management</b>"))
+        layout.addWidget(QLabel(f"<b style='color:{self.COLORS['accent_primary']}; font-size:22px;'>📋 Dropdown Management</b>"))
         
         # Helper to create list sections
         def create_list_manager(title, key):
             lbl = QLabel(title)
-            lbl.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size: 18px;")            
+            lbl.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size: 20px;")            
             layout.addWidget(lbl)
             layout.addWidget(lbl)
             
@@ -426,7 +426,7 @@ class SettingsPage(QWidget):
         """Create the Manage Types section - identical to Supplier style (Add & Delete only)."""
         # Section Title
         lbl = QLabel("Manage Types:")
-        lbl.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size: 18px;")
+        lbl.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold; font-size: 20px;")
         parent_layout.addWidget(lbl)
         
         # Input and Add button row (same as Supplier)
@@ -569,10 +569,10 @@ class SettingsPage(QWidget):
             if api_key:
                 if self.api_key_manager.set_api_key('google_ai', api_key):
                     self.lbl_api_status.setText("✅ API key saved successfully")
-                    self.lbl_api_status.setStyleSheet(f"color: #10b981; font-size: 12px; margin-left: 155px;")
+                    self.lbl_api_status.setStyleSheet(f"color: #10b981; font-size: 14px; margin-left: 155px;")
                 else:
                     self.lbl_api_status.setText("⚠️ Failed to save API key")
-                    self.lbl_api_status.setStyleSheet(f"color: #f97316; font-size: 12px; margin-left: 155px;")
+                    self.lbl_api_status.setStyleSheet(f"color: #f97316; font-size: 14px; margin-left: 155px;")
             
             # 2. Update Company Info
             company_data = {k: v.text() for k, v in self.company_inputs.items()}
