@@ -98,7 +98,7 @@ All 6 requested features have been successfully implemented:
 
 **Features Working:**
 - ✅ Types managed from Settings → Dropdown Management
-- ✅ Add new types with ➕ button
+- ✅ Add new types with ✚ button
 - ✅ Delete types with ➖ button
 - ✅ Changes immediately reflected in:
   - Home page invoice Type dropdown
@@ -259,7 +259,7 @@ All 6 requested features have been successfully implemented:
 
 ### To Manage Invoice Types:
 1. Settings → Dropdown Management → Manage Types
-2. Add: Type name → Click ➕
+2. Add: Type name → Click ✚
 3. Delete: Select type → Click ➖
 4. Changes appear instantly in dropdowns
 

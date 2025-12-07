@@ -331,7 +331,7 @@ class SupplierPage(QWidget):
         action_layout.addStretch()
         
         # Add Supplier Button
-        add_btn = QPushButton("➕ Add New Supplier")
+        add_btn = QPushButton("✚ Add New Supplier")
         add_btn.setStyleSheet(self.get_button_style('add') + """
             QPushButton {
                 padding: 12px 25px;

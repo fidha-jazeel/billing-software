@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from utils.config_manager import ConfigManager
 from travel_billing_software.utils.api_key_manager import get_api_key_manager
+from travel_billing_software.utils.email_manager import get_email_manager
 from travel_billing_software.utils.custom_widgets import NoWheelSpinBox, NoWheelDoubleSpinBox
 
 def get_currency_symbol():
@@ -25,6 +26,7 @@ class SettingsPage(QWidget):
         super().__init__()
         self.config_manager = ConfigManager()
         self.api_key_manager = get_api_key_manager()
+        self.email_manager = get_email_manager()
         
         # Load live data from ConfigManager instead of static arguments
         self.COMPANY_INFO = self.config_manager.get_company_info()
@@ -71,13 +73,16 @@ class SettingsPage(QWidget):
         # 2. AI API KEY CONFIGURATION
         self._create_api_key_section()
 
-        # 3. COMPANY SETTINGS
+        # 3. EMAIL/SMTP CONFIGURATION
+        self._create_email_section()
+
+        # 4. COMPANY SETTINGS
         self._create_company_section()
 
-        # 4. INVOICE SETTINGS
+        # 5. INVOICE SETTINGS
         self._create_invoice_section()
 
-        # 5. DROPDOWN MANAGEMENT
+        # 6. DROPDOWN MANAGEMENT
         self._create_dropdown_section()
         
         # Save Button
@@ -286,6 +291,217 @@ class SettingsPage(QWidget):
                 "3. API key has proper permissions"
             )
 
+    def _create_email_section(self):
+        """Create Email/SMTP configuration section."""
+        frame = QFrame()
+        frame.setStyleSheet(self._create_frame_style())
+        layout = QVBoxLayout(frame)
+        
+        title = QLabel(f"<b style='color:{self.COLORS['accent_primary']}; font-size:22px;'>📧 Email/SMTP Configuration</b>")
+        layout.addWidget(title)
+        
+        description = QLabel(
+            "Configure SMTP settings to send invoices via email.\n"
+            "Common SMTP providers: Gmail (smtp.gmail.com:587), Outlook (smtp.office365.com:587)"
+        )
+        description.setStyleSheet(f"color: {self.COLORS['text_secondary']}; font-size: 14px; margin-bottom: 10px;")
+        description.setWordWrap(True)
+        layout.addWidget(description)
+        
+        # Load current email configuration
+        email_config = self.email_manager.get_config()
+        
+        # Grid layout for form fields
+        form_layout = QGridLayout()
+        form_layout.setSpacing(12)
+        row = 0
+        
+        # SMTP Server
+        lbl_smtp_server = QLabel("SMTP Server:")
+        lbl_smtp_server.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold;")
+        lbl_smtp_server.setFixedWidth(150)
+        self.inp_smtp_server = QLineEdit()
+        self.inp_smtp_server.setPlaceholderText("e.g., smtp.gmail.com")
+        self.inp_smtp_server.setText(email_config.get("smtp_server", ""))
+        self.inp_smtp_server.setStyleSheet(self.get_input_style())
+        form_layout.addWidget(lbl_smtp_server, row, 0)
+        form_layout.addWidget(self.inp_smtp_server, row, 1)
+        row += 1
+        
+        # SMTP Port
+        lbl_smtp_port = QLabel("SMTP Port:")
+        lbl_smtp_port.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold;")
+        lbl_smtp_port.setFixedWidth(150)
+        self.spin_smtp_port = NoWheelSpinBox()
+        self.spin_smtp_port.setRange(1, 65535)
+        self.spin_smtp_port.setValue(email_config.get("smtp_port", 587))
+        self.spin_smtp_port.setStyleSheet(self.get_spinbox_style())
+        form_layout.addWidget(lbl_smtp_port, row, 0)
+        form_layout.addWidget(self.spin_smtp_port, row, 1)
+        row += 1
+        
+        # Use TLS
+        lbl_use_tls = QLabel("Use TLS:")
+        lbl_use_tls.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold;")
+        lbl_use_tls.setFixedWidth(150)
+        self.combo_use_tls = QComboBox()
+        self.combo_use_tls.addItems(["Yes (TLS)", "No (SSL)"])
+        self.combo_use_tls.setCurrentIndex(0 if email_config.get("use_tls", True) else 1)
+        self.combo_use_tls.setStyleSheet(f"QComboBox {{ background-color: #333; color: white; padding: 5px; border-radius: 5px; }}")
+        form_layout.addWidget(lbl_use_tls, row, 0)
+        form_layout.addWidget(self.combo_use_tls, row, 1)
+        row += 1
+        
+        # Username
+        lbl_username = QLabel("Username:")
+        lbl_username.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold;")
+        lbl_username.setFixedWidth(150)
+        self.inp_smtp_username = QLineEdit()
+        self.inp_smtp_username.setPlaceholderText("Your email address")
+        self.inp_smtp_username.setText(email_config.get("username", ""))
+        self.inp_smtp_username.setStyleSheet(self.get_input_style())
+        form_layout.addWidget(lbl_username, row, 0)
+        form_layout.addWidget(self.inp_smtp_username, row, 1)
+        row += 1
+        
+        # Password
+        lbl_password = QLabel("Password:")
+        lbl_password.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold;")
+        lbl_password.setFixedWidth(150)
+        password_layout = QHBoxLayout()
+        self.inp_smtp_password = QLineEdit()
+        self.inp_smtp_password.setPlaceholderText("SMTP password or app password")
+        self.inp_smtp_password.setText(email_config.get("password", ""))
+        self.inp_smtp_password.setEchoMode(QLineEdit.EchoMode.Password)
+        self.inp_smtp_password.setStyleSheet(self.get_input_style())
+        password_layout.addWidget(self.inp_smtp_password)
+        
+        # Show/Hide password button
+        self.btn_toggle_smtp_password = QPushButton("👁️")
+        self.btn_toggle_smtp_password.setFixedWidth(50)
+        self.btn_toggle_smtp_password.setStyleSheet(self.get_button_style('add'))
+        self.btn_toggle_smtp_password.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_toggle_smtp_password.setToolTip("Show/Hide Password")
+        self.btn_toggle_smtp_password.clicked.connect(self._toggle_smtp_password_visibility)
+        password_layout.addWidget(self.btn_toggle_smtp_password)
+        
+        form_layout.addWidget(lbl_password, row, 0)
+        form_layout.addLayout(password_layout, row, 1)
+        row += 1
+        
+        # Sender Email
+        lbl_sender_email = QLabel("Sender Email:")
+        lbl_sender_email.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold;")
+        lbl_sender_email.setFixedWidth(150)
+        self.inp_sender_email = QLineEdit()
+        self.inp_sender_email.setPlaceholderText("Email to appear as sender")
+        self.inp_sender_email.setText(email_config.get("sender_email", ""))
+        self.inp_sender_email.setStyleSheet(self.get_input_style())
+        form_layout.addWidget(lbl_sender_email, row, 0)
+        form_layout.addWidget(self.inp_sender_email, row, 1)
+        row += 1
+        
+        # Sender Name
+        lbl_sender_name = QLabel("Sender Name:")
+        lbl_sender_name.setStyleSheet(f"color: {self.COLORS['text_primary']}; font-weight: bold;")
+        lbl_sender_name.setFixedWidth(150)
+        self.inp_sender_name = QLineEdit()
+        self.inp_sender_name.setPlaceholderText("Name to appear as sender")
+        self.inp_sender_name.setText(email_config.get("sender_name", "Billing System"))
+        self.inp_sender_name.setStyleSheet(self.get_input_style())
+        form_layout.addWidget(lbl_sender_name, row, 0)
+        form_layout.addWidget(self.inp_sender_name, row, 1)
+        row += 1
+        
+        layout.addLayout(form_layout)
+        
+        # Test button
+        test_btn_layout = QHBoxLayout()
+        test_btn_layout.addStretch()
+        btn_test_smtp = QPushButton("🧪 Test SMTP Connection")
+        btn_test_smtp.setStyleSheet(self.get_button_style('add'))
+        btn_test_smtp.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn_test_smtp.clicked.connect(self._test_smtp_connection)
+        test_btn_layout.addWidget(btn_test_smtp)
+        layout.addLayout(test_btn_layout)
+        
+        # Status label
+        self.lbl_smtp_status = QLabel("")
+        self.lbl_smtp_status.setStyleSheet(f"color: {self.COLORS['text_secondary']}; font-size: 12px; margin-left: 155px;")
+        layout.addWidget(self.lbl_smtp_status)
+        
+        # Update status based on configuration
+        if self.email_manager.is_configured():
+            self.lbl_smtp_status.setText("✅ Email is configured and ready")
+            self.lbl_smtp_status.setStyleSheet(f"color: #10b981; font-size: 14px; margin-left: 155px;")
+        else:
+            self.lbl_smtp_status.setText("⚠️ Email not configured - Invoice sharing via email will be disabled")
+            self.lbl_smtp_status.setStyleSheet(f"color: #f97316; font-size: 14px; margin-left: 155px;")
+        
+        # Help text
+        help_text = QLabel(
+            "💡 <b>Gmail Users:</b> You need to use an 'App Password' instead of your regular password.\n"
+            "   Generate one at: https://myaccount.google.com/apppasswords"
+        )
+        help_text.setStyleSheet(f"color: {self.COLORS['text_secondary']}; font-size: 12px; margin-top: 10px;")
+        help_text.setWordWrap(True)
+        layout.addWidget(help_text)
+        
+        self.content_layout.addWidget(frame)
+    
+    def _toggle_smtp_password_visibility(self):
+        """Toggle visibility of SMTP password input."""
+        if self.inp_smtp_password.echoMode() == QLineEdit.EchoMode.Password:
+            self.inp_smtp_password.setEchoMode(QLineEdit.EchoMode.Normal)
+            self.btn_toggle_smtp_password.setText("🙈")
+        else:
+            self.inp_smtp_password.setEchoMode(QLineEdit.EchoMode.Password)
+            self.btn_toggle_smtp_password.setText("👁️")
+    
+    def _test_smtp_connection(self):
+        """Test SMTP connection with current settings."""
+        # Save current settings first
+        email_config = {
+            "smtp_server": self.inp_smtp_server.text().strip(),
+            "smtp_port": self.spin_smtp_port.value(),
+            "use_tls": self.combo_use_tls.currentIndex() == 0,
+            "username": self.inp_smtp_username.text().strip(),
+            "password": self.inp_smtp_password.text(),
+            "sender_email": self.inp_sender_email.text().strip(),
+            "sender_name": self.inp_sender_name.text().strip()
+        }
+        
+        # Validate inputs
+        if not email_config["smtp_server"]:
+            QMessageBox.warning(self, "Missing Information", "Please enter SMTP server.")
+            return
+        if not email_config["username"]:
+            QMessageBox.warning(self, "Missing Information", "Please enter username.")
+            return
+        if not email_config["password"]:
+            QMessageBox.warning(self, "Missing Information", "Please enter password.")
+            return
+        if not email_config["sender_email"]:
+            QMessageBox.warning(self, "Missing Information", "Please enter sender email.")
+            return
+        
+        # Show testing message
+        self.lbl_smtp_status.setText("🔄 Testing SMTP connection...")
+        self.lbl_smtp_status.setStyleSheet(f"color: {self.COLORS['text_secondary']}; font-size: 14px; margin-left: 155px;")
+        QApplication.processEvents()
+        
+        # Temporarily save config and test
+        self.email_manager.save_config(email_config)
+        success, message = self.email_manager.test_connection()
+        
+        if success:
+            self.lbl_smtp_status.setText("✅ " + message)
+            self.lbl_smtp_status.setStyleSheet(f"color: #10b981; font-size: 14px; margin-left: 155px;")
+            QMessageBox.information(self, "Success", message)
+        else:
+            self.lbl_smtp_status.setText("❌ Connection failed")
+            self.lbl_smtp_status.setStyleSheet(f"color: #ef4444; font-size: 14px; margin-left: 155px;")
+            QMessageBox.warning(self, "SMTP Test Failed", message)
 
     def _create_company_section(self):
         frame = QFrame()
@@ -367,7 +583,7 @@ class SettingsPage(QWidget):
             inp.setPlaceholderText(f"Add new {title.lower().strip(':')}...")
             inp.setStyleSheet(self.get_input_style())
             
-            btn_add = QPushButton("➕")
+            btn_add = QPushButton("✚")
             btn_add.setFixedWidth(70)
             btn_add.setStyleSheet(self.get_button_style('add'))
             
@@ -443,7 +659,7 @@ class SettingsPage(QWidget):
         self.types_input.setPlaceholderText("Add new type...")
         self.types_input.setStyleSheet(self.get_input_style())
         
-        btn_add = QPushButton("➕")
+        btn_add = QPushButton("✚")
         btn_add.setFixedWidth(70)
         btn_add.setStyleSheet(self.get_button_style('add'))
         btn_add.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -586,7 +802,21 @@ class SettingsPage(QWidget):
             company_data = {k: v.text() for k, v in self.company_inputs.items()}
             self.config_manager.set_company_info(company_data)
 
-            # 3. Update Invoice Config
+            # 3. Save Email/SMTP Configuration
+            email_config = {
+                "smtp_server": self.inp_smtp_server.text().strip(),
+                "smtp_port": self.spin_smtp_port.value(),
+                "use_tls": self.combo_use_tls.currentIndex() == 0,
+                "username": self.inp_smtp_username.text().strip(),
+                "password": self.inp_smtp_password.text(),
+                "sender_email": self.inp_sender_email.text().strip(),
+                "sender_name": self.inp_sender_name.text().strip()
+            }
+            if self.email_manager.save_config(email_config):
+                self.lbl_smtp_status.setText("✅ Email settings saved")
+                self.lbl_smtp_status.setStyleSheet(f"color: #10b981; font-size: 14px; margin-left: 155px;")
+
+            # 4. Update Invoice Config
             invoice_data = {
                 "prefix": self.inp_prefix.text(),
                 "currency_symbol": self.inp_currency.text(),
@@ -595,11 +825,11 @@ class SettingsPage(QWidget):
             }
             self.config_manager.set_invoice_config(invoice_data)
 
-            # 4. Update App Settings (Font Size)
+            # 5. Update App Settings (Font Size)
             new_font_size = self.spin_font_size.value()
             self.config_manager.set_app_setting("font_size", new_font_size)
             
-            # 5. Update Accent Color
+            # 6. Update Accent Color
             accent_color_map = {
                 "Purple": "#7c3aed",
                 "Blue": "#3b82f6",

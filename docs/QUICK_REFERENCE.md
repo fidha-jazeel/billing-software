@@ -138,7 +138,7 @@ Settings → Invoice Config → Currency Symbol → Save → Use immediately
 Settings → Company Info → Edit fields → Save → Use immediately
 
 **Add Invoice Type:**
-Settings → Manage Types → Type name → ➕ → Use immediately
+Settings → Manage Types → Type name → ✚ → Use immediately
 
 **Change Font Size:**
 Settings → Appearance → Font Size → Save → **Restart app**
@@ -181,7 +181,7 @@ Settings → Appearance → Accent Color → Save → **Restart app**
 **Solution:** Generate NEW invoice (not old one)
 
 **Problem:** Type not in dropdown
-**Solution:** Make sure you clicked ➕ to add it
+**Solution:** Make sure you clicked ✚ to add it
 
 ---
 

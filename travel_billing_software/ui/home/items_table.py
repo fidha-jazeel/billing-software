@@ -11,7 +11,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, pyqtSignal, QEvent
 from PyQt6.QtGui import QCursor, QKeyEvent
 from travel_billing_software.utils.logger import log_info, log_error, log_warning
-from travel_billing_software.utils.custom_widgets import NoWheelDoubleSpinBox
+from travel_billing_software.utils.custom_widgets import NoWheelDoubleSpinBox, PlaceholderDoubleSpinBox
 from .passport_dialog import PassportDetailsDialog
 from travel_billing_software.config.config import format_currency, get_currency_symbol
 
@@ -91,7 +91,7 @@ class ItemsTableWidget(QFrame):
         header_layout.addWidget(table_title)
         header_layout.addStretch()
         
-        self.btn_add_item = QPushButton("➕ Add Item")
+        self.btn_add_item = QPushButton("✚ Add Item")
         self.btn_add_item.setStyleSheet(
             f"QPushButton {{ "
             f"background-color: {self.colors['accent_primary']}; "
@@ -159,7 +159,7 @@ class ItemsTableWidget(QFrame):
                                         next_widget.selectAll()
                                     elif isinstance(next_widget, QComboBox):
                                         next_widget.setFocus()
-                                    elif isinstance(next_widget, (QDoubleSpinBox, NoWheelDoubleSpinBox)):
+                                    elif isinstance(next_widget, (QDoubleSpinBox, NoWheelDoubleSpinBox, PlaceholderDoubleSpinBox)):
                                         next_widget.setFocus()
                                         next_widget.selectAll()
                                 return True
@@ -228,6 +228,9 @@ class ItemsTableWidget(QFrame):
                 "} "
                 "QLineEdit:focus { "
                 "border: 1px solid #9b9bff; background-color: #333; "
+                "} "
+                "QLineEdit::placeholder { "
+                "color: #666; font-style: italic; "
                 "}"
             )
             
@@ -280,7 +283,7 @@ class ItemsTableWidget(QFrame):
             qty.valueChanged.connect(self.items_changed.emit)
             qty.installEventFilter(self)  # Install event filter for Enter key navigation
             
-            supplier_amount = NoWheelDoubleSpinBox()
+            supplier_amount = PlaceholderDoubleSpinBox()
             supplier_amount.setMinimum(0)
             supplier_amount.setMaximum(999999)
             supplier_amount.setValue(0)
@@ -290,7 +293,7 @@ class ItemsTableWidget(QFrame):
             supplier_amount.valueChanged.connect(self.items_changed.emit)
             supplier_amount.installEventFilter(self)  # Install event filter for Enter key navigation
             
-            customer_amount = NoWheelDoubleSpinBox()
+            customer_amount = PlaceholderDoubleSpinBox()
             customer_amount.setMinimum(0)
             customer_amount.setMaximum(999999)
             customer_amount.setValue(0)
@@ -340,7 +343,7 @@ class ItemsTableWidget(QFrame):
         actions_layout.setSpacing(5)
         
         # Add Passport button
-        add_passport_btn = QPushButton("➕")
+        add_passport_btn = QPushButton("✚")
         add_passport_btn.setFixedWidth(40)
         add_passport_btn.setToolTip("Add Passport Details")
         add_passport_btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
@@ -784,14 +787,14 @@ class ItemsTableWidget(QFrame):
             for row in range(self.table.rowCount()):
                 # Update Supplier Amount spinbox
                 supp_amt_widget = self.table.cellWidget(row, 6)
-                if supp_amt_widget and isinstance(supp_amt_widget, (QDoubleSpinBox, NoWheelDoubleSpinBox)):
+                if supp_amt_widget and isinstance(supp_amt_widget, (QDoubleSpinBox, NoWheelDoubleSpinBox, PlaceholderDoubleSpinBox)):
                     current_value = supp_amt_widget.value()
                     supp_amt_widget.setPrefix(f"{get_currency_symbol()} ")
                     supp_amt_widget.setValue(current_value)
                 
                 # Update Customer Amount spinbox
                 cust_amt_widget = self.table.cellWidget(row, 7)
-                if cust_amt_widget and isinstance(cust_amt_widget, (QDoubleSpinBox, NoWheelDoubleSpinBox)):
+                if cust_amt_widget and isinstance(cust_amt_widget, (QDoubleSpinBox, NoWheelDoubleSpinBox, PlaceholderDoubleSpinBox)):
                     current_value = cust_amt_widget.value()
                     cust_amt_widget.setPrefix(f"{get_currency_symbol()} ")
                     cust_amt_widget.setValue(current_value)

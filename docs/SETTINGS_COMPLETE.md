@@ -125,7 +125,7 @@ QComboBox()  →  NoWheelComboBox()  # optional, for dropdowns too
 
 **How to use:**
 1. Go to Settings → Dropdown Management → "Manage Types (Invoice Categories)"
-2. To add: Enter type name → Click ➕
+2. To add: Enter type name → Click ✚
 3. To remove: Select type → Click "➖ Remove Selected"
 4. Changes automatically update:
    - Home page → Invoice Type dropdown
@@ -384,7 +384,7 @@ Would require adding more spinboxes in settings appearance section.
 **Solution:** That spinbox needs to be updated to use `NoWheelDoubleSpinBox` - see "Mouse Wheel Scroll Disabled" section
 
 ### Problem: New type not appearing in dropdown
-**Solution:** Make sure you clicked ➕ button and the type was added successfully (should appear in list)
+**Solution:** Make sure you clicked ✚ button and the type was added successfully (should appear in list)
 
 ---
 

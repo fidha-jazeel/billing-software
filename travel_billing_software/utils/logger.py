@@ -4,6 +4,7 @@ Provides centralized logging with rotation and error tracking.
 """
 import logging
 import sys
+import os
 from pathlib import Path
 from logging.handlers import RotatingFileHandler
 from datetime import datetime
@@ -28,9 +29,10 @@ class BillingLogger:
             
         self._initialized = True
         
-        # Create logs directory
-        self.log_dir = Path(__file__).resolve().parents[2] / "logs"
-        self.log_dir.mkdir(exist_ok=True)
+        # Create logs directory in AppData for persistence
+        app_data_dir = os.path.join(os.getenv('LOCALAPPDATA', os.path.expanduser('~')), 'TravelBilling')
+        self.log_dir = Path(app_data_dir) / "logs"
+        self.log_dir.mkdir(parents=True, exist_ok=True)
         
         # Setup loggers
         self._setup_main_logger()

@@ -1,9 +1,9 @@
 import json
 import os
+from travel_billing_software.utils.path_loader import persistent_data_path
 
-# Define path relative to this file to ensure it works anywhere
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CONFIG_FILE = os.path.join(BASE_DIR, "config", "settings.json")
+# Use persistent storage for config file
+CONFIG_FILE = persistent_data_path("settings.json")
 
 # Default Defaults (Updated with missing keys to prevent KeyErrors)
 DEFAULT_CONFIG = {

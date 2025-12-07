@@ -12,6 +12,7 @@ import sys
 import json
 import os
 from datetime import datetime
+from travel_billing_software.utils.path_loader import persistent_data_path
 
 # Import configuration and utilities
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -423,7 +424,7 @@ class DashboardImproved(QMainWindow):
         table_header_layout.addWidget(table_title)
         table_header_layout.addStretch()
         
-        self.btn_add_item = QPushButton("➕ Add Item")
+        self.btn_add_item = QPushButton("✚ Add Item")
         self.btn_add_item.setStyleSheet(f"""
             QPushButton {{
                 background-color: {COLORS['accent_primary']};
@@ -1365,7 +1366,7 @@ class DashboardImproved(QMainWindow):
 
         # Build PDF path
         pdf_path = os.path.join(
-            os.getcwd(), "output", "invoice",
+            persistent_data_path(), "output", "invoice",
             f"invoice_{self.invoice_number.text()}.pdf"
         )
 

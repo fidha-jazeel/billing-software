@@ -4,6 +4,7 @@ Follows billing software industry standards.
 """
 import sqlite3
 import hashlib
+import os
 from pathlib import Path
 from typing import Optional, Dict, List, Any, Tuple
 from datetime import datetime
@@ -15,10 +16,17 @@ from travel_billing_software.utils.logger import get_logger, handle_exceptions, 
 class DatabaseManager:
     """Manages all database operations for the billing software."""
     
+    @staticmethod
+    def get_default_db_path():
+        """Get the default database path in user's AppData folder for persistence."""
+        # Use AppData/Local for user-specific application data
+        app_data_dir = os.path.join(os.getenv('LOCALAPPDATA', os.path.expanduser('~')), 'TravelBilling')
+        os.makedirs(app_data_dir, exist_ok=True)
+        return os.path.join(app_data_dir, 'billing.db')
+    
     def __init__(self, db_path: Optional[str] = None):
         """Initialize database connection and ensure tables exist."""
-        base = Path(__file__).resolve().parents[1]
-        self.db_path = db_path or str(base / "billing.db")
+        self.db_path = db_path or self.get_default_db_path()
         self.conn = None
         self.current_user_id = None  # Track logged-in user
         self.logger = get_logger()  # Initialize logger

@@ -372,7 +372,7 @@ class ExpensesPage(QWidget):
         action_layout.addStretch()
         
         # Add Expense Button
-        add_btn = QPushButton("➕ Add New Expense")
+        add_btn = QPushButton("✚ Add New Expense")
         add_btn.setStyleSheet(self.get_button_style('add') + """
             QPushButton {
                 padding: 10px 20px;

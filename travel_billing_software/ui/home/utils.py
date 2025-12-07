@@ -5,11 +5,12 @@ Contains helpers for invoice operations, shortcuts, and PDF generation.
 import os
 from datetime import datetime
 from typing import Dict, Any, Optional
-from PyQt6.QtWidgets import QMessageBox, QInputDialog
+from PyQt6.QtWidgets import QMessageBox, QInputDialog, QApplication
 from PyQt6.QtGui import QShortcut, QKeySequence
-from PyQt6.QtCore import QDate
+from PyQt6.QtCore import QDate, Qt
 from utils.invoice_generator import generate_invoice_pdf
 from travel_billing_software.utils.logger import log_info, log_error, log_warning
+from travel_billing_software.utils.path_loader import persistent_data_path
 
 try:
     import pypdfium2 as pdfium
@@ -92,8 +93,8 @@ class PDFOperations:
             str: Path to generated PDF, or None if failed
         """
         try:
-            # Prepare output directory
-            default_dir = os.path.join(os.getcwd(), "output", "invoice")
+            # Prepare output directory in AppData
+            default_dir = os.path.join(persistent_data_path(), "output", "invoice")
             os.makedirs(default_dir, exist_ok=True)
             
             filename = os.path.join(default_dir, f"invoice_{invoice_number}.pdf")
@@ -178,13 +179,26 @@ class PDFOperations:
                 )
                 return False
             
-            from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
-            from PyQt6.QtGui import QPainter, QImage
-            from PyQt6.QtCore import Qt
+            try:
+                from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
+                from PyQt6.QtGui import QPainter, QImage
+                from PyQt6.QtCore import Qt
+            except ImportError as e:
+                log_error(
+                    f"Print support not available: {e}",
+                    logger_name="pdf_operations"
+                )
+                QMessageBox.critical(
+                    parent_widget,
+                    "Print Unavailable",
+                    "Print support is not available.\n"
+                    "PyQt6.QtPrintSupport module is missing."
+                )
+                return False
             
             # Check if PDF exists
             pdf_path = os.path.join(
-                os.getcwd(), "output", "invoice",
+                persistent_data_path(), "output", "invoice",
                 f"invoice_{invoice_number}.pdf"
             )
             
@@ -278,16 +292,31 @@ class PDFOperations:
     
     def share_invoice(self, invoice_number: str, parent_widget=None) -> bool:
         """
-        Share invoice via email (placeholder for future implementation).
+        Share invoice via email using configured SMTP settings.
         
         Args:
             invoice_number: Invoice number
             parent_widget: Parent widget for dialogs
             
         Returns:
-            bool: True if share initiated successfully
+            bool: True if email sent successfully
         """
         try:
+            from travel_billing_software.utils.email_manager import get_email_manager
+            from travel_billing_software.config.config import COMPANY_INFO
+            
+            email_manager = get_email_manager()
+            
+            # Check if email is configured
+            if not email_manager.is_configured():
+                QMessageBox.warning(
+                    parent_widget,
+                    "Email Not Configured",
+                    "Email/SMTP settings are not configured.\n\n"
+                    "Please go to Settings → Email/SMTP Configuration to set up email before sharing invoices."
+                )
+                return False
+            
             pdf_path = os.path.join(
                 os.getcwd(), "output", "invoice",
                 f"invoice_{invoice_number}.pdf"
@@ -301,28 +330,85 @@ class PDFOperations:
                 )
                 return False
             
-            # Get recipient email
+            # Get invoice data from database to populate email
+            try:
+                from travel_billing_software.database.db_manager import get_db_instance
+                db = get_db_instance()
+                invoice_data = db.get_invoice_by_number(invoice_number)
+                
+                if not invoice_data:
+                    raise Exception("Invoice not found in database")
+                
+                customer_name = invoice_data.get('customer_name', 'Customer')
+                customer_email = invoice_data.get('customer_email', '')
+                total_amount = invoice_data.get('total_amount', 0)
+                
+            except Exception as e:
+                log_warning(f"Could not load invoice data from database: {e}", "pdf_operations")
+                customer_name = "Customer"
+                customer_email = ""
+                total_amount = 0
+            
+            # Get recipient email (pre-fill with customer email if available)
             email, ok = QInputDialog.getText(
                 parent_widget,
-                "Share Invoice",
-                f"Recipient email for Invoice {invoice_number}:"
+                "Share Invoice via Email",
+                f"Recipient email for Invoice {invoice_number}:",
+                text=customer_email
             )
             
             if ok and email:
+                # Validate email format (basic check)
+                if '@' not in email or '.' not in email:
+                    QMessageBox.warning(
+                        parent_widget,
+                        "Invalid Email",
+                        "Please enter a valid email address."
+                    )
+                    return False
+                
                 log_info(
-                    f"Share invoice requested: {invoice_number} to {email}",
+                    f"Sending invoice via email: {invoice_number} to {email}",
                     "pdf_operations"
                 )
                 
-                QMessageBox.information(
-                    parent_widget,
-                    "Share Ready",
-                    f"Ready to send invoice to {email}\n"
-                    f"File: {pdf_path}\n\n"
-                    f"(Email integration coming soon)"
+                # Show sending progress
+                from PyQt6.QtWidgets import QProgressDialog
+                progress = QProgressDialog("Sending email...", None, 0, 0, parent_widget)
+                progress.setWindowModality(Qt.WindowModality.WindowModal)
+                progress.setMinimumDuration(0)
+                progress.setValue(0)
+                QApplication.processEvents()
+                
+                # Send invoice email
+                success, message = email_manager.send_invoice_email(
+                    to_email=email,
+                    invoice_number=invoice_number,
+                    customer_name=customer_name,
+                    pdf_path=pdf_path,
+                    total_amount=total_amount,
+                    company_name=COMPANY_INFO.get('name', 'Our Company')
                 )
                 
-                return True
+                progress.close()
+                
+                if success:
+                    QMessageBox.information(
+                        parent_widget,
+                        "Email Sent",
+                        f"Invoice successfully sent to {email}!\n\n"
+                        f"File: {os.path.basename(pdf_path)}"
+                    )
+                    log_info(f"Invoice emailed successfully to {email}", "pdf_operations")
+                    return True
+                else:
+                    QMessageBox.critical(
+                        parent_widget,
+                        "Email Failed",
+                        f"Failed to send email:\n\n{message}\n\n"
+                        "Please check your email configuration in Settings."
+                    )
+                    return False
             
             return False
             
@@ -335,7 +421,8 @@ class PDFOperations:
             QMessageBox.critical(
                 parent_widget,
                 "Share Error",
-                f"Failed to share invoice:\n{str(e)}"
+                f"Failed to share invoice:\n{str(e)}\n\n"
+                "Please check your email configuration in Settings."
             )
             return False
 

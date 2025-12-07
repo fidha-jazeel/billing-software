@@ -2,7 +2,7 @@
 Authentication Manager for Billing Software
 Handles password storage and verification
 """
-from travel_billing_software.utils.path_loader import resource_path
+from travel_billing_software.utils.path_loader import persistent_data_path
 import hashlib
 import json
 import os
@@ -12,7 +12,7 @@ class AuthManager:
     """Manages user authentication"""
     
     def __init__(self):
-        self.auth_file = resource_path(r"travel_billing_software\auth_data.json")
+        self.auth_file = persistent_data_path("auth_data.json")
         self.default_password = "admin123"  # Default password
         self._initialize_auth_file()
     
