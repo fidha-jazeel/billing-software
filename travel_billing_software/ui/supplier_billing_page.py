@@ -666,7 +666,7 @@ class SupplierBillingPage(QWidget):
                 amount=amount,
                 payment_mode=payment_mode,
                 date=payment_date,
-                reference=reference,
+                reference_number=reference,
                 notes=notes
             )
             
