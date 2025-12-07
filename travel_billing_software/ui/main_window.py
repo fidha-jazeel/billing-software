@@ -114,8 +114,8 @@ class DashboardImproved(QMainWindow):
             ('suppliers', '🏭 Suppliers', 'suppliers'),
             ('supplier_billing', '📋 Supplier Billing', 'supplier_billing'),
             ('ai', '🤖 AI Features', 'ai'),
-            ('settings', '⚙ Settings', 'settings'),
-            ('about', 'ℹ About', 'about'),
+            ('settings', '⚙️ Settings', 'settings'),
+            ('about', 'ℹ️ About', 'about'),
             ('check_updates', '🔄 Check for Updates', 'updates'),
         ]:
             btn = self._create_sidebar_button(label, page_id)
