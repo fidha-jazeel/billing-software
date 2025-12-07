@@ -236,3 +236,4 @@ invoices/
 .api_keys.json
 **/config/.api_keys.json
 travel_billing_software/config/.api_keys.json
+test/sqlite_csv_output/

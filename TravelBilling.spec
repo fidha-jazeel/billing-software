@@ -7,14 +7,28 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[
+        # Core files
         ('travel_billing_software/auth_data.json', 'travel_billing_software'),
+        ('travel_billing_software/billing_app.ico', 'travel_billing_software'),
+        ('pyproject.toml', '.'),  # Required for version checking in auto-updater
+        
+        # Directories (entire folders)
         ('travel_billing_software/fonts', 'travel_billing_software/fonts'),
         ('travel_billing_software/config', 'travel_billing_software/config'),
+        ('travel_billing_software/auth', 'travel_billing_software/auth'),
+        ('travel_billing_software/database', 'travel_billing_software/database'),
         ('travel_billing_software/ui', 'travel_billing_software/ui'),
         ('travel_billing_software/utils', 'travel_billing_software/utils'),
-        ('travel_billing_software/database', 'travel_billing_software/database'),
     ],
-    hiddenimports=[],
+    hiddenimports=[
+        'PyQt6.QtCore',
+        'PyQt6.QtGui',
+        'PyQt6.QtWidgets',
+        'reportlab',
+        'pypdfium2',
+        'sqlite3',
+        'tomllib',  # Required for reading pyproject.toml in auto-updater
+    ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
