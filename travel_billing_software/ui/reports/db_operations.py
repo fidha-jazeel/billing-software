@@ -130,16 +130,22 @@ class ReportsDBOperations:
             Formatted invoice dictionary
         """
         # Convert date to dd/MM/yyyy format
-        # Database column is 'date', not 'invoice_date'
-        invoice_date_str = inv.get('date', '') or inv.get('invoice_date', '')
+        # Try multiple date fields: date, invoice_date, created_at
+        invoice_date_str = inv.get('date') or inv.get('invoice_date') or inv.get('created_at', '')
         try:
-            if invoice_date_str:
-                date_obj = datetime.strptime(invoice_date_str, '%Y-%m-%d')
+            if invoice_date_str and invoice_date_str != 'None':
+                # Handle different date formats
+                if ' ' in str(invoice_date_str):
+                    # Format: "2024-12-07 12:16:16"
+                    date_obj = datetime.strptime(str(invoice_date_str).split()[0], '%Y-%m-%d')
+                else:
+                    # Format: "2024-12-07"
+                    date_obj = datetime.strptime(str(invoice_date_str), '%Y-%m-%d')
                 invoice_date_formatted = date_obj.strftime('%d/%m/%Y')
             else:
                 invoice_date_formatted = ''
         except Exception:
-            invoice_date_formatted = invoice_date_str
+            invoice_date_formatted = str(invoice_date_str) if invoice_date_str else ''
         
         return {
             'invoice_number': inv.get('invoice_number', ''),

@@ -197,7 +197,7 @@ class ReportFilters:
         
         self.filter_from_date = QDateEdit()
         self.filter_from_date.setCalendarPopup(True)
-        self.filter_from_date.setDate(QDate.currentDate().addMonths(-1))
+        self.filter_from_date.setDate(QDate.currentDate().addYears(-10))
         self.filter_from_date.setStyleSheet(self._get_dateedit_style())
         date_row.addWidget(self.filter_from_date)
         
@@ -456,21 +456,33 @@ class ReportFilters:
             
             for invoice in invoices:
                 try:
-                    # Date filter
+                    # Date filter - handle multiple date field names and None values
                     try:
-                        date_str = invoice.get('invoice_date', '')
-                        if date_str:
-                            day, month, year = map(int, date_str.split('/'))
-                            invoice_date = datetime(year, month, day).date()
+                        date_str = invoice.get('invoice_date') or invoice.get('date') or invoice.get('created_at', '')
+                        if date_str and date_str != 'None':
+                            # Handle different date formats
+                            if '/' in date_str:
+                                # Format: "07/12/2024"
+                                day, month, year = map(int, date_str.split('/'))
+                                invoice_date = datetime(year, month, day).date()
+                            elif ' ' in date_str:
+                                # Format: "2024-12-07 12:16:16"
+                                date_part = date_str.split()[0]
+                                invoice_date = datetime.strptime(date_part, '%Y-%m-%d').date()
+                            else:
+                                # Format: "2024-12-07"
+                                invoice_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+                            
                             if not (from_date <= invoice_date <= to_date):
                                 continue
+                        # If no valid date, include the invoice (don't filter out)
                     except Exception as date_error:
                         log_warning(
                             f"Date parsing error for invoice {invoice.get('invoice_number', 'Unknown')}: "
-                            f"{date_error}",
+                            f"{date_error}, including invoice anyway",
                             'billing_app'
                         )
-                        pass
+                        # Don't skip invoice if date parsing fails
                     
                     # Contact filter
                     if contact and contact not in invoice.get('customer_phone', '').lower():
@@ -526,7 +538,7 @@ class ReportFilters:
         try:
             log_info("Clearing all filters", 'billing_app')
             
-            self.filter_from_date.setDate(QDate.currentDate().addMonths(-1))
+            self.filter_from_date.setDate(QDate.currentDate().addYears(-10))
             self.filter_to_date.setDate(QDate.currentDate())
             self.filter_contact.clear()
             self.filter_passenger.clear()
