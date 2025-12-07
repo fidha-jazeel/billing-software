@@ -1,6 +1,8 @@
 """Test to verify summary card update issue"""
 from PyQt6.QtWidgets import QApplication, QFrame, QLabel, QVBoxLayout
 import sys
+from travel_billing_software.config.config import format_currency, get_currency_symbol
+
 
 def test_findChildren_issue():
     """Test if findChildren returns too many frames"""
@@ -18,7 +20,7 @@ def test_findChildren_issue():
         title = QLabel(f"Card {i+1} Title")
         card_layout.addWidget(title)
         
-        value = QLabel("₹0.00")
+        value = QLabel(format_currency(0))
         value.setProperty('summary_value', True)
         card_layout.addWidget(value)
         

@@ -206,20 +206,6 @@ Line   82:     return cm.get_invoice_config().get("currency_symbol", "₹")
 Line   96:         Formatted string like "₹1,234.56" or "1,234.56"
 
 
-File: travel_billing_software\ui\expenses_page.py
-----------------------------------------------------------------------------------------------------
-Line  413:         self.total_expenses_label = self._create_stat_card("Total Expenses", "₹0.00", self.colors['danger'])
-Line  415:         self.avg_expense_label = self._create_stat_card("Average Expense", "₹0.00", self.colors['accent_secondary'])
-Line  416:         self.cash_expenses_label = self._create_stat_card("Cash Expenses", "₹0.00", self.colors['success'])
-Line  662:             amount_item = QTableWidgetItem(f"₹{amount:,.2f}")
-Line  816:             f"Are you sure you want to delete this expense?\n\nCategory: {expense['category']}\nAmount: ₹{expense['amount']:,.2f}\n\nThis action cannot be undone.",
-Line  889:         amount_label = QLabel(f"₹{expense.get('amount', 0.0):,.2f}")
-Line  935:             ("Amount", f"₹{expense.get('amount', 0.0):,.2f}"),
-Line 1071:                         label.setText(f"₹{total:,.2f}")
-Line 1075:                         label.setText(f"₹{avg:,.2f}")
-Line 1077:                         label.setText(f"₹{cash_total:,.2f}")
-
-
 File: travel_billing_software\ui\home\calculations.py
 ----------------------------------------------------------------------------------------------------
 Line  230:             received_text = self.txt_received.text().replace('₹', '').replace(',', '').strip()
@@ -234,33 +220,27 @@ Line  296:             customer_amount.setPrefix("₹ ")
 
 File: travel_billing_software\ui\main_window.py
 ----------------------------------------------------------------------------------------------------
-Line  433:             "Passenger Name", "PNR", "Sector", "Supplier", "Type", "Class", "Price (₹)", "Qty", "Tax (%)", "Amount (₹)", "Actions"
-Line  826:         price.setPrefix("₹ ")
-Line 1002:         amount = QLineEdit("₹ 0.00")
-Line 1067:                 amount_w.setText(f"₹ {total:.2f}")
-Line 1101:             discount_text = self.txt_discount.text().replace('₹', '').replace(',', '').strip()
-Line 1109:         self.lbl_subtotal.setText(f"₹{subtotal:.2f}")
-Line 1110:         self.lbl_tax.setText(f"₹{total_tax:.2f}")
-Line 1111:         self.lbl_total.setText(f"₹{total:.2f}")
-Line 1120:             total_text = self.lbl_total.text().replace('₹', '').replace(',', '').strip()
-Line 1124:             received_text = self.txt_received.text().replace('₹', '').replace(',', '').strip()
-Line 1145:             self.lbl_balance.setText("₹0.00")
-Line 1187:                     "amount": amount_w.text() if amount_w else "₹0.00"
-Line 1199:                     db_data['subtotal'] = float(db_data['subtotal'].replace('₹', '').replace(',', '').strip() or 0)
-Line 1200:                     db_data['tax'] = float(db_data['tax'].replace('₹', '').replace(',', '').strip() or 0)
-Line 1201:                     db_data['total'] = float(db_data['total'].replace('₹', '').replace(',', '').strip() or 0)
-Line 1202:                     db_data['received'] = float(db_data['received'].replace('₹', '').replace(',', '').strip() or 0)
-Line 1205:                     discount_text = db_data.get('discount', '₹0.00').replace('₹', '').replace(',', '').strip()
-Line 1209:                     balance_text = db_data['balance'].replace('₹', '').replace(',', '').replace('(Paid)', '').replace('(Overpaid)', '').strip()
-Line 1224:                         amount_text = item.get('amount', '₹0.00').replace('₹', '').replace(',', '').strip()
-Line 1559:         if isinstance(value, (int, float)) and '₹' in title or 'Revenue' in title or 'Balance' in title:
+Line  435:             "Passenger Name", "PNR", "Sector", "Supplier", "Type", "Class", "Price (₹)", "Qty", "Tax (%)", "Amount (₹)", "Actions"
+Line 1004:         amount = QLineEdit("₹ 0.00")
+Line 1069:                 amount_w.setText(f"₹ {total:.2f}")
+Line 1103:             discount_text = self.txt_discount.text().replace('₹', '').replace(',', '').strip()
+Line 1111:         self.lbl_subtotal.setText(f"₹{subtotal:.2f}")
+Line 1112:         self.lbl_tax.setText(f"₹{total_tax:.2f}")
+Line 1113:         self.lbl_total.setText(f"₹{total:.2f}")
+Line 1122:             total_text = self.lbl_total.text().replace('₹', '').replace(',', '').strip()
+Line 1126:             received_text = self.txt_received.text().replace('₹', '').replace(',', '').strip()
+Line 1201:                     db_data['subtotal'] = float(db_data['subtotal'].replace('₹', '').replace(',', '').strip() or 0)
+Line 1202:                     db_data['tax'] = float(db_data['tax'].replace('₹', '').replace(',', '').strip() or 0)
+Line 1203:                     db_data['total'] = float(db_data['total'].replace('₹', '').replace(',', '').strip() or 0)
+Line 1204:                     db_data['received'] = float(db_data['received'].replace('₹', '').replace(',', '').strip() or 0)
+Line 1207:                     discount_text = db_data.get('discount', '₹0.00').replace('₹', '').replace(',', '').strip()
+Line 1211:                     balance_text = db_data['balance'].replace('₹', '').replace(',', '').replace('(Paid)', '').replace('(Overpaid)', '').strip()
+Line 1226:                         amount_text = item.get('amount', '₹0.00').replace('₹', '').replace(',', '').strip()
+Line 1561:         if isinstance(value, (int, float)) and '₹' in title or 'Revenue' in title or 'Balance' in title:
 
 
 File: travel_billing_software\ui\payments_page.py
 ----------------------------------------------------------------------------------------------------
-Line  575:             total_item = QTableWidgetItem(f"₹{inv.get('total_amount', 0):,.2f}")
-Line  579:             paid_item = QTableWidgetItem(f"₹{inv.get('paid_amount', 0):,.2f}")
-Line  584:             balance_item = QTableWidgetItem(f"₹{inv.get('balance', 0):,.2f}")
 Line  671:                     print(f"✅ Payment recorded: ₹{payment_data['amount']:.2f} for invoice {invoice_data['invoice_number']}")
 
 
@@ -315,88 +295,32 @@ Line  476:             log_info(f"Payment summary updated - Cash: ₹{total_cash
 
 File: travel_billing_software\ui\reports\sub_pages\all_transactions.py
 ----------------------------------------------------------------------------------------------------
-Line  126:                     "0", "₹0.00", "₹0.00"
-Line  159:                 amount_item = QTableWidgetItem(f"₹{amount:,.2f}")
-Line  183:                 f"₹{total_value:,.2f}",
-Line  184:                 f"₹{avg_transaction:,.2f}"
-Line  187:             log_info(f"All transactions populated: {transaction_count} transactions, Total: ₹{total_value:,.2f}", 'billing_app')
+Line  189:             log_info(f"All transactions populated: {transaction_count} transactions, Total: ₹{total_value:,.2f}", 'billing_app')
 
 
 File: travel_billing_software\ui\reports\sub_pages\balance_report.py
 ----------------------------------------------------------------------------------------------------
-Line  129:                     "₹0.00", "₹0.00", "₹0.00"
-Line  190:                 self.balance_table.setItem(row, 3, QTableWidgetItem(f"₹{total_invoiced:,.2f}"))
-Line  193:                 received_item = QTableWidgetItem(f"₹{total_received:,.2f}")
-Line  198:                 balance_item = QTableWidgetItem(f"₹{balance_due:,.2f}")
-Line  233:                 f"₹{overall_balance:,.2f}",
-Line  234:                 f"₹{overall_received:,.2f}",
-Line  235:                 f"₹{overall_invoiced:,.2f}"
-Line  238:             log_info(f"Balance report populated: {len(customer_balances)} customers, Balance: ₹{overall_balance:,.2f}", 'billing_app')
+Line  240:             log_info(f"Balance report populated: {len(customer_balances)} customers, Balance: ₹{overall_balance:,.2f}", 'billing_app')
 
 
 File: travel_billing_software\ui\reports\sub_pages\bill_wise_profit.py
 ----------------------------------------------------------------------------------------------------
-Line  133:                     "₹0.00", "₹0.00", "₹0.00"
-Line  191:                     sale_item = QTableWidgetItem(f"₹{sale_price:,.2f}")
-Line  196:                     cost_item = QTableWidgetItem(f"₹{cost_price:,.2f}")
-Line  201:                     profit_item = QTableWidgetItem(f"₹{profit:,.2f}")
-Line  218:                 f"₹{total_sale:,.2f}",
-Line  219:                 f"₹{total_cost:,.2f}",
-Line  220:                 f"₹{total_profit:,.2f}"
-Line  223:             log_info(f"Bill wise profit populated: {self.bill_wise_profit_table.rowCount()} items, Profit: ₹{total_profit:,.2f}", 'billing_app')
+Line  226:             log_info(f"Bill wise profit populated: {self.bill_wise_profit_table.rowCount()} items, Profit: ₹{total_profit:,.2f}", 'billing_app')
 
 
 File: travel_billing_software\ui\reports\sub_pages\cash_transactions.py
 ----------------------------------------------------------------------------------------------------
-Line  166:                     "₹0.00", "₹0.00", "₹0.00"
-Line  208:                 received_item = QTableWidgetItem(f"₹{cash_received_amt:,.2f}")
-Line  214:                 paid_item = QTableWidgetItem(f"₹{cash_paid_amt:,.2f}")
-Line  220:                 balance_item = QTableWidgetItem(f"₹{abs(balance):,.2f}")
-Line  250:                 f"₹{total_received:,.2f}",
-Line  251:                 f"₹{total_paid:,.2f}",
-Line  252:                 f"₹{net_cash_flow:,.2f}"
-Line  257:                 f"Received: ₹{total_received:,.2f}, Paid: ₹{total_paid:,.2f}, Net: ₹{net_cash_flow:,.2f}",
+Line  259:                 f"Received: ₹{total_received:,.2f}, Paid: ₹{total_paid:,.2f}, Net: ₹{net_cash_flow:,.2f}",
 
 
 File: travel_billing_software\ui\reports\sub_pages\day_book.py
 ----------------------------------------------------------------------------------------------------
-Line  124:                     "₹0.00", "₹0.00", "₹0.00"
-Line  174:                 sales_item = QTableWidgetItem(f"₹{data['sales']:,.2f}")
-Line  179:                 purchases_item = QTableWidgetItem(f"₹{data['purchases']:,.2f}")
-Line  185:                 profit_item = QTableWidgetItem(f"₹{profit:,.2f}")
-Line  191:                 f"₹{total_sales:,.2f}",
-Line  192:                 f"₹{total_purchases:,.2f}",
-Line  193:                 f"₹{total_profit:,.2f}"
-Line  196:             log_info(f"Day book populated: {len(daily_data)} days, Profit: ₹{total_profit:,.2f}", 'billing_app')
+Line  198:             log_info(f"Day book populated: {len(daily_data)} days, Profit: ₹{total_profit:,.2f}", 'billing_app')
 
 
 File: travel_billing_software\ui\reports\sub_pages\profit_loss.py
 ----------------------------------------------------------------------------------------------------
-Line  126:                     "₹0.00", "₹0.00", "₹0.00"
-Line  164:                 sales_item = QTableWidgetItem(f"₹{sales:,.2f}")
-Line  169:                 cost_item = QTableWidgetItem(f"₹{cost:,.2f}")
-Line  174:                 profit_item = QTableWidgetItem(f"₹{profit:,.2f}")
-Line  191:                 f"₹{total_sales:,.2f}",
-Line  192:                 f"₹{total_cost:,.2f}",
-Line  193:                 f"₹{total_profit:,.2f}"
-Line  196:             log_info(f"Profit & loss populated: {len(invoices)} invoices, Profit: ₹{total_profit:,.2f}", 'billing_app')
-
-
-File: travel_billing_software\ui\reports\sub_pages\sale_report.py
-----------------------------------------------------------------------------------------------------
-Line  225:                     "₹0.00",  # Total Sales
-Line  227:                     "₹0.00",  # Avg Invoice Value
-Line  228:                     "₹0.00",  # Total Received
-Line  229:                     "₹0.00",  # Total Due
-Line  230:                     "₹0.00"   # Net Profit
-Line  277:                     total_item = QTableWidgetItem(f"₹{total:,.2f}")
-Line  310:                 f"₹{total_sales:,.2f}",      # Total Sales
-Line  312:                 f"₹{avg_value:,.2f}",        # Avg Invoice Value
-Line  313:                 f"₹{total_received:,.2f}",   # Total Received
-Line  314:                 f"₹{total_due:,.2f}",        # Total Due
-Line  315:                 f"₹{net_profit:,.2f}"        # Net Profit
-Line  320:                 f"Total Sales: ₹{total_sales:,.2f}, Received: ₹{total_received:,.2f}, "
-Line  321:                 f"Due: ₹{total_due:,.2f}, Net Profit: ₹{net_profit:,.2f}",
+Line  198:             log_info(f"Profit & loss populated: {len(invoices)} invoices, Profit: ₹{total_profit:,.2f}", 'billing_app')
 
 
 File: travel_billing_software\ui\reports\utils.py
@@ -433,30 +357,14 @@ Line  698:                     f"Payment recorded successfully!\n\nSupplier: {su
 Line  726:         self.total_payable_label.setText("Total Payable: ₹0.00")
 Line  727:         self.already_paid_label.setText("Already Paid: ₹0.00")
 Line  728:         self.pending_label.setText("Pending: ₹0.00")
-Line  753:                 amount_item = QTableWidgetItem(f"₹{amount:,.2f}")
 
 
 File: travel_billing_software\ui\supplier_page.py
 ----------------------------------------------------------------------------------------------------
-Line  380:         self.total_pending_label = self._create_stat_card("Total Pending to Pay", "₹0.00", self.colors['danger'])
-Line  381:         self.total_paid_label = self._create_stat_card("Total Amount Paid", "₹0.00", self.colors['success'])
-Line  382:         self.total_received_label = self._create_stat_card("Total Received from Suppliers", "₹0.00", self.colors['accent_cyan'])
-Line  690:             payable_item = QTableWidgetItem(f"₹{total_payable:,.2f}")
-Line  696:             paid_item = QTableWidgetItem(f"₹{paid:,.2f}")
-Line  702:             pending_item = QTableWidgetItem(f"₹{pending:,.2f}")
-Line  956:         payable_card = self._create_mini_card("Total Payable", f"₹{total_payable:,.2f}", self.colors['text_primary'])
-Line  960:         paid_card = self._create_mini_card("Amount Paid", f"₹{paid:,.2f}", self.colors['success'])
-Line  964:         pending_card = self._create_mini_card("Pending Amount", f"₹{pending:,.2f}", self.colors['danger'])
-Line 1039:                 cost_item = QTableWidgetItem(f"₹{total_cost:,.2f}")
-Line 1057:                 amount_item = QTableWidgetItem(f"₹{payment.get('amount', 0.0):,.2f}")
-Line 1164:                         label.setText(f"₹{total_pending:,.2f}")
-Line 1166:                         label.setText(f"₹{total_paid:,.2f}")
-Line 1168:                         label.setText(f"₹{total_received:,.2f}")
 Line 1288:                 <td style='padding:15px; font-weight:bold; font-size:18px; color:#ff4444; text-align:right;'>₹{financial.get('amount_pending', 0.0):,.2f}</td>
 Line 1292:                 <td style='padding:15px; font-weight:bold; font-size:18px; color:#10b981; text-align:right;'>₹{financial.get('amount_paid', 0.0):,.2f}</td>
 Line 1296:                 <td style='padding:15px; font-weight:bold; font-size:18px; color:#06b6d4; text-align:right;'>₹{financial.get('amount_received', 0.0):,.2f}</td>
 Line 1300:                 <td style='padding:15px; font-weight:bold; font-size:16px; color:#7c3aed; text-align:right;'>₹{financial.get('total_payable', 0.0):,.2f}</td>
-Line 1429:             amount_item = QTableWidgetItem(f"₹{amount:,.2f}")
 Line 1484:             QMessageBox.information(self, "Success", f"Payment of ₹{amount:,.2f} recorded successfully!")
 Line 1515:             QMessageBox.information(self, "Success", f"Receipt of ₹{amount:,.2f} recorded successfully!")
 
@@ -474,33 +382,31 @@ Line  233:       currency: symbol (optional, e.g. '₹' or '$')
 
 ====================================================================================================
 
-Total: 363 instances found
+Total: 279 instances found
 
 Statistics by file:
  80 instances: docs\report files\ui_updated_reports.py
  74 instances: docs\report files\reports.py
  36 instances: travel_billing_software\ui\reports\db_operations.py
- 21 instances: travel_billing_software\ui\supplier_page.py
- 20 instances: travel_billing_software\ui\main_window.py
- 20 instances: travel_billing_software\ui\supplier_billing_page.py
- 13 instances: travel_billing_software\ui\reports\sub_pages\sale_report.py
- 10 instances: travel_billing_software\ui\expenses_page.py
+ 19 instances: travel_billing_software\ui\supplier_billing_page.py
+ 17 instances: travel_billing_software\ui\main_window.py
   9 instances: currency_replacer.py
   9 instances: detect_currency_symbols.py
-  8 instances: travel_billing_software\ui\reports\sub_pages\balance_report.py
-  8 instances: travel_billing_software\ui\reports\sub_pages\bill_wise_profit.py
-  8 instances: travel_billing_software\ui\reports\sub_pages\cash_transactions.py
-  8 instances: travel_billing_software\ui\reports\sub_pages\day_book.py
-  8 instances: travel_billing_software\ui\reports\sub_pages\profit_loss.py
+  6 instances: travel_billing_software\ui\supplier_page.py
   5 instances: travel_billing_software\ui\reports\reports_page.py
-  5 instances: travel_billing_software\ui\reports\sub_pages\all_transactions.py
-  4 instances: travel_billing_software\ui\payments_page.py
   4 instances: travel_billing_software\ui\reports\utils.py
   3 instances: travel_billing_software\utils\invoice_generator.py
   3 instances: travel_billing_software\ui\home\items_table.py
   2 instances: travel_billing_software\config\config.py
   1 instances: test_payment_history.py
   1 instances: test\test_summary_cards.py
+  1 instances: travel_billing_software\ui\payments_page.py
   1 instances: travel_billing_software\ui\settings.py
   1 instances: travel_billing_software\utils\config_manager.py
   1 instances: travel_billing_software\ui\home\calculations.py
+  1 instances: travel_billing_software\ui\reports\sub_pages\all_transactions.py
+  1 instances: travel_billing_software\ui\reports\sub_pages\balance_report.py
+  1 instances: travel_billing_software\ui\reports\sub_pages\bill_wise_profit.py
+  1 instances: travel_billing_software\ui\reports\sub_pages\cash_transactions.py
+  1 instances: travel_billing_software\ui\reports\sub_pages\day_book.py
+  1 instances: travel_billing_software\ui\reports\sub_pages\profit_loss.py

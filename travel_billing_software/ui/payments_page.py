@@ -668,7 +668,7 @@ class PaymentsPage(QWidget):
                     if total_paid >= invoice_data.get('total_amount', 0):
                         self.db.update_invoice_status(invoice_data['id'], 'PAID')
                     
-                    print(f"✅ Payment recorded: ₹{payment_data['amount']:.2f} for invoice {invoice_data['invoice_number']}")
+                    print(f"✅ Payment recorded: {format_currency(payment_data['amount'])} for invoice {invoice_data['invoice_number']}")
                     
                     # Reload data
                     self._load_data()

@@ -1285,19 +1285,19 @@ class SupplierPage(QWidget):
         <table style='width:100%; border-collapse: collapse;'>
             <tr style='background-color:#fee; border-left:5px solid #ff4444;'>
                 <td style='padding:15px; font-weight:bold; font-size:14px;'>Amount Not Yet Paid to Supplier:</td>
-                <td style='padding:15px; font-weight:bold; font-size:18px; color:#ff4444; text-align:right;'>₹{financial.get('amount_pending', 0.0):,.2f}</td>
+                <td style='padding:15px; font-weight:bold; font-size:18px; color:#ff4444; text-align:right;'>{get_currency_symbol()}{financial.get('amount_pending', 0.0):,.2f}</td>
             </tr>
             <tr style='background-color:#efe; border-left:5px solid #10b981;'>
                 <td style='padding:15px; font-weight:bold; font-size:14px;'>Amount Already Paid to Supplier:</td>
-                <td style='padding:15px; font-weight:bold; font-size:18px; color:#10b981; text-align:right;'>₹{financial.get('amount_paid', 0.0):,.2f}</td>
+                <td style='padding:15px; font-weight:bold; font-size:18px; color:#10b981; text-align:right;'>{get_currency_symbol()}{financial.get('amount_paid', 0.0):,.2f}</td>
             </tr>
             <tr style='background-color:#eff; border-left:5px solid #06b6d4;'>
                 <td style='padding:15px; font-weight:bold; font-size:14px;'>Amount Received from Supplier:</td>
-                <td style='padding:15px; font-weight:bold; font-size:18px; color:#06b6d4; text-align:right;'>₹{financial.get('amount_received', 0.0):,.2f}</td>
+                <td style='padding:15px; font-weight:bold; font-size:18px; color:#06b6d4; text-align:right;'>{get_currency_symbol()}{financial.get('amount_received', 0.0):,.2f}</td>
             </tr>
             <tr style='background-color:#f5f5f5; border-left:5px solid #7c3aed;'>
                 <td style='padding:15px; font-weight:bold; font-size:14px;'>Total Payable (from invoices):</td>
-                <td style='padding:15px; font-weight:bold; font-size:16px; color:#7c3aed; text-align:right;'>₹{financial.get('total_payable', 0.0):,.2f}</td>
+                <td style='padding:15px; font-weight:bold; font-size:16px; color:#7c3aed; text-align:right;'>{get_currency_symbol()}{financial.get('total_payable', 0.0):,.2f}</td>
             </tr>
         </table>
         """
@@ -1481,7 +1481,7 @@ class SupplierPage(QWidget):
         supplier['financial']['amount_pending'] = max(0, supplier['financial']['total_payable'] - supplier['financial']['amount_paid'])
         
         if self._save_suppliers():
-            QMessageBox.information(self, "Success", f"Payment of ₹{amount:,.2f} recorded successfully!")
+            QMessageBox.information(self, "Success", f"Payment of {get_currency_symbol()}{amount:,.2f} recorded successfully!")
             self._populate_table()
             dialog.accept()
     
@@ -1512,7 +1512,7 @@ class SupplierPage(QWidget):
         supplier['financial']['amount_received'] += amount
         
         if self._save_suppliers():
-            QMessageBox.information(self, "Success", f"Receipt of ₹{amount:,.2f} recorded successfully!")
+            QMessageBox.information(self, "Success", f"Receipt of {get_currency_symbol()}{amount:,.2f} recorded successfully!")
             self._populate_table()
             dialog.accept()
     

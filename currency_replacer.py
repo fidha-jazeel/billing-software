@@ -20,36 +20,51 @@ class CurrencyReplacer:
     def __init__(self, project_root):
         self.project_root = Path(project_root)
         self.patterns = {
-            # Pattern 1: f"₹{amount:,.2f}"
+            # Pattern 1: f"₹{amount:,.2f}" - Most common format
             'f_string_format': (
                 r'f"₹\{([^}]+):,\.2f\}"',
                 r'format_currency(\1)'
             ),
-            # Pattern 2: "₹0.00"
+            # Pattern 2: "₹0.00" - Static zero values
             'static_zero': (
                 r'"₹0\.00"',
                 r'format_currency(0)'
             ),
-            # Pattern 3: setPrefix("₹ ")
+            # Pattern 3: setPrefix("₹ ") - Spinbox prefix
             'spinbox_prefix': (
                 r'setPrefix\("₹ "\)',
                 r'setPrefix(f"{get_currency_symbol()} ")'
             ),
-            # Pattern 4: Simple f"₹{var}"
+            # Pattern 4: Table headers like "Price (₹)" or "Amount (₹)"
+            'table_headers': (
+                r'\(₹\)',
+                r'({get_currency_symbol()})'
+            ),
+            # Pattern 5: .replace('₹', '') - String cleaning
+            # Skip this pattern as it's used for parsing existing values
+            
+            # Pattern 6: QLabel("Text: ₹0.00") - Labels with text prefix
+            'label_with_text': (
+                r'QLabel\("([^"]+): ₹0\.00"\)',
+                r'QLabel(f"\1: {format_currency(0)}")'
+            ),
+            # Pattern 7: setText(f"Text: ₹{value:,.2f}")
+            'settext_format': (
+                r'setText\(f"([^"]+): ₹\{([^}]+):,\.2f\}"\)',
+                r'setText(f"\1: {format_currency(\2)}")'
+            ),
+            # Pattern 8: Simple f"₹{var}" without formatting
             'simple_f_string': (
                 r'f"₹\{([^:}]+)\}"',
-                r'f"{get_currency_symbol()}{\\1}"'
+                r'f"{get_currency_symbol()}{{\1}}"'
             ),
         }
         
-        self.files_to_check = [
-            'travel_billing_software/ui/supplier_page.py',
-            'travel_billing_software/ui/supplier_billing_page.py',
-            'travel_billing_software/ui/payments_page.py',
-            'travel_billing_software/ui/expenses_page.py',
-            'travel_billing_software/ui/main_window.py',
-            'travel_billing_software/ui/reports/sub_pages/*.py',
-        ]
+        # Scan all Python files in the project (excluding utility scripts)
+        self.exclude_files = {
+            'currency_replacer.py',
+            'detect_currency_symbols.py',
+        }
         
         self.import_line = (
             "from travel_billing_software.config.config import "
@@ -129,23 +144,20 @@ class CurrencyReplacer:
         total_matches = 0
         files_with_issues = []
         
-        for pattern in self.files_to_check:
-            if '*' in pattern:
-                # Handle wildcards
-                base_dir = self.project_root / '/'.join(pattern.split('/')[:-1])
-                if base_dir.exists():
-                    for filepath in base_dir.glob(pattern.split('/')[-1]):
-                        matches = self.scan_file(filepath)
-                        if matches:
-                            files_with_issues.append((filepath, matches))
-                            total_matches += len(matches)
-            else:
-                filepath = self.project_root / pattern
-                if filepath.exists():
-                    matches = self.scan_file(filepath)
-                    if matches:
-                        files_with_issues.append((filepath, matches))
-                        total_matches += len(matches)
+        # Find all Python files in the project
+        for python_file in self.project_root.rglob('*.py'):
+            # Skip excluded files
+            if python_file.name in self.exclude_files:
+                continue
+            
+            # Skip __pycache__ and build directories
+            if '__pycache__' in str(python_file) or 'build' in str(python_file):
+                continue
+            
+            matches = self.scan_file(python_file)
+            if matches:
+                files_with_issues.append((python_file, matches))
+                total_matches += len(matches)
         
         # Print results
         print(f"Found {total_matches} hardcoded currency symbols in {len(files_with_issues)} files:\n")

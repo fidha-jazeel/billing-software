@@ -227,7 +227,7 @@ class CalculationsWidget(QFrame):
         """Calculate balance (Total - Received) and update UI."""
         try:
             # Parse received amount
-            received_text = self.txt_received.text().replace('₹', '').replace(',', '').strip()
+            received_text = self.txt_received.text().replace(f'{self.get_currency_symbol()}', '').replace(',', '').strip()
             self._received = float(received_text) if received_text else 0.0
             
             # Calculate balance

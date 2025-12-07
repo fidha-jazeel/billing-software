@@ -13,6 +13,8 @@ from PyQt6.QtGui import QCursor, QKeyEvent
 from travel_billing_software.utils.logger import log_info, log_error, log_warning
 from travel_billing_software.utils.custom_widgets import NoWheelDoubleSpinBox
 from .passport_dialog import PassportDetailsDialog
+from travel_billing_software.config.config import format_currency, get_currency_symbol
+
 
 
 class ItemsTableWidget(QFrame):
@@ -111,7 +113,7 @@ class ItemsTableWidget(QFrame):
         self.table = QTableWidget(0, 9)
         self.table.setHorizontalHeaderLabels([
             "Passenger Name", "PNR", "Sector", "Supplier",
-            "Passport No.", "Qty", "Supp. Amt (₹)", "Cust. Amt (₹)", "Actions"
+            "Passport No.", "Qty", f"Supp. Amt ({get_currency_symbol()})", f"Cust. Amt ({get_currency_symbol()})", "Actions"
         ])
         self.table.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.table.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
@@ -283,7 +285,7 @@ class ItemsTableWidget(QFrame):
             supplier_amount.setMaximum(999999)
             supplier_amount.setValue(0)
             supplier_amount.setDecimals(2)
-            supplier_amount.setPrefix("₹ ")
+            supplier_amount.setPrefix(f"{get_currency_symbol()} ")
             supplier_amount.setStyleSheet(spinbox_style)
             supplier_amount.valueChanged.connect(self.items_changed.emit)
             supplier_amount.installEventFilter(self)  # Install event filter for Enter key navigation
@@ -293,7 +295,7 @@ class ItemsTableWidget(QFrame):
             customer_amount.setMaximum(999999)
             customer_amount.setValue(0)
             customer_amount.setDecimals(2)
-            customer_amount.setPrefix("₹ ")
+            customer_amount.setPrefix(f"{get_currency_symbol()} ")
             customer_amount.setStyleSheet(spinbox_style)
             customer_amount.valueChanged.connect(self.items_changed.emit)
             customer_amount.installEventFilter(self)  # Install event filter for Enter key navigation

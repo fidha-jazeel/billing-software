@@ -12,6 +12,8 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QDate
 from PyQt6.QtGui import QColor
 from travel_billing_software.utils.logger import log_info, log_error, log_warning
+from travel_billing_software.config.config import format_currency, get_currency_symbol
+
 
 
 class TableConfigurator:
@@ -932,7 +934,7 @@ class SummaryCardManager:
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         card_layout.addWidget(title_label)
         
-        value_label = QLabel("₹0.00")
+        value_label = QLabel(format_currency(0))
         value_label.setProperty('summary_value', True)
         value_label.setStyleSheet("""
             color: #FFFFFF;

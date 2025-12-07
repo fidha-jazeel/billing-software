@@ -134,10 +134,10 @@ class SupplierBillingPage(QWidget):
             }}
             QComboBox::down-arrow {{
                 image: none;
-                border-left: 8px solid transparent;
-                border-right: 8px solid transparent;
+                border-left: 5px solid transparent;
+                border-right: 5px solid transparent;
                 border-top: 10px solid {self.colors['text_primary']};
-                margin-right: 8px;
+                margin-right: 5px;
             }}
             QDateEdit::drop-down {{
                 border: none;
@@ -146,10 +146,10 @@ class SupplierBillingPage(QWidget):
             }}
             QDateEdit::down-arrow {{
                 image: none;
-                border-left: 8px solid transparent;
-                border-right: 8px solid transparent;
+                border-left: 5px solid transparent;
+                border-right: 5px solid transparent;
                 border-top: 10px solid {self.colors['text_primary']};
-                margin-right: 8px;
+                margin-right: 5px;
             }}
             QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {{
                 border: none;
@@ -209,15 +209,15 @@ class SupplierBillingPage(QWidget):
         balance_info_layout.setSpacing(30)
         balance_info_layout.setContentsMargins(180, 5, 0, 5)
         
-        self.total_payable_label = QLabel("Total Payable: ₹0.00")
+        self.total_payable_label = QLabel(f"Total Payable: {format_currency(0)}")
         self.total_payable_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-size: 16px; font-weight: bold; margin: 0px; padding: 0px;")
         balance_info_layout.addWidget(self.total_payable_label)
         
-        self.already_paid_label = QLabel("Already Paid: ₹0.00")
+        self.already_paid_label = QLabel(f"Already Paid: {format_currency(0)}")
         self.already_paid_label.setStyleSheet(f"color: {self.colors['success']}; font-size: 16px; font-weight: bold; margin: 0px; padding: 0px;")
         balance_info_layout.addWidget(self.already_paid_label)
         
-        self.pending_label = QLabel("Pending: ₹0.00")
+        self.pending_label = QLabel(f"Pending: {format_currency(0)}")
         self.pending_label.setStyleSheet(f"color: {self.colors['danger']}; font-size: 16px; font-weight: bold; margin: 0px; padding: 0px;")
         balance_info_layout.addWidget(self.pending_label)
         
@@ -614,9 +614,9 @@ class SupplierBillingPage(QWidget):
         supplier_name = self.supplier_combo.currentText().strip()
         
         if not supplier_name:
-            self.total_payable_label.setText("Total Payable: ₹0.00")
-            self.already_paid_label.setText("Already Paid: ₹0.00")
-            self.pending_label.setText("Pending: ₹0.00")
+            self.total_payable_label.setText(f"Total Payable: {get_currency_symbol()}0.00")
+            self.already_paid_label.setText(f"Already Paid: {get_currency_symbol()}0.00")
+            self.pending_label.setText(f"Pending: {get_currency_symbol()}0.00")
             return
         
         try:
@@ -628,22 +628,22 @@ class SupplierBillingPage(QWidget):
                 amount_paid = balance_data.get('amount_paid', 0.0)
                 pending = balance_data.get('pending', 0.0)
                 
-                self.total_payable_label.setText(f"Total Payable: ₹{total_payable:,.2f}")
-                self.already_paid_label.setText(f"Already Paid: ₹{amount_paid:,.2f}")
-                self.pending_label.setText(f"Pending: ₹{pending:,.2f}")
+                self.total_payable_label.setText(f"Total Payable: {format_currency(total_payable)}")
+                self.already_paid_label.setText(f"Already Paid: {format_currency(amount_paid)}")
+                self.pending_label.setText(f"Pending: {format_currency(pending)}")
                 
                 # Auto-fill payment amount with pending amount if positive
                 if pending > 0:
                     self.payment_amount.setValue(pending)
             else:
-                self.total_payable_label.setText("Total Payable: ₹0.00")
-                self.already_paid_label.setText("Already Paid: ₹0.00")
-                self.pending_label.setText("Pending: ₹0.00")
+                self.total_payable_label.setText(f"Total Payable: {get_currency_symbol()}0.00")
+                self.already_paid_label.setText(f"Already Paid: {get_currency_symbol()}0.00")
+                self.pending_label.setText(f"Pending: {get_currency_symbol()}0.00")
         except Exception as e:
             print(f"Error loading supplier balance: {e}")
-            self.total_payable_label.setText("Total Payable: ₹0.00")
-            self.already_paid_label.setText("Already Paid: ₹0.00")
-            self.pending_label.setText("Pending: ₹0.00")
+            self.total_payable_label.setText(f"Total Payable: {get_currency_symbol()}0.00")
+            self.already_paid_label.setText(f"Already Paid: {get_currency_symbol()}0.00")
+            self.pending_label.setText(f"Pending: {get_currency_symbol()}0.00")
     
     def _save_payment(self):
         """Save payment to database."""
@@ -695,7 +695,7 @@ class SupplierBillingPage(QWidget):
                 QMessageBox.information(
                     self, 
                     "Success", 
-                    f"Payment recorded successfully!\n\nSupplier: {supplier_name}\nAmount: ₹{amount:,.2f}\nMode: {payment_mode}"
+                    f"Payment recorded successfully!\n\nSupplier: {supplier_name}\nAmount: {get_currency_symbol()}{amount:,.2f}\nMode: {payment_mode}"
                 )
                 
                 # Refresh supplier balance
@@ -723,9 +723,9 @@ class SupplierBillingPage(QWidget):
         self.reference_number.clear()
         self.notes_input.clear()
         
-        self.total_payable_label.setText("Total Payable: ₹0.00")
-        self.already_paid_label.setText("Already Paid: ₹0.00")
-        self.pending_label.setText("Pending: ₹0.00")
+        self.total_payable_label.setText(f"Total Payable: {get_currency_symbol()}0.00")
+        self.already_paid_label.setText(f"Already Paid: {get_currency_symbol()}0.00")
+        self.pending_label.setText(f"Pending: {get_currency_symbol()}0.00")
     
     def _load_recent_payments(self, limit=50):
         """Load recent payments from database."""

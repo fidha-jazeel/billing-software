@@ -13,6 +13,8 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QStackedWidget, QListWidget, QListWidgetItem)
 from PyQt6.QtCore import Qt, QDate
 from PyQt6.QtGui import QColor, QFont
+from travel_billing_software.config.config import format_currency, get_currency_symbol
+
 
 
 class ReportsPage(QWidget):
@@ -360,7 +362,7 @@ class ReportsPage(QWidget):
         cash_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         cash_layout.addWidget(cash_title)
         
-        self.lbl_total_cash = QLabel("₹0.00")
+        self.lbl_total_cash = QLabel(format_currency(0))
         self.lbl_total_cash.setStyleSheet("""
             color: #FFFFFF;
             font-size: 24px;
@@ -393,7 +395,7 @@ class ReportsPage(QWidget):
         bank_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         bank_layout.addWidget(bank_title)
         
-        self.lbl_total_bank = QLabel("₹0.00")
+        self.lbl_total_bank = QLabel(format_currency(0))
         self.lbl_total_bank.setStyleSheet("""
             color: #FFFFFF;
             font-size: 24px;
@@ -441,13 +443,13 @@ class ReportsPage(QWidget):
                         continue
             
             # Update labels with formatted currency
-            self.lbl_total_cash.setText(f"₹{total_cash:,.2f}")
-            self.lbl_total_bank.setText(f"₹{total_bank:,.2f}")
+            self.lbl_total_cash.setText(format_currency(total_cash))
+            self.lbl_total_bank.setText(format_currency(total_bank))
             
         except Exception as e:
             print(f"Error updating payment summary: {e}")
-            self.lbl_total_cash.setText("₹0.00")
-            self.lbl_total_bank.setText("₹0.00")
+            self.lbl_total_cash.setText(format_currency(0))
+            self.lbl_total_bank.setText(format_currency(0))
     
     def _load_all_invoices(self):
         """Load all invoices from files."""
@@ -1077,9 +1079,9 @@ class ReportsPage(QWidget):
             self._show_no_records_message("Sale Report")
             # Update summary with zeros
             self._update_summary_cards(self.sale_summary_frame, [
-                "₹0.00",
+                format_currency(0),
                 "0",
-                "₹0.00"
+                format_currency(0)
             ])
             return
         
@@ -1112,7 +1114,7 @@ class ReportsPage(QWidget):
             except:
                 total = 0.0
             
-            total_item = QTableWidgetItem(f"₹{total:,.2f}")
+            total_item = QTableWidgetItem(format_currency(total))
             total_item.setForeground(QColor(self.colors['accent_gold']))
             self.sale_table.setItem(row, 5, total_item)
             
@@ -1131,9 +1133,9 @@ class ReportsPage(QWidget):
         
         # Update summary
         self._update_summary_cards(self.sale_summary_frame, [
-            f"₹{total_sales:,.2f}",
+            format_currency(total_sales),
             str(len(filtered_invoices)),
-            f"₹{total_sales/len(filtered_invoices):,.2f}" if filtered_invoices else "₹0.00"
+            format_currency(total_sales/len(filtered_invoices)) if filtered_invoices else format_currency(0)
         ])
     
     def _create_purchase_report_view(self) -> QWidget:
@@ -1216,9 +1218,9 @@ class ReportsPage(QWidget):
             self._show_no_records_message("Purchase Report")
             # Update summary with zeros
             self._update_summary_cards(self.purchase_summary_frame, [
-                "₹0.00",
+                format_currency(0),
                 "0",
-                "₹0.00"
+                format_currency(0)
             ])
             return
         
@@ -1251,15 +1253,15 @@ class ReportsPage(QWidget):
                 supp_amt = item.get('supplier_amount', 0.0)
                 total_purchases += supp_amt
                 
-                amt_item = QTableWidgetItem(f"₹{supp_amt:,.2f}")
+                amt_item = QTableWidgetItem(format_currency(supp_amt))
                 amt_item.setForeground(QColor(self.colors['accent_gold']))
                 self.purchase_table.setItem(row, 5, amt_item)
         
         # Update summary
         self._update_summary_cards(self.purchase_summary_frame, [
-            f"₹{total_purchases:,.2f}",
+            format_currency(total_purchases),
             str(int(total_items)),
-            f"₹{total_purchases/total_items:,.2f}" if total_items > 0 else "₹0.00"
+            format_currency(total_purchases/total_items) if total_items > 0 else format_currency(0)
         ])
     
     def _create_all_transactions_view(self) -> QWidget:
@@ -1345,8 +1347,8 @@ class ReportsPage(QWidget):
             # Update summary with zeros
             self._update_summary_cards(self.transactions_summary_frame, [
                 "0",
-                "₹0.00",
-                "₹0.00"
+                format_currency(0),
+                format_currency(0)
             ])
             return
         
@@ -1387,7 +1389,7 @@ class ReportsPage(QWidget):
                 total_value += amt_value
                 transaction_count += 1
                 
-                amt_item = QTableWidgetItem(f"₹{amt_value:,.2f}")
+                amt_item = QTableWidgetItem(format_currency(amt_value))
                 amt_item.setForeground(QColor(self.colors['accent_gold']))
                 self.transactions_table.setItem(row, 6, amt_item)
                 
@@ -1407,8 +1409,8 @@ class ReportsPage(QWidget):
         # Update summary
         self._update_summary_cards(self.transactions_summary_frame, [
             str(transaction_count),
-            f"₹{total_value:,.2f}",
-            f"₹{total_value/transaction_count:,.2f}" if transaction_count > 0 else "₹0.00"
+            format_currency(total_value),
+            format_currency(total_value/transaction_count) if transaction_count > 0 else format_currency(0)
         ])
     
     def _create_day_book_view(self) -> QWidget:
@@ -1489,9 +1491,9 @@ class ReportsPage(QWidget):
             self.daybook_table.setRowCount(0)
             # Update summary with zeros
             self._update_summary_cards(self.daybook_summary_frame, [
-                "₹0.00",
-                "₹0.00",
-                "₹0.00"
+                format_currency(0),
+                format_currency(0),
+                format_currency(0)
             ])
             return
         
@@ -1546,25 +1548,25 @@ class ReportsPage(QWidget):
             self.daybook_table.setItem(row, 1, QTableWidgetItem(str(data['invoices'])))
             
             # Sales
-            sales_item = QTableWidgetItem(f"₹{data['sales']:,.2f}")
+            sales_item = QTableWidgetItem(format_currency(data['sales']))
             sales_item.setForeground(QColor(self.colors['success']))
             self.daybook_table.setItem(row, 2, sales_item)
             
             # Purchases
-            purchases_item = QTableWidgetItem(f"₹{data['purchases']:,.2f}")
+            purchases_item = QTableWidgetItem(format_currency(data['purchases']))
             purchases_item.setForeground(QColor(self.colors['danger']))
             self.daybook_table.setItem(row, 3, purchases_item)
             
             # Profit
-            profit_item = QTableWidgetItem(f"₹{profit:,.2f}")
+            profit_item = QTableWidgetItem(format_currency(profit))
             profit_item.setForeground(QColor(self.colors['accent_primary']))
             self.daybook_table.setItem(row, 4, profit_item)
         
         # Update summary
         self._update_summary_cards(self.daybook_summary_frame, [
-            f"₹{total_sales:,.2f}",
-            f"₹{total_purchases:,.2f}",
-            f"₹{total_profit:,.2f}"
+            format_currency(total_sales),
+            format_currency(total_purchases),
+            format_currency(total_profit)
         ])
     
     def _create_profit_loss_view(self) -> QWidget:
@@ -1605,7 +1607,7 @@ class ReportsPage(QWidget):
         revenue_label.setStyleSheet(f"font-weight: bold; font-size: 16px; color: {self.colors['accent_primary']};")
         pl_layout.addWidget(revenue_label)
         
-        self.pl_revenue_label = QLabel("Total Sales: ₹0.00")
+        self.pl_revenue_label = QLabel(f"Total Sales: {format_currency(0)}")
         self.pl_revenue_label.setStyleSheet(f"font-size: 18px; color: {self.colors['success']}; padding: 5px 20px;")
         pl_layout.addWidget(self.pl_revenue_label)
         
@@ -1616,7 +1618,7 @@ class ReportsPage(QWidget):
         expenses_label.setStyleSheet(f"font-weight: bold; font-size: 16px; color: {self.colors['accent_primary']};")
         pl_layout.addWidget(expenses_label)
         
-        self.pl_expenses_label = QLabel("Total Purchases: ₹0.00")
+        self.pl_expenses_label = QLabel(f"Total Purchases: {format_currency(0)}")
         self.pl_expenses_label.setStyleSheet(f"font-size: 18px; color: {self.colors['danger']}; padding: 5px 20px;")
         pl_layout.addWidget(self.pl_expenses_label)
         
@@ -1635,7 +1637,7 @@ class ReportsPage(QWidget):
         profit_label.setStyleSheet(f"font-weight: bold; font-size: 16px; color: {self.colors['accent_primary']};")
         pl_layout.addWidget(profit_label)
         
-        self.pl_profit_label = QLabel("₹0.00")
+        self.pl_profit_label = QLabel(format_currency(0))
         self.pl_profit_label.setStyleSheet(f"font-size: 24px; font-weight: bold; color: {self.colors['accent_gold']}; padding: 5px 20px;")
         pl_layout.addWidget(self.pl_profit_label)
         
@@ -1683,7 +1685,7 @@ class ReportsPage(QWidget):
             # Update labels with zeros
             self.pl_revenue_label.setText("Total Sales: ₹0.00")
             self.pl_expenses_label.setText("Total Purchases: ₹0.00")
-            self.pl_profit_label.setText("₹0.00")
+            self.pl_profit_label.setText(format_currency(0))
             self.pl_margin_label.setText("Profit Margin: 0%")
             return
         
@@ -1706,9 +1708,9 @@ class ReportsPage(QWidget):
         margin = (net_profit / total_revenue * 100) if total_revenue > 0 else 0
         
         # Update labels
-        self.pl_revenue_label.setText(f"Total Sales: ₹{total_revenue:,.2f}")
-        self.pl_expenses_label.setText(f"Total Purchases: ₹{total_expenses:,.2f}")
-        self.pl_profit_label.setText(f"₹{net_profit:,.2f}")
+        self.pl_revenue_label.setText(f"Total Sales: {format_currency(total_revenue)}")
+        self.pl_expenses_label.setText(f"Total Purchases: {format_currency(total_expenses)}")
+        self.pl_profit_label.setText(format_currency(net_profit))
         self.pl_margin_label.setText(f"Profit Margin: {margin:.2f}%")
     
     def _create_bill_wise_profit_view(self) -> QWidget:
@@ -1792,8 +1794,8 @@ class ReportsPage(QWidget):
             self._show_no_records_message("Bill Wise Profit")
             # Update summary with zeros
             self._update_summary_cards(self.bill_profit_summary_frame, [
-                "₹0.00",
-                "₹0.00",
+                format_currency(0),
+                format_currency(0),
                 "0.00%"
             ])
             return
@@ -1823,7 +1825,7 @@ class ReportsPage(QWidget):
                 sale_amt = 0.0
             total_sales += sale_amt
             
-            sale_item = QTableWidgetItem(f"₹{sale_amt:,.2f}")
+            sale_item = QTableWidgetItem(format_currency(sale_amt))
             sale_item.setForeground(QColor(self.colors['success']))
             self.bill_profit_table.setItem(row, 3, sale_item)
             
@@ -1831,7 +1833,7 @@ class ReportsPage(QWidget):
             purchase_amt = sum(item.get('supplier_amount', 0.0) for item in invoice.get('items', []))
             total_purchases += purchase_amt
             
-            purchase_item = QTableWidgetItem(f"₹{purchase_amt:,.2f}")
+            purchase_item = QTableWidgetItem(format_currency(purchase_amt))
             purchase_item.setForeground(QColor(self.colors['danger']))
             self.bill_profit_table.setItem(row, 4, purchase_item)
             
@@ -1839,7 +1841,7 @@ class ReportsPage(QWidget):
             profit = sale_amt - purchase_amt
             total_profit += profit
             
-            profit_item = QTableWidgetItem(f"₹{profit:,.2f}")
+            profit_item = QTableWidgetItem(format_currency(profit))
             profit_item.setForeground(QColor(self.colors['accent_gold']))
             self.bill_profit_table.setItem(row, 5, profit_item)
             
@@ -1854,8 +1856,8 @@ class ReportsPage(QWidget):
         overall_margin = (total_profit / total_sales * 100) if total_sales > 0 else 0
         
         self._update_summary_cards(self.bill_profit_summary_frame, [
-            f"₹{total_profit:,.2f}",
-            f"₹{avg_profit:,.2f}",
+            format_currency(total_profit),
+            format_currency(avg_profit),
             f"{overall_margin:.2f}%"
         ])
     
@@ -1899,7 +1901,7 @@ class ReportsPage(QWidget):
             """)
             card_layout.addWidget(title_label)
             
-            value_label = QLabel("₹0.00")
+            value_label = QLabel(format_currency(0))
             value_label.setStyleSheet("""
                 color: #FFFFFF;
                 font-size: 24px;
@@ -2053,9 +2055,9 @@ class ReportsPage(QWidget):
             self._show_no_records_message("Cash Transactions")
             # Update summary with zeros
             self._update_summary_cards(self.cash_summary_frame, [
-                "₹0.00",
-                "₹0.00",
-                "₹0.00"
+                format_currency(0),
+                format_currency(0),
+                format_currency(0)
             ])
             return
         
@@ -2087,7 +2089,7 @@ class ReportsPage(QWidget):
                 received_amt = 0.0
             total_received += received_amt
             
-            received_item = QTableWidgetItem(f"₹{received_amt:,.2f}")
+            received_item = QTableWidgetItem(format_currency(received_amt))
             received_item.setForeground(QColor(self.colors['success']))
             self.cash_transactions_table.setItem(row, 4, received_item)
             
@@ -2095,7 +2097,7 @@ class ReportsPage(QWidget):
             paid_amt = sum(item.get('supplier_amount', 0.0) for item in invoice.get('items', []))
             total_paid += paid_amt
             
-            paid_item = QTableWidgetItem(f"₹{paid_amt:,.2f}")
+            paid_item = QTableWidgetItem(format_currency(paid_amt))
             paid_item.setForeground(QColor(self.colors['danger']))
             self.cash_transactions_table.setItem(row, 5, paid_item)
             
@@ -2106,7 +2108,7 @@ class ReportsPage(QWidget):
             except:
                 balance_amt = 0.0
             
-            balance_item = QTableWidgetItem(f"₹{balance_amt:,.2f}")
+            balance_item = QTableWidgetItem(format_currency(balance_amt))
             if balance_amt > 0:
                 balance_item.setForeground(QColor(self.colors['accent_gold']))
             else:
@@ -2130,9 +2132,9 @@ class ReportsPage(QWidget):
         
         # Update summary
         self._update_summary_cards(self.cash_summary_frame, [
-            f"₹{total_received:,.2f}",
-            f"₹{total_paid:,.2f}",
-            f"₹{net_cash_flow:,.2f}"
+            format_currency(total_received),
+            format_currency(total_paid),
+            format_currency(net_cash_flow)
         ])
     
     def _create_balance_report_view(self) -> QWidget:
@@ -2222,9 +2224,9 @@ class ReportsPage(QWidget):
             self._show_no_records_message("Balance Report")
             # Update summary with zeros
             self._update_summary_cards(self.balance_summary_frame, [
-                "₹0.00",
-                "₹0.00",
-                "₹0.00"
+                format_currency(0),
+                format_currency(0),
+                format_currency(0)
             ])
             return
         
@@ -2290,17 +2292,17 @@ class ReportsPage(QWidget):
             self.balance_table.setItem(row, 1, QTableWidgetItem(data['contact']))
             
             # Total Amount
-            total_item = QTableWidgetItem(f"₹{data['total']:,.2f}")
+            total_item = QTableWidgetItem(format_currency(data['total']))
             total_item.setForeground(QColor(self.colors['text_primary']))
             self.balance_table.setItem(row, 2, total_item)
             
             # Amount Paid
-            received_item = QTableWidgetItem(f"₹{data['received']:,.2f}")
+            received_item = QTableWidgetItem(format_currency(data['received']))
             received_item.setForeground(QColor(self.colors['success']))
             self.balance_table.setItem(row, 3, received_item)
             
             # Balance Due
-            balance_item = QTableWidgetItem(f"₹{data['balance']:,.2f}")
+            balance_item = QTableWidgetItem(format_currency(data['balance']))
             if data['balance'] > 0:
                 balance_item.setForeground(QColor(self.colors['danger']))
             else:
@@ -2347,7 +2349,7 @@ class ReportsPage(QWidget):
         
         # Update summary
         self._update_summary_cards(self.balance_summary_frame, [
-            f"₹{grand_balance:,.2f}",
-            f"₹{grand_received:,.2f}",
-            f"₹{grand_total:,.2f}"
+            format_currency(grand_balance),
+            format_currency(grand_received),
+            format_currency(grand_total)
         ])

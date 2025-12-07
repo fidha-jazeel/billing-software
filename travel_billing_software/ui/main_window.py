@@ -33,7 +33,7 @@ from travel_billing_software.ui.reports import ReportsPage
 from travel_billing_software.ui.home import HomePage
 from travel_billing_software.ui.ai_features import AIFeaturesPage
 from travel_billing_software.ui.expenses_page import ExpensesPage
-from travel_billing_software.ui.supplier_billing_page import SupplierBillingPage
+from travel_billing_software.ui.supplier_payment_page import SupplierBillingPage
 from travel_billing_software.ui.payments_page import PaymentsPage
 from travel_billing_software.ui.supplier_page import SupplierPage
 
@@ -432,7 +432,7 @@ class DashboardImproved(QMainWindow):
         # Table with 11 columns: Passenger Name, PNR, Sector, Supplier, Type, Class, Price, Qty, Tax, Amount, Actions
         self.table = QTableWidget(0, 11)
         self.table.setHorizontalHeaderLabels([
-            "Passenger Name", "PNR", "Sector", "Supplier", "Type", "Class", "Price (₹)", "Qty", "Tax (%)", "Amount (₹)", "Actions"
+            "Passenger Name", "PNR", "Sector", "Supplier", "Type", "Class", "Price ({get_currency_symbol()})", "Qty", "Tax (%)", "Amount ({get_currency_symbol()})", "Actions"
         ])
         
         # Disable table's own scrollbars (we use page-level scrolling)
@@ -1001,7 +1001,7 @@ class DashboardImproved(QMainWindow):
         table.setCellWidget(row, 8, tax)
 
         # Column 9: Amount (QLineEdit - Read-only)
-        amount = QLineEdit("₹ 0.00")
+        amount = QLineEdit(f"{get_currency_symbol()} 0.00")
         amount.setReadOnly(True)
         amount.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         amount.setStyleSheet("""
@@ -1066,7 +1066,7 @@ class DashboardImproved(QMainWindow):
             total = subtotal + tax_amount
             
             if amount_w:
-                amount_w.setText(f"₹ {total:.2f}")
+                amount_w.setText(f"{get_currency_symbol()} {total:.2f}")
         except Exception as e:
             print(f"Error calculating row total: {e}")
         finally:
@@ -1100,7 +1100,7 @@ class DashboardImproved(QMainWindow):
         
         # Get discount amount
         try:
-            discount_text = self.txt_discount.text().replace('₹', '').replace(',', '').strip()
+            discount_text = self.txt_discount.text().replace(f'{get_currency_symbol()}', '').replace(',', '').strip()
             discount = float(discount_text) if discount_text else 0.0
         except:
             discount = 0.0
@@ -1108,9 +1108,9 @@ class DashboardImproved(QMainWindow):
         # Calculate total: subtotal - discount + tax
         total = subtotal - discount + total_tax
         
-        self.lbl_subtotal.setText(f"₹{subtotal:.2f}")
-        self.lbl_tax.setText(f"₹{total_tax:.2f}")
-        self.lbl_total.setText(f"₹{total:.2f}")
+        self.lbl_subtotal.setText(f"{get_currency_symbol()}{subtotal:.2f}")
+        self.lbl_tax.setText(f"{get_currency_symbol()}{total_tax:.2f}")
+        self.lbl_total.setText(f"{get_currency_symbol()}{total:.2f}")
         
         # Recalculate balance when totals change
         self.calculate_balance()
@@ -1119,11 +1119,11 @@ class DashboardImproved(QMainWindow):
         """Calculate balance as Total - Received Amount."""
         try:
             # Get total amount from label
-            total_text = self.lbl_total.text().replace('₹', '').replace(',', '').strip()
+            total_text = self.lbl_total.text().replace(f'{get_currency_symbol()}', '').replace(',', '').strip()
             total = float(total_text) if total_text else 0.0
 
             # Get received amount from input field
-            received_text = self.txt_received.text().replace('₹', '').replace(',', '').strip()
+            received_text = self.txt_received.text().replace(f'{get_currency_symbol()}', '').replace(',', '').strip()
             received = float(received_text) if received_text else 0.0
 
             # Calculate balance
@@ -1198,17 +1198,17 @@ class DashboardImproved(QMainWindow):
                 try:
                     # Parse numeric values for database
                     db_data = invoice_data.copy()
-                    db_data['subtotal'] = float(db_data['subtotal'].replace('₹', '').replace(',', '').strip() or 0)
-                    db_data['tax'] = float(db_data['tax'].replace('₹', '').replace(',', '').strip() or 0)
-                    db_data['total'] = float(db_data['total'].replace('₹', '').replace(',', '').strip() or 0)
-                    db_data['received'] = float(db_data['received'].replace('₹', '').replace(',', '').strip() or 0)
+                    db_data['subtotal'] = float(db_data['subtotal'].replace(f'{get_currency_symbol()}', '').replace(',', '').strip() or 0)
+                    db_data['tax'] = float(db_data['tax'].replace(f'{get_currency_symbol()}', '').replace(',', '').strip() or 0)
+                    db_data['total'] = float(db_data['total'].replace(f'{get_currency_symbol()}', '').replace(',', '').strip() or 0)
+                    db_data['received'] = float(db_data['received'].replace(f'{get_currency_symbol()}', '').replace(',', '').strip() or 0)
                     
                     # Parse discount
-                    discount_text = db_data.get('discount', '₹0.00').replace('₹', '').replace(',', '').strip()
+                    discount_text = db_data.get('discount', f'{get_currency_symbol()}0.00').replace(f'{get_currency_symbol()}', '').replace(',', '').strip()
                     db_data['discount'] = float(discount_text or 0)
                     
                     # Parse balance
-                    balance_text = db_data['balance'].replace('₹', '').replace(',', '').replace('(Paid)', '').replace('(Overpaid)', '').strip()
+                    balance_text = db_data['balance'].replace(f'{get_currency_symbol()}', '').replace(',', '').replace('(Paid)', '').replace('(Overpaid)', '').strip()
                     db_data['balance'] = float(balance_text or 0)
                     
                     # Determine status
@@ -1223,7 +1223,7 @@ class DashboardImproved(QMainWindow):
                     db_data['items'] = []
                     for item in invoice_data.get('items', []):
                         # Parse amount value
-                        amount_text = item.get('amount', '₹0.00').replace('₹', '').replace(',', '').strip()
+                        amount_text = item.get('amount', f'{get_currency_symbol()}0.00').replace(f'{get_currency_symbol()}', '').replace(',', '').strip()
                         amount_value = float(amount_text or 0)
                         
                         db_item = {
@@ -1558,7 +1558,7 @@ class DashboardImproved(QMainWindow):
         card_layout.addWidget(title_label)
         
         # Value
-        if isinstance(value, (int, float)) and '₹' in title or 'Revenue' in title or 'Balance' in title:
+        if isinstance(value, (int, float)) and f"{get_currency_symbol()}" in title or 'Revenue' in title or 'Balance' in title:
             value_text = f"{get_currency_symbol()}{value:,.2f}"
         else:
             value_text = f"{int(value):,}"

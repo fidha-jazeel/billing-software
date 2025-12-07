@@ -16,6 +16,8 @@ from travel_billing_software.utils.logger import log_info, log_error, log_warnin
 
 from .db_operations import ReportsDBOperations
 from .utils import ReportFilters, ReportExporter
+
+from travel_billing_software.config.config import format_currency, get_currency_symbol
 from .sub_pages import (
     SaleReportView,
     PurchaseReportView,
@@ -338,7 +340,7 @@ class ReportsPage(QWidget):
         cash_title.setStyleSheet("color: white; font-size: 14px;")
         cash_layout.addWidget(cash_title)
         
-        self.lbl_total_cash = QLabel("₹0.00")
+        self.lbl_total_cash = QLabel(format_currency(0))
         self.lbl_total_cash.setStyleSheet("color: white; font-size: 24px; font-weight: bold;")
         cash_layout.addWidget(self.lbl_total_cash)
         
@@ -359,7 +361,7 @@ class ReportsPage(QWidget):
         bank_title.setStyleSheet("color: white; font-size: 14px;")
         bank_layout.addWidget(bank_title)
         
-        self.lbl_total_bank = QLabel("₹0.00")
+        self.lbl_total_bank = QLabel(format_currency(0))
         self.lbl_total_bank.setStyleSheet("color: white; font-size: 24px; font-weight: bold;")
         bank_layout.addWidget(self.lbl_total_bank)
         
@@ -469,9 +471,9 @@ class ReportsPage(QWidget):
             total_bank = summary['bank']
             
             if hasattr(self, 'lbl_total_cash'):
-                self.lbl_total_cash.setText(f"₹{total_cash:,.2f}")
+                self.lbl_total_cash.setText(format_currency(total_cash))
             if hasattr(self, 'lbl_total_bank'):
-                self.lbl_total_bank.setText(f"₹{total_bank:,.2f}")
+                self.lbl_total_bank.setText(format_currency(total_bank))
             
             log_info(f"Payment summary updated - Cash: ₹{total_cash:,.2f}, Bank: ₹{total_bank:,.2f}", 'billing_app')
             

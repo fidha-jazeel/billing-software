@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import List, Dict, Any, Optional
 from travel_billing_software.database.db_manager import get_db_instance
 from travel_billing_software.utils.logger import log_info, log_error, log_warning
-
+from travel_billing_software.config.config import format_currency, get_currency_symbol
 
 class ReportsDBOperations:
     """
@@ -183,7 +183,7 @@ class ReportsDBOperations:
                     total_bank += amount
             
             log_info(
-                f"Payment summary - Cash: ₹{total_cash:,.2f}, Bank: ₹{total_bank:,.2f}",
+                f"Payment summary - Cash: {get_currency_symbol()}{total_cash:,.2f}, Bank: {get_currency_symbol()}{total_bank:,.2f}",
                 'billing_app'
             )
             
@@ -515,9 +515,9 @@ if __name__ == "__main__":
             sample = invoices[0]
             print(f"   Sample Invoice: {sample['invoice_number']}")
             print(f"   Customer: {sample['customer_name']} ({sample['customer_phone']})")
-            print(f"   Total: ₹{sample['total_amount']:,.2f}")
-            print(f"   Paid: ₹{sample['paid_amount']:,.2f}")
-            print(f"   Balance: ₹{sample['balance']:,.2f}")
+            print(f"   Total: {get_currency_symbol()}{sample['total_amount']:,.2f}")
+            print(f"   Paid: {get_currency_symbol()}{sample['paid_amount']:,.2f}")
+            print(f"   Balance: {get_currency_symbol()}{sample['balance']:,.2f}")
             print(f"   Status: {sample['payment_status']}")
             print(f"   Tickets: {len(sample['tickets'])}")
             print(f"   Passengers: {len(sample['passengers'])}")
@@ -528,9 +528,9 @@ if __name__ == "__main__":
         print("\n[3] Testing get_all_payments_summary()...")
         payment_summary = db_ops.get_all_payments_summary()
         print(f"✓ Payment Summary Retrieved:")
-        print(f"   Total Cash Received: ₹{payment_summary['cash']:,.2f}")
-        print(f"   Total Bank Received: ₹{payment_summary['bank']:,.2f}")
-        print(f"   Grand Total: ₹{payment_summary['cash'] + payment_summary['bank']:,.2f}")
+        print(f"   Total Cash Received: {get_currency_symbol()}{payment_summary['cash']:,.2f}")
+        print(f"   Total Bank Received: {get_currency_symbol()}{payment_summary['bank']:,.2f}")
+        print(f"   Grand Total: {get_currency_symbol()}{payment_summary['cash'] + payment_summary['bank']:,.2f}")
         
         # Test 3: Get cash payments
         print("\n[4] Testing get_cash_payments()...")
@@ -542,7 +542,7 @@ if __name__ == "__main__":
             print(f"   Date: {sample_payment['date']}")
             print(f"   Invoice: {sample_payment['invoice_number']}")
             print(f"   Customer: {sample_payment['customer_name']}")
-            print(f"   Amount: ₹{sample_payment['amount']:,.2f}")
+            print(f"   Amount: {get_currency_symbol()}{sample_payment['amount']:,.2f}")
         else:
             print("   ⚠ No cash payments found")
         
@@ -555,7 +555,7 @@ if __name__ == "__main__":
             print(f"   Sample Supplier Payment:")
             print(f"   Date: {sample_sp['date']}")
             print(f"   Supplier: {sample_sp['supplier_name']}")
-            print(f"   Amount: ₹{sample_sp['amount']:,.2f}")
+            print(f"   Amount: {get_currency_symbol()}{sample_sp['amount']:,.2f}")
         else:
             print("   ⚠ No supplier cash payments found")
         
@@ -564,9 +564,9 @@ if __name__ == "__main__":
             print("\n[6] Testing calculate_profit_metrics()...")
             profit_metrics = db_ops.calculate_profit_metrics(invoices)
             print(f"✓ Profit Metrics Calculated:")
-            print(f"   Total Sales: ₹{profit_metrics['total_sale']:,.2f}")
-            print(f"   Total Cost: ₹{profit_metrics['total_cost']:,.2f}")
-            print(f"   Gross Profit: ₹{profit_metrics['gross_profit']:,.2f}")
+            print(f"   Total Sales: {get_currency_symbol()}{profit_metrics['total_sale']:,.2f}")
+            print(f"   Total Cost: {get_currency_symbol()}{profit_metrics['total_cost']:,.2f}")
+            print(f"   Gross Profit: {get_currency_symbol()}{profit_metrics['gross_profit']:,.2f}")
             print(f"   Profit Margin: {profit_metrics['profit_margin']:.2f}%")
         
         # Test 6: Calculate balance report
@@ -579,9 +579,9 @@ if __name__ == "__main__":
             print("   Top Customers with Outstanding Balance:")
             for i, customer in enumerate(sorted_balances[:3], 1):
                 print(f"   {i}. {customer['customer_name']}")
-                print(f"      Total Invoiced: ₹{customer['total']:,.2f}")
-                print(f"      Received: ₹{customer['received']:,.2f}")
-                print(f"      Balance: ₹{customer['balance']:,.2f}")
+                print(f"      Total Invoiced: {get_currency_symbol()}{customer['total']:,.2f}")
+                print(f"      Received: {get_currency_symbol()}{customer['received']:,.2f}")
+                print(f"      Balance: {get_currency_symbol()}{customer['balance']:,.2f}")
         
         # Test 7: Get supplier bills
         print("\n[8] Testing get_supplier_bills()...")
@@ -613,8 +613,8 @@ if __name__ == "__main__":
         print("DATABASE OPERATIONS TEST SUMMARY")
         print("=" * 80)
         print(f"Total Invoices in Database: {len(invoices)}")
-        print(f"Total Cash Received: ₹{payment_summary['cash']:,.2f}")
-        print(f"Total Bank Received: ₹{payment_summary['bank']:,.2f}")
+        print(f"Total Cash Received: {get_currency_symbol()}{payment_summary['cash']:,.2f}")
+        print(f"Total Bank Received: {get_currency_symbol()}{payment_summary['bank']:,.2f}")
         print(f"Cash Payments (Received): {len(cash_payments)}")
         print(f"Cash Payments (Paid to Suppliers): {len(supplier_payments)}")
         print(f"Customers with Balance: {len(balance_report)}")
@@ -630,9 +630,9 @@ if __name__ == "__main__":
             
             print(f"Total Tickets/Items: {total_tickets}")
             print(f"Total Passengers: {total_passengers}")
-            print(f"Total Invoice Amount: ₹{total_amount:,.2f}")
-            print(f"Total Paid Amount: ₹{total_paid:,.2f}")
-            print(f"Average Invoice Value: ₹{avg_invoice:,.2f}")
+            print(f"Total Invoice Amount: {get_currency_symbol()}{total_amount:,.2f}")
+            print(f"Total Paid Amount: {get_currency_symbol()}{total_paid:,.2f}")
+            print(f"Average Invoice Value: {get_currency_symbol()}{avg_invoice:,.2f}")
         
         # Test Report-specific calculations
         print("\n" + "=" * 80)
@@ -644,9 +644,9 @@ if __name__ == "__main__":
         sale_count = len(invoices)
         sale_avg = sale_total / sale_count if sale_count else 0
         print(f"\n1. SALE REPORT:")
-        print(f"   Total Sales: ₹{sale_total:,.2f}")
+        print(f"   Total Sales: {get_currency_symbol()}{sale_total:,.2f}")
         print(f"   Total Invoices: {sale_count}")
-        print(f"   Avg Invoice Value: ₹{sale_avg:,.2f}")
+        print(f"   Avg Invoice Value: {get_currency_symbol()}{sale_avg:,.2f}")
         
         # Purchase Report calculations
         purchase_total = 0
@@ -657,9 +657,9 @@ if __name__ == "__main__":
                 purchase_items += 1
         purchase_avg = purchase_total / purchase_items if purchase_items else 0
         print(f"\n2. PURCHASE REPORT:")
-        print(f"   Total Purchase Cost: ₹{purchase_total:,.2f}")
+        print(f"   Total Purchase Cost: {get_currency_symbol()}{purchase_total:,.2f}")
         print(f"   Total Items: {purchase_items}")
-        print(f"   Avg Cost per Item: ₹{purchase_avg:,.2f}")
+        print(f"   Avg Cost per Item: {get_currency_symbol()}{purchase_avg:,.2f}")
         
         # Day Book calculations
         daily_data = {}
@@ -676,35 +676,35 @@ if __name__ == "__main__":
         net_profit = total_daily_sales - total_daily_purchases
         
         print(f"\n3. DAY BOOK:")
-        print(f"   Total Daily Sales: ₹{total_daily_sales:,.2f}")
-        print(f"   Total Daily Purchases: ₹{total_daily_purchases:,.2f}")
-        print(f"   Net Profit: ₹{net_profit:,.2f}")
+        print(f"   Total Daily Sales: {get_currency_symbol()}{total_daily_sales:,.2f}")
+        print(f"   Total Daily Purchases: {get_currency_symbol()}{total_daily_purchases:,.2f}")
+        print(f"   Net Profit: {get_currency_symbol()}{net_profit:,.2f}")
         print(f"   Days with Activity: {len(daily_data)}")
         
         # Profit & Loss calculations
         gross_profit = sale_total - purchase_total
         print(f"\n4. PROFIT & LOSS:")
-        print(f"   Total Revenue: ₹{sale_total:,.2f}")
-        print(f"   Total Cost: ₹{purchase_total:,.2f}")
-        print(f"   Gross Profit: ₹{gross_profit:,.2f}")
+        print(f"   Total Revenue: {get_currency_symbol()}{sale_total:,.2f}")
+        print(f"   Total Cost: {get_currency_symbol()}{purchase_total:,.2f}")
+        print(f"   Gross Profit: {get_currency_symbol()}{gross_profit:,.2f}")
         
         # Cash Transactions
         cash_received_total = sum(p['amount'] for p in cash_payments)
         cash_paid_total = sum(p['amount'] for p in supplier_payments)
         net_cash = cash_received_total - cash_paid_total
         print(f"\n5. CASH TRANSACTIONS:")
-        print(f"   Total Cash Received: ₹{cash_received_total:,.2f}")
-        print(f"   Total Cash Paid: ₹{cash_paid_total:,.2f}")
-        print(f"   Net Cash Flow: ₹{net_cash:,.2f}")
+        print(f"   Total Cash Received: {get_currency_symbol()}{cash_received_total:,.2f}")
+        print(f"   Total Cash Paid: {get_currency_symbol()}{cash_paid_total:,.2f}")
+        print(f"   Net Cash Flow: {get_currency_symbol()}{net_cash:,.2f}")
         
         # Balance Report
         total_invoiced = sum(c['total'] for c in balance_report)
         total_received_balance = sum(c['received'] for c in balance_report)
         total_balance_due = sum(c['balance'] for c in balance_report)
         print(f"\n6. BALANCE REPORT:")
-        print(f"   Total Invoiced: ₹{total_invoiced:,.2f}")
-        print(f"   Total Received: ₹{total_received_balance:,.2f}")
-        print(f"   Total Outstanding: ₹{total_balance_due:,.2f}")
+        print(f"   Total Invoiced: {get_currency_symbol()}{total_invoiced:,.2f}")
+        print(f"   Total Received: {get_currency_symbol()}{total_received_balance:,.2f}")
+        print(f"   Total Outstanding: {get_currency_symbol()}{total_balance_due:,.2f}")
         print(f"   Customers: {len(balance_report)}")
         
         print("\n✅ ALL TESTS COMPLETED SUCCESSFULLY!")

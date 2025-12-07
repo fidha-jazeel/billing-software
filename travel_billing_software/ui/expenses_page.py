@@ -813,7 +813,7 @@ class ExpensesPage(QWidget):
         reply = QMessageBox.question(
             self,
             "Confirm Delete",
-            f"Are you sure you want to delete this expense?\n\nCategory: {expense['category']}\nAmount: ₹{expense['amount']:,.2f}\n\nThis action cannot be undone.",
+            f"Are you sure you want to delete this expense?\n\nCategory: {expense['category']}\nAmount: {format_currency(0)}{expense['amount']:,.2f}\n\nThis action cannot be undone.",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No
         )
