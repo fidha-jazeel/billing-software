@@ -17,16 +17,20 @@ if not exist "pyproject.toml" (
 
 REM Read version from pyproject.toml
 echo [1/5] Reading version from pyproject.toml...
-for /f "tokens=3 delims== " %%a in ('findstr /C:"version = " pyproject.toml') do (
+for /f "tokens=2 delims==" %%a in ('findstr /C:"version = " pyproject.toml') do (
     set VERSION=%%a
 )
-REM Remove quotes from version
+REM Remove quotes, spaces, and leading/trailing whitespace from version
 set VERSION=%VERSION:"=%
+set VERSION=%VERSION: =%
 echo Current version: %VERSION%
 echo.
 
 REM Clean previous builds
 echo [2/5] Cleaning previous builds...
+echo Attempting to close any running instances...
+taskkill /F /IM TravelBilling.exe >nul 2>&1
+timeout /t 2 /nobreak >nul
 if exist "dist" rmdir /s /q dist
 if exist "build" rmdir /s /q build
 if exist "Output" rmdir /s /q Output
@@ -59,7 +63,11 @@ if not exist %ISCC% (
 
 REM Update version in Inno Setup script
 echo Updating version in TravelBilling.iss...
-powershell -Command "(Get-Content TravelBilling.iss) -replace '#define MyAppVersion \".*\"', '#define MyAppVersion \"%VERSION%\"' | Set-Content TravelBilling.iss"
+cscript //Nologo update_iss_version.vbs "%VERSION%" "TravelBilling.iss"
+if errorlevel 1 (
+    echo WARNING: Could not update version automatically
+    echo Please ensure TravelBilling.iss has the correct version
+)
 
 REM Compile with Inno Setup
 %ISCC% TravelBilling.iss

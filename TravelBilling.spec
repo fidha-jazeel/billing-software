@@ -25,9 +25,18 @@ a = Analysis(
         'PyQt6.QtGui',
         'PyQt6.QtWidgets',
         'reportlab',
+        'reportlab.lib',
+        'reportlab.lib.pagesizes',
+        'reportlab.lib.styles',
+        'reportlab.lib.units',
+        'reportlab.lib.colors',
+        'reportlab.platypus',
+        'reportlab.pdfgen',
+        'reportlab.pdfgen.canvas',
         'pypdfium2',
         'sqlite3',
         'tomllib',  # Required for reading pyproject.toml in auto-updater
+        'logging.handlers',  # Required for RotatingFileHandler
     ],
     hookspath=[],
     hooksconfig={},
