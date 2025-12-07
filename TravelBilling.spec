@@ -38,6 +38,12 @@ a = Analysis(
         'sqlite3',
         'tomllib',  # Required for reading pyproject.toml in auto-updater
         'logging.handlers',  # Required for RotatingFileHandler
+        'email.mime.text',
+        'email.mime.multipart',
+        'email.mime.application',
+        'email.mime.base',
+        'email.mime.image',
+        'email.utils',
     ],
     hookspath=[],
     hooksconfig={},
