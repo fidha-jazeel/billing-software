@@ -122,6 +122,10 @@ class CashTransactionsView(QWidget):
         """
         Populate cash transactions report.
         
+        IMPORTANT: This method displays EVERY individual cash transaction as a separate row.
+        NO date-based grouping or merging. If 10 transactions happened on the same day,
+        all 10 rows will be displayed.
+        
         Args:
             invoices: Not used - kept for compatibility
             cash_received: List of cash payment records received from customers
@@ -130,13 +134,18 @@ class CashTransactionsView(QWidget):
         try:
             log_info("Populating cash transactions report", 'billing_app')
             
+            # Clear existing table rows
             self.cash_transactions_table.setRowCount(0)
             
-            # Combine both received and paid transactions
+            # Build list of ALL individual transactions (NO grouping or aggregation)
+            # Each payment record = one transaction = one table row
             all_transactions = []
             
+            # Process cash received from customers
             if cash_received:
+                log_info(f"Processing {len(cash_received)} cash payments received", 'billing_app')
                 for payment in cash_received:
+                    # Each payment is a separate transaction - NO date-based merging
                     all_transactions.append({
                         'date': payment.get('date', ''),
                         'reference': payment.get('invoice_number', ''),
@@ -148,8 +157,11 @@ class CashTransactionsView(QWidget):
                         'type': 'RECEIVED'
                     })
             
+            # Process cash paid to suppliers
             if cash_paid:
+                log_info(f"Processing {len(cash_paid)} cash payments paid to suppliers", 'billing_app')
                 for payment in cash_paid:
+                    # Each payment is a separate transaction - NO date-based merging
                     all_transactions.append({
                         'date': payment.get('date', ''),
                         'reference': payment.get('reference_number', '-'),
@@ -161,6 +173,7 @@ class CashTransactionsView(QWidget):
                         'type': 'PAID'
                     })
             
+            # Check if no transactions found
             if not all_transactions:
                 log_warning("No cash transactions found", 'billing_app')
                 show_no_records_message(self, "Cash Transactions")
@@ -169,7 +182,10 @@ class CashTransactionsView(QWidget):
                 ])
                 return
             
-            # Sort by date (most recent first)
+            log_info(f"Total transactions to display: {len(all_transactions)}", 'billing_app')
+            
+            # Sort by date (most recent first) - but this does NOT merge/group rows
+            # Multiple transactions on same date will still be separate rows
             try:
                 all_transactions.sort(key=lambda x: datetime.strptime(x['date'], '%d/%m/%Y'), reverse=True)
             except:
@@ -178,8 +194,13 @@ class CashTransactionsView(QWidget):
             total_received = 0.0
             total_paid = 0.0
             
-            for transaction in all_transactions:
+            # CRITICAL: Insert EVERY transaction as a separate row
+            # NO date-based filtering, NO "skip if date already exists" logic
+            for transaction_index, transaction in enumerate(all_transactions):
+                # Get current row count (this will increment for EACH transaction)
                 row = self.cash_transactions_table.rowCount()
+                
+                # Insert new row for THIS transaction
                 self.cash_transactions_table.insertRow(row)
                 
                 cash_received_amt = transaction['received']
@@ -189,7 +210,7 @@ class CashTransactionsView(QWidget):
                 total_received += cash_received_amt
                 total_paid += cash_paid_amt
                 
-                # Date
+                # Date - NO checking if this date already exists in table
                 self.cash_transactions_table.setItem(row, 0, QTableWidgetItem(transaction['date']))
                 
                 # Reference (Invoice # or Payment Reference)
@@ -245,6 +266,14 @@ class CashTransactionsView(QWidget):
                 status_item = QTableWidgetItem(status)
                 status_item.setForeground(QColor(color))
                 self.cash_transactions_table.setItem(row, 7, status_item)
+                
+                # Log each row insertion for debugging
+                if transaction_index < 5:  # Log first 5 to avoid spam
+                    log_info(
+                        f"Row {row}: Date={transaction['date']}, Ref={transaction['reference']}, "
+                        f"Party={transaction['party']}, Amount={cash_received_amt + cash_paid_amt}",
+                        'billing_app'
+                    )
             
             # Update summary
             net_cash_flow = total_received - total_paid
@@ -255,7 +284,7 @@ class CashTransactionsView(QWidget):
             ])
             
             log_info(
-                f"Cash transactions populated: {len(all_transactions)} transactions, "
+                f"✅ Cash transactions populated: {len(all_transactions)} rows inserted, "
                 f"Received: {get_currency_symbol()}{total_received:,.2f}, Paid: {get_currency_symbol()}{total_paid:,.2f}, Net: {get_currency_symbol()}{net_cash_flow:,.2f}",
                 'billing_app'
             )

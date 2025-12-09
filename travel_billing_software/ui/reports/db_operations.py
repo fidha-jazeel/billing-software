@@ -381,23 +381,29 @@ class ReportsDBOperations:
     
     def get_cash_payments(self) -> List[Dict[str, Any]]:
         """
-        Fetch all cash payments from payments_received table.
+        Fetch ALL individual cash payment records from payments_received table.
+        
+        IMPORTANT: This method returns EVERY cash payment as a separate record.
+        NO aggregation, NO grouping by date, NO merging.
+        If 10 cash payments exist on the same day, all 10 will be returned.
         
         Returns:
-            List of payment records with invoice and customer details
+            List of payment records with invoice and customer details.
+            Each payment in the database = one dict in the returned list.
         """
         try:
+            # Get ALL payments from database (no filtering yet)
             all_payments = self.db.get_all_payments_received()
             
-            # Filter for CASH payments only
+            # Filter for CASH payment mode only (still keeps all individual records)
             cash_payments = []
             for payment in all_payments:
                 if payment.get('payment_mode', '').upper() == 'CASH':
-                    # Enrich with invoice and customer details
+                    # Enrich each individual payment with invoice and customer details
                     invoice_id = payment.get('invoice_id')
                     if invoice_id:
                         try:
-                            # Get invoice details
+                            # Get invoice details for this specific payment
                             cur = self.db.conn.cursor()
                             cur.execute("""
                                 SELECT i.invoice_number, i.date as invoice_date, i.total_amount,
@@ -424,6 +430,8 @@ class ReportsDBOperations:
                                 except:
                                     formatted_payment_date = payment_date
                                 
+                                # Add this individual payment to the list
+                                # NO checking if date already exists - every payment is unique
                                 cash_payments.append({
                                     'date': formatted_payment_date,
                                     'invoice_number': inv_row['invoice_number'],
@@ -440,7 +448,7 @@ class ReportsDBOperations:
                             log_warning(f"Error enriching payment {payment.get('id')}: {e}", 'billing_app')
                             continue
             
-            log_info(f"Loaded {len(cash_payments)} cash payments received", 'billing_app')
+            log_info(f"Loaded {len(cash_payments)} individual cash payment records (no grouping)", 'billing_app')
             return cash_payments
             
         except Exception as e:
@@ -449,23 +457,31 @@ class ReportsDBOperations:
     
     def get_cash_supplier_payments(self) -> List[Dict[str, Any]]:
         """
-        Fetch all CASH supplier payments from supplier_payments table.
+        Fetch ALL individual CASH supplier payment records from supplier_payments table.
+        
+        IMPORTANT: This method returns EVERY supplier cash payment as a separate record.
+        NO aggregation, NO grouping by date, NO merging.
+        The SQL query does NOT use GROUP BY - it fetches every individual row.
         
         Returns:
-            List of supplier payment records with supplier details
+            List of supplier payment records with supplier details.
+            Each payment in the database = one dict in the returned list.
         """
         try:
             cur = self.db.conn.cursor()
+            # SQL Query: Fetch EVERY payment record individually
+            # NO GROUP BY, NO aggregation - one row per payment
             cur.execute("""
-                SELECT sp.date, sp.amount, sp.payment_mode, sp.reference_number, sp.notes,
+                SELECT sp.id, sp.date, sp.amount, sp.payment_mode, sp.reference_number, sp.notes,
                        c.name as supplier_name, c.phone as supplier_phone
                 FROM supplier_payments sp
                 LEFT JOIN contacts c ON sp.supplier_id = c.id
                 WHERE sp.payment_mode = 'CASH'
-                ORDER BY sp.date DESC
+                ORDER BY sp.date DESC, sp.id DESC
             """)
             
             cash_supplier_payments = []
+            # Process each row individually - NO date-based filtering or merging
             for row in cur.fetchall():
                 payment_date = row['date']
                 try:
@@ -474,7 +490,10 @@ class ReportsDBOperations:
                 except:
                     formatted_date = payment_date
                 
+                # Add this individual payment to the list
+                # NO checking if date already exists - every payment is unique
                 cash_supplier_payments.append({
+                    'payment_id': row['id'],
                     'date': formatted_date,
                     'supplier_name': row['supplier_name'],
                     'supplier_phone': row['supplier_phone'],
@@ -484,7 +503,7 @@ class ReportsDBOperations:
                     'type': 'PAID'  # Mark as payment made
                 })
             
-            log_info(f"Loaded {len(cash_supplier_payments)} cash supplier payments", 'billing_app')
+            log_info(f"Loaded {len(cash_supplier_payments)} individual cash supplier payment records (no grouping)", 'billing_app')
             return cash_supplier_payments
             
         except Exception as e:
