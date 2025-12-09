@@ -31,6 +31,10 @@ def check_for_updates(main_window):
 
 
 if __name__ == "__main__":
+    # Clear any cached database instance to ensure fresh connection with correct path
+    import travel_billing_software.database.db_manager as db_module
+    db_module._db_instance = None
+    
     app = QApplication(sys.argv)
     
     # Set application icon

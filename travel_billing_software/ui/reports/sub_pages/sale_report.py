@@ -143,7 +143,7 @@ class SaleReportView(QWidget):
         
         # Configure table
         TableConfigurator.configure_table(self.sale_table, {
-            0: 140,  # Invoice #
+            0: 180,  # Invoice # - Increased width to show full invoice numbers
             1: 100,  # Date
             2: 'stretch',  # Customer
             3: 120,  # Contact
@@ -151,6 +151,9 @@ class SaleReportView(QWidget):
             5: 120,  # Total
             6: 120   # Status
         })
+        
+        # Enable text wrapping in table cells to prevent truncation
+        self.sale_table.setWordWrap(True)
         self.sale_table.setMinimumHeight(500)
         layout.addWidget(self.sale_table)
         

@@ -71,9 +71,16 @@ class TableConfigurator:
             for col, width in column_widths.items():
                 if width == 'stretch':
                     header.setSectionResizeMode(col, QHeaderView.ResizeMode.Stretch)
+                elif width == 'auto':
+                    # Auto-resize based on content
+                    header.setSectionResizeMode(col, QHeaderView.ResizeMode.ResizeToContents)
                 elif isinstance(width, int):
                     table.setColumnWidth(col, width)
-                    header.setSectionResizeMode(col, QHeaderView.ResizeMode.Fixed)
+                    # Use Interactive mode to allow manual resizing while respecting minimum width
+                    header.setSectionResizeMode(col, QHeaderView.ResizeMode.Interactive)
+        
+        # Enable text wrapping for better display of long content
+        table.setWordWrap(True)
         
         log_info(f"Table configured with {table.columnCount()} columns", 'billing_app')
 
@@ -255,7 +262,9 @@ class ReportFilters:
         
         self.filter_from_date = QDateEdit()
         self.filter_from_date.setCalendarPopup(True)
-        self.filter_from_date.setDate(QDate.currentDate().addYears(-10))
+        # Set to year 1900 to include ALL historical invoices by default
+        # No automatic date filtering - show everything unless user manually changes
+        self.filter_from_date.setDate(QDate(1900, 1, 1))
         self.filter_from_date.setStyleSheet(self._get_dateedit_style())
         date_row.addWidget(self.filter_from_date)
         
@@ -265,7 +274,8 @@ class ReportFilters:
         
         self.filter_to_date = QDateEdit()
         self.filter_to_date.setCalendarPopup(True)
-        self.filter_to_date.setDate(QDate.currentDate())
+        # Set to 100 years in future to include all future-dated invoices
+        self.filter_to_date.setDate(QDate.currentDate().addYears(100))
         self.filter_to_date.setStyleSheet(self._get_dateedit_style())
         date_row.addWidget(self.filter_to_date)
         
@@ -517,33 +527,41 @@ class ReportFilters:
             
             for invoice in invoices:
                 try:
-                    # Date filter - handle multiple date field names and None values
+                    # Date filter - OPTIONAL, only applied if invoice has valid date
+                    # Default behavior: ALWAYS INCLUDE invoices with invalid/missing dates
+                    # This ensures 100% of invoices are visible by default
+                    apply_date_filter = False
+                    invoice_date = None
+                    
                     try:
                         date_str = invoice.get('invoice_date') or invoice.get('date') or invoice.get('created_at', '')
-                        if date_str and date_str != 'None':
-                            # Handle different date formats
-                            if '/' in date_str:
-                                # Format: "07/12/2024"
-                                day, month, year = map(int, date_str.split('/'))
+                        if date_str and str(date_str).strip() and str(date_str) != 'None':
+                            # Parse date from various formats
+                            if '/' in str(date_str):
+                                # Format: "07/12/2024" or "7/12/2024"
+                                parts = str(date_str).split('/')
+                                day, month, year = int(parts[0]), int(parts[1]), int(parts[2])
                                 invoice_date = datetime(year, month, day).date()
-                            elif ' ' in date_str:
+                                apply_date_filter = True
+                            elif ' ' in str(date_str):
                                 # Format: "2024-12-07 12:16:16"
-                                date_part = date_str.split()[0]
+                                date_part = str(date_str).split()[0]
                                 invoice_date = datetime.strptime(date_part, '%Y-%m-%d').date()
+                                apply_date_filter = True
                             else:
                                 # Format: "2024-12-07"
-                                invoice_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-                            
-                            if not (from_date <= invoice_date <= to_date):
-                                continue
-                        # If no valid date, include the invoice (don't filter out)
+                                invoice_date = datetime.strptime(str(date_str), '%Y-%m-%d').date()
+                                apply_date_filter = True
                     except Exception as date_error:
-                        log_warning(
-                            f"Date parsing error for invoice {invoice.get('invoice_number', 'Unknown')}: "
-                            f"{date_error}, including invoice anyway",
-                            'billing_app'
-                        )
-                        # Don't skip invoice if date parsing fails
+                        # Date parsing failed - ALWAYS INCLUDE this invoice
+                        # Date filter is optional, not mandatory
+                        pass
+                    
+                    # Only apply date filter if we successfully parsed a valid date
+                    # Otherwise, INCLUDE the invoice (no date filtering)
+                    if apply_date_filter and invoice_date:
+                        if not (from_date <= invoice_date <= to_date):
+                            continue
                     
                     # Contact filter
                     if contact and contact not in invoice.get('customer_phone', '').lower():
@@ -595,19 +613,20 @@ class ReportFilters:
             return []
     
     def clear_filters(self):
-        """Reset all filter values to defaults."""
+        """Reset all filter values to defaults - show ALL invoices."""
         try:
-            log_info("Clearing all filters", 'billing_app')
+            log_info("Clearing all filters - resetting to show ALL invoices", 'billing_app')
             
-            self.filter_from_date.setDate(QDate.currentDate().addYears(-10))
-            self.filter_to_date.setDate(QDate.currentDate())
+            # Reset date range to show ALL invoices (1900 to 100 years future)
+            self.filter_from_date.setDate(QDate(1900, 1, 1))
+            self.filter_to_date.setDate(QDate.currentDate().addYears(100))
             self.filter_contact.clear()
             self.filter_passenger.clear()
             self.filter_sector.clear()
             self.filter_supplier.setCurrentIndex(0)
             self.filter_type.setCurrentIndex(0)
             
-            log_info("Filters cleared successfully", 'billing_app')
+            log_info("Filters cleared - now showing ALL invoices", 'billing_app')
             
         except Exception as e:
             log_error("Error clearing filters", exception=e, logger_name='billing_errors')
@@ -748,7 +767,7 @@ class ReportExporter:
                 cell.border = thin_border
             
             # Set header row height
-            ws.row_dimensions[1].height = 25
+            ws.row_dimensions[1].height = 30
             
             # Write data rows
             for row in range(table.rowCount()):
@@ -774,7 +793,7 @@ class ReportExporter:
                     if isinstance(cell_value, (int, float)):
                         cell.number_format = f'"{get_currency_symbol()}"#,##0.00'
             
-            # Auto-adjust column widths
+            # Auto-adjust column widths with improved algorithm
             for col in range(1, table.columnCount() + 1):
                 column_letter = get_column_letter(col)
                 max_length = 0
@@ -783,8 +802,8 @@ class ReportExporter:
                 header_length = len(str(headers[col - 1]))
                 max_length = max(max_length, header_length)
                 
-                # Check data length (sample first 100 rows for performance)
-                for row in range(2, min(102, ws.max_row + 1)):
+                # Check ALL data rows for accurate sizing (not just sample)
+                for row in range(2, ws.max_row + 1):
                     try:
                         cell_value = ws.cell(row=row, column=col).value
                         if cell_value:
@@ -793,9 +812,21 @@ class ReportExporter:
                     except:
                         pass
                 
-                # Set column width (with min and max limits)
-                adjusted_width = min(max(max_length + 2, 10), 50)
+                # Set column width with appropriate limits
+                # Minimum 12 characters, maximum 60 characters
+                adjusted_width = min(max(max_length + 3, 12), 60)
                 ws.column_dimensions[column_letter].width = adjusted_width
+            
+            # Apply text wrapping to all data cells to prevent overflow
+            from openpyxl.styles import Alignment as OpenpyxlAlignment
+            for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=1, max_col=ws.max_column):
+                for cell in row:
+                    if cell.alignment:
+                        cell.alignment = OpenpyxlAlignment(
+                            horizontal=cell.alignment.horizontal,
+                            vertical='center',
+                            wrap_text=True
+                        )
             
             # Freeze header row
             ws.freeze_panes = 'A2'
@@ -920,17 +951,72 @@ class ReportExporter:
                     row_data.append(cell_value)
                 table_data.append(row_data)
             
-            # Create table
+            # Create table with intelligent column width calculation
             if table_data:
-                # Calculate column widths dynamically
+                # Calculate column widths based on content length
                 page_width = landscape(A4)[0] - 60  # Subtract margins
                 num_cols = len(table_data[0])
-                col_width = page_width / num_cols
-                col_widths = [col_width] * num_cols
                 
-                pdf_table = Table(table_data, colWidths=col_widths, repeatRows=1)
+                # Calculate max length for each column (including header)
+                col_max_lengths = []
+                for col_idx in range(num_cols):
+                    max_len = len(str(headers[col_idx]))  # Start with header length
+                    
+                    # Check data rows (sample first 50 rows for performance)
+                    for row_idx in range(1, min(51, len(table_data))):
+                        if col_idx < len(table_data[row_idx]):
+                            cell_len = len(str(table_data[row_idx][col_idx]))
+                            max_len = max(max_len, cell_len)
+                    
+                    col_max_lengths.append(max_len)
                 
-                # Apply table style
+                # Calculate proportional widths based on content
+                total_chars = sum(col_max_lengths)
+                col_widths = []
+                
+                if total_chars > 0:
+                    for max_len in col_max_lengths:
+                        # Proportional width with minimum of 0.5 inch
+                        width = max((max_len / total_chars) * page_width, 0.5 * inch)
+                        col_widths.append(width)
+                    
+                    # Adjust if total exceeds page width
+                    total_width = sum(col_widths)
+                    if total_width > page_width:
+                        scale_factor = page_width / total_width
+                        col_widths = [w * scale_factor for w in col_widths]
+                else:
+                    # Fallback to equal distribution
+                    col_width = page_width / num_cols
+                    col_widths = [col_width] * num_cols
+                
+                # Wrap long text in Paragraph objects to prevent overflow
+                from reportlab.lib.styles import ParagraphStyle
+                cell_style = ParagraphStyle(
+                    'CellStyle',
+                    parent=styles['Normal'],
+                    fontSize=8,
+                    leading=10,
+                    wordWrap='CJK',
+                    alignment=0  # Left alignment
+                )
+                
+                # Convert long text cells to Paragraph objects
+                formatted_table_data = []
+                for row_idx, row in enumerate(table_data):
+                    formatted_row = []
+                    for col_idx, cell in enumerate(row):
+                        cell_str = str(cell)
+                        # Wrap long text (> 30 chars) in Paragraph for automatic wrapping
+                        if len(cell_str) > 30 and row_idx > 0:  # Don't wrap headers
+                            formatted_row.append(Paragraph(cell_str, cell_style))
+                        else:
+                            formatted_row.append(cell_str)
+                    formatted_table_data.append(formatted_row)
+                
+                pdf_table = Table(formatted_table_data, colWidths=col_widths, repeatRows=1)
+                
+                # Apply table style with text wrapping support
                 table_style = TableStyle([
                     # Header style
                     ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#000000')),

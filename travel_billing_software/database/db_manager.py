@@ -18,11 +18,30 @@ class DatabaseManager:
     
     @staticmethod
     def get_default_db_path():
-        """Get the default database path in user's AppData folder for persistence."""
-        # Use AppData/Local for user-specific application data
+        """Get the default database path in the application folder with fallback to AppData."""
+        # First, try to use the database in the application folder (where the code is)
+        app_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        app_db_path = os.path.join(app_dir, 'billing.db')
+        
+        # Check if database exists in app folder and is accessible
+        if os.path.exists(app_db_path) and os.access(app_db_path, os.R_OK | os.W_OK):
+            return app_db_path
+        
+        # Fallback: Use AppData/Local for user-specific application data
         app_data_dir = os.path.join(os.getenv('LOCALAPPDATA', os.path.expanduser('~')), 'TravelBilling')
         os.makedirs(app_data_dir, exist_ok=True)
-        return os.path.join(app_data_dir, 'billing.db')
+        app_data_db_path = os.path.join(app_data_dir, 'billing.db')
+        
+        # If database exists in app folder but no write access, copy it to AppData
+        if os.path.exists(app_db_path) and not os.path.exists(app_data_db_path):
+            try:
+                import shutil
+                shutil.copy2(app_db_path, app_data_db_path)
+                print(f"✓ Copied database from {app_db_path} to {app_data_db_path}")
+            except Exception as e:
+                print(f"⚠ Could not copy database: {e}")
+        
+        return app_data_db_path if not os.access(app_db_path, os.W_OK) else app_db_path
     
     def __init__(self, db_path: Optional[str] = None):
         """Initialize database connection and ensure tables exist."""
@@ -1627,10 +1646,21 @@ class DatabaseManager:
 # Singleton instance
 _db_instance = None
 
-def get_db_instance(db_path: Optional[str] = None) -> DatabaseManager:
-    """Get or create the database manager singleton instance."""
+def get_db_instance(db_path: Optional[str] = None, force_reset: bool = False) -> DatabaseManager:
+    """Get or create the database manager singleton instance.
+    
+    Args:
+        db_path: Optional custom database path
+        force_reset: If True, recreates the instance even if one exists
+    """
     global _db_instance
-    if _db_instance is None:
+    if _db_instance is None or force_reset:
+        if _db_instance is not None and force_reset:
+            # Close existing connection before creating new instance
+            try:
+                _db_instance.conn.close()
+            except:
+                pass
         _db_instance = DatabaseManager(db_path)
     return _db_instance
 

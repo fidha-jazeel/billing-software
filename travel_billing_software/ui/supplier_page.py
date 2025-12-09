@@ -1540,5 +1540,3 @@ class SupplierPage(QWidget):
                     home_page.items_table.refresh_supplier_dropdowns()
         except Exception as e:
             print(f"Error refreshing home supplier dropdowns: {e}")
-        # Reopen dialog with updated data
-        self._manage_supplier_finances(supplier)
