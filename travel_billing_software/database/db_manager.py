@@ -556,15 +556,27 @@ class DatabaseManager:
             return []
     
     def get_or_create_contact(self, name: str, phone: str, contact_type: str = 'CUSTOMER') -> int:
-        """Get existing contact by phone or create new one."""
+        """Get existing contact by phone (and name if phone is empty) or create new one."""
         try:
             cur = self.conn.cursor()
-            cur.execute("SELECT id FROM contacts WHERE phone = ? AND type = ?", (phone, contact_type))
-            existing = cur.fetchone()
             
-            if existing:
-                return existing['id']
+            # If phone is provided and not empty, search by phone only
+            if phone and phone.strip():
+                cur.execute("SELECT id FROM contacts WHERE phone = ? AND type = ?", (phone, contact_type))
+                existing = cur.fetchone()
+                
+                if existing:
+                    return existing['id']
+            else:
+                # If phone is empty, search by name to avoid reusing wrong contact
+                cur.execute("SELECT id FROM contacts WHERE name = ? AND type = ? AND (phone IS NULL OR phone = '')", 
+                           (name, contact_type))
+                existing = cur.fetchone()
+                
+                if existing:
+                    return existing['id']
             
+            # No existing contact found, create new one
             return self.add_contact(contact_type, name, phone=phone)
         except Exception as e:
             print(f"✗ Error in get_or_create_contact: {e}")

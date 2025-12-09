@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QCursor
 from travel_billing_software.utils.logger import log_info, log_error, log_warning
+from travel_billing_software.config.config import format_currency, get_currency_symbol
 from ..utils import (
     TableConfigurator,
     ReportExporter,
@@ -49,7 +50,7 @@ class PurchaseReportView(QWidget):
         
         # Header
         header = create_report_header(
-            "📊 Purchase & Profitability Report",
+            "� Purchase & Profitability Report",
             "Analyze supplier purchases with profit margins and business insights",
             self.colors
         )
@@ -124,104 +125,171 @@ class PurchaseReportView(QWidget):
     
     def populate(self, invoices: List[Dict[str, Any]]):
         """
-        RAW DATA MODE: No colors, no styling. Just forces data onto the screen.
+        Populate the Purchase Report table with invoice data.
+        Shows one row per ticket/item with profitability analysis.
         """
-        # 1. Clear the table
-        self.purchase_table.setRowCount(0)
-        
-        # 2. Check data
-        if not invoices:
-            return
-
-        print(f"--- DEBUG: Starting population of {len(invoices)} invoices ---")
-
-        for invoice in invoices:
-            # Get safe values
-            invoice_number = str(invoice.get('invoice_number', 'N/A'))
+        try:
+            log_info(f"Populating purchase report with {len(invoices)} invoices", 'billing_app')
             
-            # Date handling
-            inv_date = invoice.get('invoice_date') or invoice.get('date') or 'N/A'
+            # Clear the table
+            self.purchase_table.setRowCount(0)
             
-            # Ticket handling
-            tickets = invoice.get('tickets', [])
-            if not tickets:
-                # If no tickets, we skip this invoice (or you can add a placeholder row)
-                continue
+            # Check if no records found
+            if not invoices:
+                log_warning("No records found for purchase report with current filters", 'billing_app')
+                show_no_records_message(self, "Purchase Report")
+                
+                # Update summary with zeros (6 cards)
+                SummaryCardManager.update_summary_cards(self.summary_frame, [
+                    format_currency(0),  # Total Purchase Cost
+                    format_currency(0),  # Total Revenue
+                    format_currency(0),  # Gross Profit
+                    "0.0%",              # Avg Margin %
+                    "0",                 # Total Tickets
+                    "-"                  # Best Supplier
+                ])
+                return
+            
+            # Calculate summary metrics
+            total_cost = 0.0
+            total_revenue = 0.0
+            total_tickets = 0
+            supplier_profits = {}  # Track profit by supplier
+            
+            log_info(f"Processing {len(invoices)} invoices for purchase report", 'billing_app')
 
-            for ticket in tickets:
-                try:
-                    # Insert a new row
-                    row = self.purchase_table.rowCount()
-                    self.purchase_table.insertRow(row)
+            for invoice in invoices:
+                # Get invoice basic info
+                invoice_number = str(invoice.get('invoice_number', 'N/A'))
+                inv_date = invoice.get('invoice_date') or invoice.get('date') or 'N/A'
+                
+                # Get tickets for this invoice
+                tickets = invoice.get('tickets', [])
+                if not tickets:
+                    log_warning(f"Invoice {invoice_number} has no tickets - skipping", 'billing_app')
+                    continue
+                
+                log_info(f"Processing invoice {invoice_number} with {len(tickets)} tickets", 'billing_app')
 
-                    # --- COL 0: DATE ---
-                    self.purchase_table.setItem(row, 0, QTableWidgetItem(str(inv_date)))
-
-                    # --- COL 1: INVOICE NUMBER ---
-                    # We print this to console to ensure the loop reaches here
-                    # print(f"Row {row}: Setting Invoice {invoice_number}") 
-                    self.purchase_table.setItem(row, 1, QTableWidgetItem(invoice_number))
-
-                    # --- COL 2: PASSENGER ---
-                    # Try ticket name -> then invoice passenger list -> then empty
-                    pass_name = ticket.get('passenger_name') or ticket.get('name') or ''
-                    if not pass_name and invoice.get('passengers'):
-                        pass_name = invoice['passengers'][0].get('name', '')
-                    self.purchase_table.setItem(row, 2, QTableWidgetItem(str(pass_name)))
-
-                    # --- COL 3: SUPPLIER ---
-                    sup_name = str(ticket.get('supplier_name', ''))
-                    self.purchase_table.setItem(row, 3, QTableWidgetItem(sup_name))
-
-                    # --- COL 4: SECTOR ---
-                    sector = str(ticket.get('sector', ''))
-                    self.purchase_table.setItem(row, 4, QTableWidgetItem(sector))
-
-                    # --- COL 5: PNR ---
-                    pnr = str(ticket.get('pnr') or ticket.get('ticket_number') or '')
-                    self.purchase_table.setItem(row, 5, QTableWidgetItem(pnr))
-
-                    # --- FINANCIAL CALCULATIONS (No Color, just numbers) ---
+                for ticket in tickets:
                     try:
-                        # Helper to safely get float
-                        def get_float(val):
-                            if not val: return 0.0
-                            return float(str(val).replace(',', ''))
+                        # Insert a new row
+                        row = self.purchase_table.rowCount()
+                        self.purchase_table.insertRow(row)
+                        total_tickets += 1
 
-                        cost = get_float(ticket.get('supplier_amount'))
-                        
-                        # Logic: Use unit_price, fallback to total_amount
-                        sell = get_float(ticket.get('unit_price'))
-                        if sell == 0:
-                            sell = get_float(ticket.get('total_amount'))
+                        # --- COL 0: DATE ---
+                        self.purchase_table.setItem(row, 0, QTableWidgetItem(str(inv_date)))
+
+                        # --- COL 1: INVOICE NUMBER ---
+                        self.purchase_table.setItem(row, 1, QTableWidgetItem(invoice_number))
+
+                        # --- COL 2: PASSENGER ---
+                        # Try ticket name -> then invoice passenger list -> then empty
+                        pass_name = ticket.get('passenger_name') or ticket.get('name') or ''
+                        if not pass_name and invoice.get('passengers'):
+                            pass_name = invoice['passengers'][0].get('name', '')
+                        self.purchase_table.setItem(row, 2, QTableWidgetItem(str(pass_name)))
+
+                        # --- COL 3: SUPPLIER ---
+                        sup_name = str(ticket.get('supplier_name', ''))
+                        self.purchase_table.setItem(row, 3, QTableWidgetItem(sup_name))
+
+                        # --- COL 4: SECTOR ---
+                        sector = str(ticket.get('sector', ''))
+                        self.purchase_table.setItem(row, 4, QTableWidgetItem(sector))
+
+                        # --- COL 5: PNR ---
+                        pnr = str(ticket.get('pnr') or ticket.get('ticket_number') or '')
+                        self.purchase_table.setItem(row, 5, QTableWidgetItem(pnr))
+
+                        # --- FINANCIAL CALCULATIONS ---
+                        try:
+                            # Helper to safely get float
+                            def get_float(val):
+                                if not val: return 0.0
+                                return float(str(val).replace(',', ''))
+
+                            cost = get_float(ticket.get('supplier_amount'))
                             
-                        qty = get_float(ticket.get('quantity')) or 1.0
-                        
-                        total_cost = cost * qty
-                        total_sell = sell * qty
-                        profit = total_sell - total_cost
-                        margin = (profit / total_sell * 100) if total_sell > 0 else 0
+                            # Logic: Use unit_price, fallback to total_amount
+                            sell = get_float(ticket.get('unit_price'))
+                            if sell == 0:
+                                sell = get_float(ticket.get('total_amount'))
+                                
+                            qty = get_float(ticket.get('quantity')) or 1.0
+                            
+                            ticket_cost = cost * qty
+                            ticket_sell = sell * qty
+                            profit = ticket_sell - ticket_cost
+                            margin = (profit / ticket_sell * 100) if ticket_sell > 0 else 0
+                            
+                            # Update summary totals
+                            total_cost += ticket_cost
+                            total_revenue += ticket_sell
+                            
+                            # Track supplier profits
+                            supplier = sup_name if sup_name else "Unknown"
+                            if supplier not in supplier_profits:
+                                supplier_profits[supplier] = 0.0
+                            supplier_profits[supplier] += profit
 
-                        # --- COL 6: COST ---
-                        self.purchase_table.setItem(row, 6, QTableWidgetItem(f"{total_cost:.2f}"))
+                            # --- COL 6: COST ---
+                            self.purchase_table.setItem(row, 6, QTableWidgetItem(f"{ticket_cost:.2f}"))
 
-                        # --- COL 7: SELL ---
-                        self.purchase_table.setItem(row, 7, QTableWidgetItem(f"{total_sell:.2f}"))
+                            # --- COL 7: SELL ---
+                            self.purchase_table.setItem(row, 7, QTableWidgetItem(f"{ticket_sell:.2f}"))
 
-                        # --- COL 8: PROFIT ---
-                        self.purchase_table.setItem(row, 8, QTableWidgetItem(f"{profit:.2f}"))
+                            # --- COL 8: PROFIT ---
+                            self.purchase_table.setItem(row, 8, QTableWidgetItem(f"{profit:.2f}"))
 
-                        # --- COL 9: MARGIN ---
-                        self.purchase_table.setItem(row, 9, QTableWidgetItem(f"{margin:.1f}%"))
+                            # --- COL 9: MARGIN ---
+                            self.purchase_table.setItem(row, 9, QTableWidgetItem(f"{margin:.1f}%"))
 
-                    except Exception as math_err:
-                        print(f"Math error on row {row}: {math_err}")
-                        self.purchase_table.setItem(row, 6, QTableWidgetItem("0.00"))
-                        self.purchase_table.setItem(row, 7, QTableWidgetItem("0.00"))
+                        except Exception as math_err:
+                            log_error(f"Financial calculation error on row {row}", exception=math_err, logger_name='billing_errors')
+                            self.purchase_table.setItem(row, 6, QTableWidgetItem("0.00"))
+                            self.purchase_table.setItem(row, 7, QTableWidgetItem("0.00"))
+                            self.purchase_table.setItem(row, 8, QTableWidgetItem("0.00"))
+                            self.purchase_table.setItem(row, 9, QTableWidgetItem("0.0%"))
 
-                except Exception as row_err:
-                    print(f"CRITICAL ERROR on Row {row}: {row_err}")
-                    # This print will tell us exactly why the row stopped filling
+                    except Exception as row_err:
+                        log_error(f"Error processing ticket row {row} for invoice {invoice_number}", 
+                                exception=row_err, logger_name='billing_errors')
+    
+            # Calculate summary metrics
+            gross_profit = total_revenue - total_cost
+            avg_margin = (gross_profit / total_revenue * 100) if total_revenue > 0 else 0
+            
+            # Find best supplier (highest profit)
+            best_supplier = "-"
+            if supplier_profits:
+                best_supplier = max(supplier_profits.items(), key=lambda x: x[1])[0]
+            
+            # Update summary cards
+            SummaryCardManager.update_summary_cards(self.summary_frame, [
+                format_currency(total_cost),       # Total Purchase Cost
+                format_currency(total_revenue),    # Total Revenue
+                format_currency(gross_profit),     # Gross Profit
+                f"{avg_margin:.1f}%",             # Avg Margin %
+                str(total_tickets),                # Total Tickets
+                best_supplier                      # Best Supplier
+            ])
+            
+            log_info(
+                f"Purchase report populated: {self.purchase_table.rowCount()} rows, "
+                f"Cost: {total_cost:.2f}, Revenue: {total_revenue:.2f}, "
+                f"Profit: {gross_profit:.2f}, Tickets: {total_tickets}",
+                'billing_app'
+            )
+            
+        except Exception as e:
+            log_error("Error populating purchase report", exception=e, logger_name='billing_errors')
+            QMessageBox.critical(
+                self,
+                "Population Error",
+                f"Failed to populate purchase report:\n{str(e)}"
+            )
     
     def get_table_widget(self) -> QTableWidget:
         """Get table for export operations"""
