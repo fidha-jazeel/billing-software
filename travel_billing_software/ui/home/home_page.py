@@ -540,6 +540,53 @@ class HomePage(QWidget):
         """Print invoice."""
         try:
             invoice_number = self.invoice_form.get_invoice_number()
+            
+            # Check if invoice exists in database
+            invoice_exists = self.db_ops.db.get_invoice(invoice_number) is not None
+            
+            # If invoice doesn't exist, auto-save it first
+            if not invoice_exists:
+                log_info(f"Invoice {invoice_number} not in database, auto-saving before print", "home_page")
+                
+                # Validate invoice has items
+                if self.items_table.get_row_count() == 0:
+                    QMessageBox.warning(
+                        self,
+                        "No Items",
+                        "Please add at least one item to the invoice before printing."
+                    )
+                    return
+                
+                # Collect invoice data
+                invoice_form_data = self.invoice_form.get_invoice_data()
+                financial_data = self.calculations.get_financial_data()
+                items = self.items_table.get_all_items()
+                
+                # Combine all data
+                invoice_data = {
+                    **invoice_form_data,
+                    **financial_data,
+                    "items": items,
+                    "payment_method": "Cash"  # Default
+                }
+                
+                # Save to database silently
+                invoice_id = self.db_ops.save_invoice(invoice_data)
+                
+                if invoice_id > 0:
+                    log_info(f"Invoice auto-saved for printing: {invoice_number}, ID: {invoice_id}", "home_page")
+                    # Update passenger history
+                    self._update_passenger_history(invoice_data)
+                else:
+                    QMessageBox.critical(
+                        self,
+                        "Save Failed",
+                        f"Failed to save invoice {invoice_number} before printing.\n"
+                        "Please check the data and try again."
+                    )
+                    return
+            
+            # Now print the invoice (PDF will be auto-generated if needed)
             self.pdf_ops.print_invoice(invoice_number, parent_widget=self)
             
         except Exception as e:
@@ -549,6 +596,53 @@ class HomePage(QWidget):
         """Share invoice via email."""
         try:
             invoice_number = self.invoice_form.get_invoice_number()
+            
+            # Check if invoice exists in database
+            invoice_exists = self.db_ops.db.get_invoice(invoice_number) is not None
+            
+            # If invoice doesn't exist, auto-save it first
+            if not invoice_exists:
+                log_info(f"Invoice {invoice_number} not in database, auto-saving before sharing", "home_page")
+                
+                # Validate invoice has items
+                if self.items_table.get_row_count() == 0:
+                    QMessageBox.warning(
+                        self,
+                        "No Items",
+                        "Please add at least one item to the invoice before sharing."
+                    )
+                    return
+                
+                # Collect invoice data
+                invoice_form_data = self.invoice_form.get_invoice_data()
+                financial_data = self.calculations.get_financial_data()
+                items = self.items_table.get_all_items()
+                
+                # Combine all data
+                invoice_data = {
+                    **invoice_form_data,
+                    **financial_data,
+                    "items": items,
+                    "payment_method": "Cash"  # Default
+                }
+                
+                # Save to database silently
+                invoice_id = self.db_ops.save_invoice(invoice_data)
+                
+                if invoice_id > 0:
+                    log_info(f"Invoice auto-saved for sharing: {invoice_number}, ID: {invoice_id}", "home_page")
+                    # Update passenger history
+                    self._update_passenger_history(invoice_data)
+                else:
+                    QMessageBox.critical(
+                        self,
+                        "Save Failed",
+                        f"Failed to save invoice {invoice_number} before sharing.\n"
+                        "Please check the data and try again."
+                    )
+                    return
+            
+            # Now share the invoice (PDF will be auto-generated if needed)
             self.pdf_ops.share_invoice(invoice_number, parent_widget=self)
             
         except Exception as e:

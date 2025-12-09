@@ -31,8 +31,8 @@ class AutoUpdater:
         try:
             # Get the project root directory
             if getattr(sys, 'frozen', False):
-                # Running as compiled executable
-                app_path = Path(sys.executable).parent
+                # Running as compiled executable - use _MEIPASS for bundled resources
+                app_path = Path(sys._MEIPASS)
             else:
                 # Running as script
                 app_path = Path(__file__).parent.parent.parent
@@ -42,8 +42,11 @@ class AutoUpdater:
             if pyproject_path.exists():
                 with open(pyproject_path, "rb") as f:
                     data = tomllib.load(f)
-                    return data.get("project", {}).get("version", "1.0.0")
+                    version = data.get("project", {}).get("version", "1.0.0")
+                    print(f"Current version from pyproject.toml: {version}")
+                    return version
             else:
+                print(f"pyproject.toml not found at {pyproject_path}")
                 return "1.0.0"
         except Exception as e:
             print(f"Error reading version: {e}")
@@ -80,9 +83,12 @@ class AutoUpdater:
                     return False, None, None
                 
                 # Compare versions
+                print(f"Comparing versions - Current: {self.current_version}, Latest: {latest_version}")
                 if self._is_newer_version(latest_version, self.current_version):
+                    print(f"Update available: {latest_version} > {self.current_version}")
                     return True, latest_version, download_url
                 else:
+                    print(f"No update needed: {latest_version} <= {self.current_version}")
                     return False, latest_version, None
                     
         except URLError as e:

@@ -80,7 +80,7 @@ class PDFOperations:
         invoice_number: str,
         invoice_data: Dict[str, Any],
         show_dialog: bool = True
-    ) -> Optional[str]:
+    ) -> bool:
         """
         Generate PDF invoice.
         
@@ -90,7 +90,7 @@ class PDFOperations:
             show_dialog: Whether to show success dialog
             
         Returns:
-            str: Path to generated PDF, or None if failed
+            bool: True if PDF generated successfully, False otherwise
         """
         try:
             # Prepare output directory in AppData
@@ -143,7 +143,7 @@ class PDFOperations:
                 if msg.clickedButton() == open_btn:
                     os.startfile(filename)
             
-            return filename
+            return True
             
         except Exception as e:
             log_error(
@@ -156,7 +156,7 @@ class PDFOperations:
                 "PDF Error",
                 f"Failed to generate PDF:\n{str(e)}"
             )
-            return None
+            return False
     
     def print_invoice(self, invoice_number: str, parent_widget=None) -> bool:
         """
@@ -196,23 +196,82 @@ class PDFOperations:
                 )
                 return False
             
-            # Check if PDF exists
+            # Check if PDF exists, if not auto-generate it
             pdf_path = os.path.join(
                 persistent_data_path(), "output", "invoice",
                 f"invoice_{invoice_number}.pdf"
             )
             
             if not os.path.exists(pdf_path):
-                log_warning(
-                    f"PDF not found for printing: {pdf_path}, generating...",
+                log_info(
+                    f"PDF not found for printing: {pdf_path}, auto-generating...",
                     logger_name="pdf_operations"
                 )
-                QMessageBox.warning(
-                    parent_widget,
-                    "PDF Not Found",
-                    "PDF not found. Please save as PDF first."
-                )
-                return False
+                
+                # Try to auto-generate the PDF
+                try:
+                    # Get the invoice data from database
+                    from travel_billing_software.database.db_manager import get_db_instance
+                    
+                    db = get_db_instance()
+                    invoice_record = db.get_invoice(invoice_number)
+                    
+                    if not invoice_record:
+                        QMessageBox.warning(
+                            parent_widget,
+                            "Invoice Not Found",
+                            f"Invoice {invoice_number} not found in database.\n"
+                            "Please save the invoice first."
+                        )
+                        return False
+                    
+                    # Prepare data for PDF
+                    pdf_items = prepare_items_for_pdf(invoice_record.get('items', []), self.get_currency_symbol)
+                    
+                    # Format date
+                    invoice_date = invoice_record.get('invoice_date')
+                    if isinstance(invoice_date, str):
+                        date_formatted = invoice_date
+                    else:
+                        date_formatted = invoice_date.strftime('%d/%m/%Y') if invoice_date else datetime.now().strftime('%d/%m/%Y')
+                    
+                    invoice_data = {
+                        "invoice_number": invoice_number,
+                        "invoice_date_formatted": date_formatted,
+                        "customer_name": invoice_record.get('customer_name', ''),
+                        "customer_address": invoice_record.get('customer_address', ''),
+                        "customer_phone": invoice_record.get('customer_phone', ''),
+                        "pdf_items": pdf_items
+                    }
+                    
+                    # Generate PDF silently
+                    success = self.generate_pdf(invoice_number, invoice_data, show_dialog=False)
+                    
+                    if not success or not os.path.exists(pdf_path):
+                        QMessageBox.warning(
+                            parent_widget,
+                            "PDF Generation Failed",
+                            "Failed to auto-generate PDF for printing."
+                        )
+                        return False
+                    
+                    log_info(
+                        f"PDF auto-generated successfully for printing: {invoice_number}",
+                        logger_name="pdf_operations"
+                    )
+                    
+                except Exception as e:
+                    log_error(
+                        f"Error auto-generating PDF for printing: {e}",
+                        exception=e,
+                        logger_name="pdf_operations"
+                    )
+                    QMessageBox.warning(
+                        parent_widget,
+                        "PDF Generation Failed",
+                        f"Failed to auto-generate PDF:\n{str(e)}"
+                    )
+                    return False
             
             # Load PDF
             pdf = pdfium.PdfDocument(pdf_path)
@@ -323,18 +382,81 @@ class PDFOperations:
             )
             
             if not os.path.exists(pdf_path):
-                QMessageBox.warning(
-                    parent_widget,
-                    "PDF Not Found",
-                    "Please save as PDF before sharing."
+                log_info(
+                    f"PDF not found for sharing: {pdf_path}, auto-generating...",
+                    logger_name="pdf_operations"
                 )
-                return False
+                
+                # Try to auto-generate the PDF
+                try:
+                    # Get the invoice data from database
+                    from travel_billing_software.database.db_manager import get_db_instance
+                    
+                    db = get_db_instance()
+                    invoice_record = db.get_invoice(invoice_number)
+                    
+                    if not invoice_record:
+                        QMessageBox.warning(
+                            parent_widget,
+                            "Invoice Not Found",
+                            f"Invoice {invoice_number} not found in database.\n"
+                            "Please save the invoice first."
+                        )
+                        return False
+                    
+                    # Prepare data for PDF
+                    pdf_items = prepare_items_for_pdf(invoice_record.get('items', []), self.get_currency_symbol)
+                    
+                    # Format date
+                    invoice_date = invoice_record.get('invoice_date')
+                    if isinstance(invoice_date, str):
+                        date_formatted = invoice_date
+                    else:
+                        date_formatted = invoice_date.strftime('%d/%m/%Y') if invoice_date else datetime.now().strftime('%d/%m/%Y')
+                    
+                    invoice_data = {
+                        "invoice_number": invoice_number,
+                        "invoice_date_formatted": date_formatted,
+                        "customer_name": invoice_record.get('customer_name', ''),
+                        "customer_address": invoice_record.get('customer_address', ''),
+                        "customer_phone": invoice_record.get('customer_phone', ''),
+                        "pdf_items": pdf_items
+                    }
+                    
+                    # Generate PDF silently
+                    success = self.generate_pdf(invoice_number, invoice_data, show_dialog=False)
+                    
+                    if not success or not os.path.exists(pdf_path):
+                        QMessageBox.warning(
+                            parent_widget,
+                            "PDF Generation Failed",
+                            "Failed to auto-generate PDF for sharing."
+                        )
+                        return False
+                    
+                    log_info(
+                        f"PDF auto-generated successfully for sharing: {invoice_number}",
+                        logger_name="pdf_operations"
+                    )
+                    
+                except Exception as e:
+                    log_error(
+                        f"Error auto-generating PDF for sharing: {e}",
+                        exception=e,
+                        logger_name="pdf_operations"
+                    )
+                    QMessageBox.warning(
+                        parent_widget,
+                        "PDF Generation Failed",
+                        f"Failed to auto-generate PDF:\n{str(e)}"
+                    )
+                    return False
             
             # Get invoice data from database to populate email
             try:
                 from travel_billing_software.database.db_manager import get_db_instance
                 db = get_db_instance()
-                invoice_data = db.get_invoice_by_number(invoice_number)
+                invoice_data = db.get_invoice(invoice_number)
                 
                 if not invoice_data:
                     raise Exception("Invoice not found in database")

@@ -48,11 +48,11 @@ This script will:
 ```bash
 # Commit your changes
 git add .
-git commit -m "Release v1.0.2"
+git commit -m "Release v1.0.3"
 
 # Create and push tag
-git tag v1.0.2
-git push origin v1.0.2
+git tag v1.0.3
+git push origin v1.0.3
 ```
 
 **4. Upload to GitHub**
