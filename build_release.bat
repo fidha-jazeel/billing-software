@@ -92,4 +92,23 @@ echo 1. Test the installer: Output\TravelBilling_Setup_v%VERSION%.exe
 echo 2. Create GitHub release with tag: v%VERSION%
 echo 3. Upload the installer to GitHub Releases
 echo.
+
+REM Ask user if they want to push to GitHub
+set /p PUSH_TO_GITHUB="Do you want to commit and push to GitHub? (Y/N): "
+if /i "%PUSH_TO_GITHUB%"=="Y" (
+    echo.
+    echo Committing changes and creating git tag...
+    git add .
+    git commit -m "Release v%VERSION%"
+    
+    echo Creating and pushing tag...
+    git tag v%VERSION%
+    git push origin v%VERSION%
+    echo.
+    echo Changes pushed to GitHub successfully!
+) else (
+    echo.
+    echo Skipping GitHub push.
+)
+echo.
 pause

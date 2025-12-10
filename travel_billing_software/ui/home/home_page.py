@@ -395,7 +395,28 @@ class HomePage(QWidget):
             financial_data = self.calculations.get_financial_data()
             items = self.items_table.get_all_items()
             
-            # Combine all data
+            # Auto-set customer name from first passenger if empty
+            if not invoice_form_data.get("customer_name"):
+                if items and items[0].get("passenger_name"):
+                    invoice_form_data["customer_name"] = items[0]["passenger_name"]
+                else:
+                    invoice_form_data["customer_name"] = "Unknown"
+
+            # Auto-set customer name from first passenger if empty
+                if not invoice_form_data.get("customer_name"):
+                    if items and items[0].get("passenger_name"):
+                        invoice_form_data["customer_name"] = items[0]["passenger_name"]
+                    else:
+                        invoice_form_data["customer_name"] = "Unknown"
+
+                # Auto-set customer name from first passenger if empty
+                if not invoice_form_data.get("customer_name"):
+                    if items and items[0].get("passenger_name"):
+                        invoice_form_data["customer_name"] = items[0]["passenger_name"]
+                    else:
+                        invoice_form_data["customer_name"] = "Unknown"
+
+                # Combine all data
             invoice_data = {
                 **invoice_form_data,
                 **financial_data,
@@ -617,6 +638,13 @@ class HomePage(QWidget):
                 invoice_form_data = self.invoice_form.get_invoice_data()
                 financial_data = self.calculations.get_financial_data()
                 items = self.items_table.get_all_items()
+                
+                # Auto-set customer name from first passenger if empty
+                if not invoice_form_data.get("customer_name"):
+                    if items and items[0].get("passenger_name"):
+                        invoice_form_data["customer_name"] = items[0]["passenger_name"]
+                    else:
+                        invoice_form_data["customer_name"] = "Unknown"
                 
                 # Combine all data
                 invoice_data = {
