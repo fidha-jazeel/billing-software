@@ -646,11 +646,11 @@ class ReportsPage(QWidget):
             self.refresh_suppliers()
             self.refresh_types()
             
-            # Refresh all sub-pages
+            # Refresh all sub-pages (only active ones, excluding temporarily disabled reports)
             for view in [
-                self.sale_report, self.purchase_report, self.all_transactions,
-                self.day_book, self.profit_loss, self.bill_wise_profit,
-                self.cash_transactions, self.balance_report
+                self.sale_report, self.all_transactions,
+                self.day_book, self.profit_loss, self.bill_wise_profit
+                # TODO: Add purchase_report, cash_transactions, balance_report in next release
             ]:
                 if hasattr(view, 'refresh_ui'):
                     view.refresh_ui()
