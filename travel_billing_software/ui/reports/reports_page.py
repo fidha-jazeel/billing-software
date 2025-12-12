@@ -20,13 +20,13 @@ from .utils import ReportFilters, ReportExporter
 from travel_billing_software.config.config import format_currency, get_currency_symbol
 from .sub_pages import (
     SaleReportView,
-    # PurchaseReportView,  # TODO: Uncomment in next release - currently has bugs
+    PurchaseReportView,
     AllTransactionsView,
     DayBookView,
     ProfitLossView,
     BillWiseProfitView,
-    # CashTransactionsView,  # TODO: Uncomment in next release - currently has bugs
-    # BalanceReportView  # TODO: Uncomment in next release - currently has bugs
+    CashTransactionsView,
+    BalanceReportView
 )
 
 
@@ -89,17 +89,18 @@ class ReportsPage(QWidget):
         # Initialize all 8 sub-page views
         # Note: is_admin defaults to True for now (can be updated later with proper auth)
         self.sale_report = SaleReportView(colors, get_button_style, self._export_report, is_admin=True)
-        # self.purchase_report = PurchaseReportView(colors, get_button_style, self._export_report)  # TODO: Uncomment in next release
+        self.purchase_report = PurchaseReportView(colors, get_button_style, self._export_report)
         self.all_transactions = AllTransactionsView(colors, get_button_style, self._export_report)
         self.day_book = DayBookView(colors, get_button_style, self._export_report)
         self.profit_loss = ProfitLossView(colors, get_button_style, self._export_report)
         self.bill_wise_profit = BillWiseProfitView(colors, get_button_style, self._export_report)
-        # self.cash_transactions = CashTransactionsView(colors, get_button_style, self._export_report)  # TODO: Uncomment in next release
-        # self.balance_report = BalanceReportView(colors, get_button_style, self._export_report)  # TODO: Uncomment in next release
+        self.cash_transactions = CashTransactionsView(colors, get_button_style, self._export_report)
+        self.balance_report = BalanceReportView(colors, get_button_style, self._export_report)
         
         # Set refresh callbacks for all reports
-        for report in [self.sale_report, self.all_transactions,
-                       self.day_book, self.profit_loss, self.bill_wise_profit]:
+        for report in [self.sale_report, self.purchase_report, self.all_transactions,
+                       self.day_book, self.profit_loss, self.bill_wise_profit,
+                       self.cash_transactions, self.balance_report]:
             if hasattr(report, 'set_refresh_callback'):
                 report.set_refresh_callback(lambda: self.load_report_data())
         
@@ -195,13 +196,13 @@ class ReportsPage(QWidget):
         # Add report items
         report_names = [
             "📊 Sale Report",
-            # "🛒 Purchase Report",  # TODO: Uncomment in next release - currently has bugs
+            "🛒 Purchase Report",
             "📋 All Transactions",
             "📅 Day Book",
             "💰 Profit & Loss",
             "📈 Bill Wise Profit",
-            # "💵 Cash Transactions",  # TODO: Uncomment in next release - currently has bugs
-            # "💳 Balance Report"  # TODO: Uncomment in next release - currently has bugs
+            "💵 Cash Transactions",
+            "💳 Balance Report"
         ]
         
         for name in report_names:
@@ -247,21 +248,21 @@ class ReportsPage(QWidget):
         self.sale_report.set_payment_summary_widget(payment_summary)
         self.content_stack.addWidget(self.sale_report)
         
-        # # Purchase Report - TODO: Uncomment in next release - currently has bugs
-        # filters_section = self.filters.create_filter_section(
-        #     apply_callback=self._handle_filter_change,
-        #     clear_callback=self._clear_filters
-        # )
-        # self.filter_widgets[1] = filters_section  # Store filter widget by report index
-        # self.purchase_report.set_filters_widget(filters_section)
-        # self.content_stack.addWidget(self.purchase_report)
+        # Purchase Report
+        filters_section = self.filters.create_filter_section(
+            apply_callback=self._handle_filter_change,
+            clear_callback=self._clear_filters
+        )
+        self.filter_widgets[1] = filters_section  # Store filter widget by report index
+        self.purchase_report.set_filters_widget(filters_section)
+        self.content_stack.addWidget(self.purchase_report)
         
         # All Transactions
         filters_section = self.filters.create_filter_section(
             apply_callback=self._handle_filter_change,
             clear_callback=self._clear_filters
         )
-        self.filter_widgets[1] = filters_section  # Store filter widget by report index
+        self.filter_widgets[2] = filters_section  # Store filter widget by report index
         self.all_transactions.set_filters_widget(filters_section)
         self.content_stack.addWidget(self.all_transactions)
         
@@ -270,7 +271,7 @@ class ReportsPage(QWidget):
             apply_callback=self._handle_filter_change,
             clear_callback=self._clear_filters
         )
-        self.filter_widgets[2] = filters_section  # Store filter widget by report index
+        self.filter_widgets[3] = filters_section  # Store filter widget by report index
         self.day_book.set_filters_widget(filters_section)
         self.content_stack.addWidget(self.day_book)
         
@@ -279,7 +280,7 @@ class ReportsPage(QWidget):
             apply_callback=self._handle_filter_change,
             clear_callback=self._clear_filters
         )
-        self.filter_widgets[3] = filters_section  # Store filter widget by report index
+        self.filter_widgets[4] = filters_section  # Store filter widget by report index
         self.profit_loss.set_filters_widget(filters_section)
         self.content_stack.addWidget(self.profit_loss)
         
@@ -288,27 +289,27 @@ class ReportsPage(QWidget):
             apply_callback=self._handle_filter_change,
             clear_callback=self._clear_filters
         )
-        self.filter_widgets[4] = filters_section  # Store filter widget by report index
+        self.filter_widgets[5] = filters_section  # Store filter widget by report index
         self.bill_wise_profit.set_filters_widget(filters_section)
         self.content_stack.addWidget(self.bill_wise_profit)
         
-        # # Cash Transactions - TODO: Uncomment in next release - currently has bugs
-        # filters_section = self.filters.create_filter_section(
-        #     apply_callback=self._handle_filter_change,
-        #     clear_callback=self._clear_filters
-        # )
-        # self.filter_widgets[6] = filters_section  # Store filter widget by report index
-        # self.cash_transactions.set_filters_widget(filters_section)
-        # self.content_stack.addWidget(self.cash_transactions)
+        # Cash Transactions
+        filters_section = self.filters.create_filter_section(
+            apply_callback=self._handle_filter_change,
+            clear_callback=self._clear_filters
+        )
+        self.filter_widgets[6] = filters_section  # Store filter widget by report index
+        self.cash_transactions.set_filters_widget(filters_section)
+        self.content_stack.addWidget(self.cash_transactions)
         
-        # # Balance Report - TODO: Uncomment in next release - currently has bugs
-        # filters_section = self.filters.create_filter_section(
-        #     apply_callback=self._handle_filter_change,
-        #     clear_callback=self._clear_filters
-        # )
-        # self.filter_widgets[7] = filters_section  # Store filter widget by report index
-        # self.balance_report.set_filters_widget(filters_section)
-        # self.content_stack.addWidget(self.balance_report)
+        # Balance Report
+        filters_section = self.filters.create_filter_section(
+            apply_callback=self._handle_filter_change,
+            clear_callback=self._clear_filters
+        )
+        self.filter_widgets[7] = filters_section  # Store filter widget by report index
+        self.balance_report.set_filters_widget(filters_section)
+        self.content_stack.addWidget(self.balance_report)
     
     def _create_payment_summary_section(self) -> QFrame:
         """Create payment summary section showing total cash and bank received."""
@@ -485,23 +486,23 @@ class ReportsPage(QWidget):
         """Populate specific report by index with filtered data."""
         if index == 0:
             self.sale_report.populate(filtered_invoices)
-        # elif index == 1:  # Purchase Report - TODO: Uncomment in next release
-        #     self.purchase_report.populate(filtered_invoices)
         elif index == 1:
-            self.all_transactions.populate(filtered_invoices)
+            self.purchase_report.populate(filtered_invoices)
         elif index == 2:
-            self.day_book.populate(filtered_invoices)
+            self.all_transactions.populate(filtered_invoices)
         elif index == 3:
-            self.profit_loss.populate(filtered_invoices)
+            self.day_book.populate(filtered_invoices)
         elif index == 4:
+            self.profit_loss.populate(filtered_invoices)
+        elif index == 5:
             self.bill_wise_profit.populate(filtered_invoices)
-        # elif index == 5:  # Cash Transactions - TODO: Uncomment in next release
-        #     # Cash Transactions needs special handling - get both received and paid cash
-        #     cash_received = self.db_operations.get_cash_payments()
-        #     cash_paid = self.db_operations.get_cash_supplier_payments()
-        #     self.cash_transactions.populate(invoices=filtered_invoices, cash_received=cash_received, cash_paid=cash_paid)
-        # elif index == 6:  # Balance Report - TODO: Uncomment in next release
-        #     self.balance_report.populate(filtered_invoices)
+        elif index == 6:
+            # Cash Transactions needs special handling - get both received and paid cash
+            cash_received = self.db_operations.get_cash_payments()
+            cash_paid = self.db_operations.get_cash_supplier_payments()
+            self.cash_transactions.populate(invoices=filtered_invoices, cash_received=cash_received, cash_paid=cash_paid)
+        elif index == 7:
+            self.balance_report.populate(filtered_invoices)
     
     def _refresh_current_report(self, index: int = None):
         """
@@ -646,11 +647,11 @@ class ReportsPage(QWidget):
             self.refresh_suppliers()
             self.refresh_types()
             
-            # Refresh all sub-pages (only active ones, excluding temporarily disabled reports)
+            # Refresh all sub-pages
             for view in [
-                self.sale_report, self.all_transactions,
-                self.day_book, self.profit_loss, self.bill_wise_profit
-                # TODO: Add purchase_report, cash_transactions, balance_report in next release
+                self.sale_report, self.purchase_report, self.all_transactions,
+                self.day_book, self.profit_loss, self.bill_wise_profit,
+                self.cash_transactions, self.balance_report
             ]:
                 if hasattr(view, 'refresh_ui'):
                     view.refresh_ui()
