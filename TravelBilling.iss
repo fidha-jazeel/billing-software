@@ -2,7 +2,7 @@
 ; This script creates a professional Windows installer
 
 #define MyAppName "Travel Billing Software"
-#define MyAppVersion "1.0.3"
+#define MyAppVersion "1.0.5"
 #define MyAppPublisher "Your Company Name"
 #define MyAppURL "https://github.com/fidha-jazeel/billing-software"
 #define MyAppExeName "TravelBilling.exe"
