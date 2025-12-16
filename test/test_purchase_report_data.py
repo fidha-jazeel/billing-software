@@ -6,7 +6,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from travel_billing_software.database.db_manager import get_db_instance
-from travel_billing_software.ui.reports.db_operations import ReportsDBOperations
+from travel_billing_software.database.db_operations import ReportsDBOperations
 
 def test_database_data():
     """Check what data is in the database."""

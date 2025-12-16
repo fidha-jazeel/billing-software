@@ -7,7 +7,7 @@ sys.path.insert(0, '.')
 import travel_billing_software.database.db_manager as db_mod
 db_mod._db_instance = None
 
-from travel_billing_software.ui.reports.db_operations import ReportsDBOperations
+from travel_billing_software.database.db_operations import ReportsDBOperations
 
 print("Testing Reports page invoice loading...")
 print("=" * 60)

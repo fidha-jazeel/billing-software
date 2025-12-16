@@ -121,9 +121,18 @@ class PDFOperations:
                     "contact": invoice_data.get("customer_phone", "")
                 },
                 "items": invoice_data.get("pdf_items", []),
+
+                "amounts": {
+                    "subtotal": invoice_data.get("total_amount", 0),
+                    "tax": 0,
+                    "total": invoice_data.get("total_amount", 0),
+                    "paid": invoice_data.get("paid_amount", 0),         
+                    "balance": invoice_data.get("balance_amount", 0)
+                },
                 "notes": "Generated from Travel Billing System",
                 "terms": self.invoice_config.get("terms", "Payment due within 7 days."),
                 "currency": self.get_currency_symbol()
+                
             }
             
             # Generate PDF
@@ -241,7 +250,10 @@ class PDFOperations:
                         "customer_name": invoice_record.get('customer_name', ''),
                         "customer_address": invoice_record.get('customer_address', ''),
                         "customer_phone": invoice_record.get('customer_phone', ''),
-                        "pdf_items": pdf_items
+                        "pdf_items": pdf_items,
+                        "total_amount": total_amount,
+                        "paid_amount": paid_amount,
+                        "balance_amount": balance_amount
                     }
                     
                     # Generate PDF silently
@@ -394,6 +406,11 @@ class PDFOperations:
                     
                     db = get_db_instance()
                     invoice_record = db.get_invoice(invoice_number)
+                    # Fetch payment details
+                    paid_amount = invoice_record.get("paid_amount", 0)
+                    total_amount = invoice_record.get("total_amount", 0)
+                    balance_amount = total_amount - paid_amount
+
                     
                     if not invoice_record:
                         QMessageBox.warning(

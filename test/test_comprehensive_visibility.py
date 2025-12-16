@@ -10,7 +10,7 @@ import travel_billing_software.database.db_manager as db_mod
 db_mod._db_instance = None
 
 from travel_billing_software.database.db_manager import get_db_instance
-from travel_billing_software.ui.reports.db_operations import ReportsDBOperations
+from travel_billing_software.database.db_operations import ReportsDBOperations
 from datetime import datetime, date
 
 print("=" * 80)

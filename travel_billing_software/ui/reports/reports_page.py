@@ -14,7 +14,7 @@ from PyQt6.QtCore import Qt, QDate
 from PyQt6.QtGui import QFont
 from travel_billing_software.utils.logger import log_info, log_error, log_warning
 
-from .db_operations import ReportsDBOperations
+from ...database.db_operations import ReportsDBOperations
 from .utils import ReportFilters, ReportExporter
 
 from travel_billing_software.config.config import format_currency, get_currency_symbol
@@ -554,6 +554,8 @@ class ReportsPage(QWidget):
                 self.filters.filter_to_date = current_filter_frame.filter_to_date
                 self.filters.filter_contact = current_filter_frame.filter_contact
                 self.filters.filter_passenger = current_filter_frame.filter_passenger
+                if hasattr(current_filter_frame, 'filter_customer_name'):
+                    self.filters.filter_customer_name = current_filter_frame.filter_customer_name
                 self.filters.filter_sector = current_filter_frame.filter_sector
                 self.filters.filter_supplier = current_filter_frame.filter_supplier
                 self.filters.filter_type = current_filter_frame.filter_type

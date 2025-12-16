@@ -9,7 +9,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from travel_billing_software.database.db_manager import get_db_instance, DatabaseManager
-from travel_billing_software.ui.reports.db_operations import ReportsDBOperations
+from travel_billing_software.database.db_operations import ReportsDBOperations
 
 def test_purchase_report_flow():
     """Test the complete Purchase Report data flow."""

@@ -31,7 +31,7 @@ print("\n" + "=" * 80)
 print("Testing application data flow:")
 print("=" * 80)
 
-from travel_billing_software.ui.reports.db_operations import ReportsDBOperations
+from travel_billing_software.database.db_operations import ReportsDBOperations
 
 db_ops = ReportsDBOperations()
 all_invoices = db_ops.load_all_invoices()

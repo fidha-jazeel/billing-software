@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QPu
 from PyQt6.QtCore import Qt
 from travel_billing_software.ui.reports.sub_pages.bill_wise_profit import BillWiseProfitView
 from travel_billing_software.database.db_manager import get_db_instance
-from travel_billing_software.ui.reports.db_operations import ReportsDBOperations
+from travel_billing_software.database.db_operations import ReportsDBOperations
 from datetime import datetime
 
 

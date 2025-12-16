@@ -157,12 +157,19 @@ class PurchaseReportView(QWidget):
             supplier_profits = {}  # Track profit by supplier
             
             log_info(f"Processing {len(invoices)} invoices for purchase report", 'billing_app')
+            processed_dates = set()
 
             for invoice in invoices:
                 # Get invoice basic info
                 invoice_number = str(invoice.get('invoice_number', 'N/A'))
                 inv_date = invoice.get('invoice_date') or invoice.get('date') or 'N/A'
-                
+
+        
+             
+    # ---------------------------------------
+
+
+    
                 # Get tickets for this invoice
                 tickets = invoice.get('tickets', [])
                 if not tickets:

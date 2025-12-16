@@ -9,7 +9,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from travel_billing_software.database.db_manager import get_db_instance
-from travel_billing_software.ui.reports.db_operations import ReportsDBOperations
+from travel_billing_software.database.db_operations import ReportsDBOperations
 from travel_billing_software.config.config import format_currency, get_currency_symbol
 
 

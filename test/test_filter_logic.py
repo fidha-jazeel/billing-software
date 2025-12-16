@@ -1,5 +1,5 @@
 """Test actual populate() methods to see where invoices are being filtered."""
-from travel_billing_software.ui.reports.db_operations import ReportsDBOperations
+from travel_billing_software.database.db_operations import ReportsDBOperations
 from travel_billing_software.ui.reports.utils import ReportFilters
 from travel_billing_software.database.db_manager import get_db_instance
 from PyQt6.QtCore import QDate

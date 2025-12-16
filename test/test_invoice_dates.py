@@ -1,5 +1,5 @@
 """Quick test to check invoice dates and filtering"""
-from travel_billing_software.ui.reports.db_operations import ReportsDBOperations
+from travel_billing_software.database.db_operations import ReportsDBOperations
 from travel_billing_software.ui.reports.utils import ReportFilters
 from datetime import datetime
 

@@ -1,4 +1,4 @@
-from travel_billing_software.ui.reports.db_operations import ReportsDBOperations
+from travel_billing_software.database.db_operations import ReportsDBOperations
 from travel_billing_software.ui.reports.utils import ReportFilters
 from travel_billing_software.config.config import COLORS
 from travel_billing_software.utils.styles import get_button_style

@@ -734,6 +734,9 @@ class DatabaseManager:
         Returns:
             invoice_id on success, -1 on failure
         """
+        paid_amount = invoice_data.get('paid_amount', 0)
+        payment_mode = invoice_data.get('payment_mode', 'Cash')
+        print(f"[DEBUG] DB save_invoice received paid_amount={paid_amount}, payment_mode={payment_mode}")
         try:
             cur = self.conn.cursor()
             

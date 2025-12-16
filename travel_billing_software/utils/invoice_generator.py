@@ -385,6 +385,22 @@ def generate_invoice_pdf(invoice_data: dict, output_path: str):
         Paragraph(_format_currency(grand_total, currency_symbol), styles['TableCellBold'])
     ])
 
+    # Paid Amount and Balance
+    paid_amount = float(invoice_data.get('paid_amount', 0))
+    balance = float(invoice_data.get('balance', grand_total - paid_amount))
+    totals_data.append([
+        '',
+        '',
+        Paragraph('Paid Amount', styles['TableCellBold']),
+        Paragraph(_format_currency(paid_amount, currency_symbol), styles['TableCell'])
+    ])
+    totals_data.append([
+        '',
+        '',
+        Paragraph('Balance', styles['TableCellBold']),
+        Paragraph(_format_currency(balance, currency_symbol), styles['TableCell'])
+    ])
+
     totals_tbl = Table(totals_data, colWidths=[doc.width*0.5, doc.width*0.1, doc.width*0.2, doc.width*0.2], hAlign='RIGHT')
     totals_tbl.setStyle(TableStyle([
         ('SPAN', (0,0), (1,0)),

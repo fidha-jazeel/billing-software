@@ -116,6 +116,7 @@ class ReportFilters:
         self.filter_to_date = None
         self.filter_contact = None
         self.filter_passenger = None
+        self.filter_customer_name = None
         self.filter_sector = None
         self.filter_supplier = None
         self.filter_type = None
@@ -286,6 +287,11 @@ class ReportFilters:
         self.filter_contact = contact_row['input']
         content_layout.addLayout(contact_row['layout'])
         
+        # Customer Name
+        customer_row = self._create_input_row("Customer Name:", "Search by customer name...")
+        self.filter_customer_name = customer_row['input']
+        content_layout.addLayout(customer_row['layout'])
+
         # Passenger Name
         passenger_row = self._create_input_row("Passenger:", "Search by passenger name...")
         self.filter_passenger = passenger_row['input']
@@ -353,6 +359,7 @@ class ReportFilters:
         filter_frame.filter_to_date = self.filter_to_date
         filter_frame.filter_contact = self.filter_contact
         filter_frame.filter_passenger = self.filter_passenger
+        filter_frame.filter_customer_name = self.filter_customer_name
         filter_frame.filter_sector = self.filter_sector
         filter_frame.filter_supplier = self.filter_supplier
         filter_frame.filter_type = self.filter_type
@@ -509,23 +516,27 @@ class ReportFilters:
         """
         try:
             filtered = []
-            
+
             from_date = self.filter_from_date.date().toPyDate()
             to_date = self.filter_to_date.date().toPyDate()
             contact = self.filter_contact.text().lower()
             passenger = self.filter_passenger.text().lower()
+            customer_name = self.filter_customer_name.text().lower() if self.filter_customer_name else ""
             sector = self.filter_sector.text().lower()
             supplier = self.filter_supplier.currentText()
             booking_type = self.filter_type.currentText()
-            
+
             log_info(
                 f"Applying filters - Date: {from_date} to {to_date}, "
-                f"Contact: '{contact}', Passenger: '{passenger}', Sector: '{sector}', "
+                f"Contact: '{contact}', Passenger: '{passenger}', Customer: '{customer_name}', Sector: '{sector}', "
                 f"Supplier: '{supplier}', Type: '{booking_type}'",
                 'billing_app'
             )
-            
+
             for invoice in invoices:
+                # Customer Name filter
+                if customer_name and customer_name not in invoice.get('customer_name', '').lower():
+                    continue
                 try:
                     # Date filter - OPTIONAL, only applied if invoice has valid date
                     # Default behavior: ALWAYS INCLUDE invoices with invalid/missing dates
@@ -702,13 +713,142 @@ class ReportFilters:
 
 
 class ReportExporter:
-    """Handles exporting reports to various formats (Excel, PDF)."""
-    
+    @staticmethod
+    def _map_invoice_for_print(invoice: dict) -> dict:
+        """
+        Map the report invoice dict to the structure expected by generate_invoice_pdf.
+        """
+        if not invoice:
+            return None
+        # Company info (customize as needed or fetch from config)
+        company = {
+            'name': invoice.get('company_name', 'Company Name'),
+            'address': invoice.get('company_address', ''),
+            'footer_note': invoice.get('company_footer', ''),
+            'logo_path': invoice.get('company_logo', ''),
+        }
+        # Invoice meta
+        invoice_meta = {
+            'number': invoice.get('invoice_number', ''),
+            'date': invoice.get('invoice_date', ''),
+            'customer_id': invoice.get('customer_id', ''),
+        }
+        # Customer
+        customer = {
+            'name': invoice.get('customer_name', ''),
+            'address': invoice.get('customer_address', ''),
+            'contact': invoice.get('customer_phone', ''),
+        }
+        # Items (tickets)
+        items = []
+        for idx, ticket in enumerate(invoice.get('tickets', []), 1):
+            # Try to get the correct unit price and amount fields
+            unit_price = (
+                ticket.get('unit_price')
+                or ticket.get('cust_amt')
+                or ticket.get('customer_amount')
+                or ticket.get('total_amount')
+                or 0
+            )
+            amount = (
+                ticket.get('total_amount')
+                or ticket.get('amount')
+                or ticket.get('cust_amt')
+                or ticket.get('customer_amount')
+                or unit_price
+                or 0
+            )
+            items.append({
+                'sno': idx,
+                'passenger_name': ticket.get('passenger_name', ''),
+                'pnr': ticket.get('pnr', ''),
+                'sector': ticket.get('sector', ''),
+                'type': ticket.get('booking_type', ''),
+                'qty': ticket.get('quantity', 1),
+                'unit_price': unit_price,
+                'amount': amount,
+            })
+        # Totals
+        subtotal = sum(float(t.get('total_amount', 0) or 0) for t in invoice.get('tickets', []))
+        tax = float(invoice.get('tax', 0) or 0)
+        total = subtotal + tax
+        # Currency
+        currency = invoice.get('currency', 'AED')
+        # Discount, notes, terms
+        discount = float(invoice.get('discount', 0) or 0)
+        notes = invoice.get('notes', '')
+        terms = invoice.get('terms', '')
+        return {
+            'company': company,
+            'invoice_meta': invoice_meta,
+            'customer': customer,
+            'items': items,
+            'discount': discount,
+            'notes': notes,
+            'terms': terms,
+            'currency': currency,
+            'tax': tax,
+            'subtotal': subtotal,
+            'total': total,
+            'paid_amount': float(invoice.get('paid_amount', 0)),
+            'balance': float(invoice.get('balance', total - float(invoice.get('paid_amount', 0))))
+        }
+
+    @staticmethod
+    def print_invoice(invoice: dict, parent: QWidget):
+        """
+        Generate a temporary PDF for the given invoice and open it for printing or manual print if no association exists.
+        """
+        import tempfile
+        import os
+        import sys
+        from PyQt6.QtWidgets import QMessageBox
+        try:
+            from travel_billing_software.utils.invoice_generator import generate_invoice_pdf
+        except ImportError as e:
+            log_error("Could not import generate_invoice_pdf", exception=e, logger_name='billing_errors')
+            QMessageBox.critical(parent, "Print Error", "Could not import invoice PDF generator.")
+            return
+
+        # Map invoice to print template structure
+        mapped_invoice = ReportExporter._map_invoice_for_print(invoice)
+        if not mapped_invoice or not mapped_invoice.get('invoice_meta', {}).get('number'):
+            QMessageBox.warning(parent, "Print Error", "No valid invoice selected. Cannot print.")
+            return
+
+        try:
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_pdf:
+                tmp_pdf_path = tmp_pdf.name
+            generate_invoice_pdf(mapped_invoice, tmp_pdf_path)
+
+            opened = False
+            if sys.platform.startswith('win'):
+                try:
+                    os.startfile(tmp_pdf_path, 'print')
+                    opened = True
+                except OSError:
+                    # No print association, try just opening
+                    try:
+                        os.startfile(tmp_pdf_path)
+                        opened = True
+                    except OSError:
+                        pass
+            elif sys.platform.startswith('darwin'):
+                opened = os.system(f'open "{tmp_pdf_path}"') == 0
+            else:
+                opened = os.system(f'xdg-open "{tmp_pdf_path}"') == 0
+
+            if not opened:
+                QMessageBox.information(parent, "Print Info", f"Invoice PDF generated at:\n{tmp_pdf_path}\n\nNo application is associated to print or open PDF files. Please open and print it manually.")
+        except Exception as e:
+            log_error("Error printing invoice PDF", exception=e, logger_name='billing_errors')
+            QMessageBox.critical(parent, "Print Error", f"Failed to print invoice: {e}")
+
     @staticmethod
     def export_to_excel(table: QTableWidget, report_name: str, parent_widget: QWidget):
         """
-        Export table data to Excel (.xlsx) file with proper formatting.
-        
+        Export the report table to an Excel (.xlsx) file.
+
         Args:
             table: QTableWidget containing report data
             report_name: Name of the report for filename
@@ -718,63 +858,63 @@ class ReportExporter:
             from openpyxl import Workbook
             from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
             from openpyxl.utils import get_column_letter
-            
+
             filename, _ = QFileDialog.getSaveFileName(
                 parent_widget,
                 f"Export {report_name} Report",
                 f"{report_name.lower().replace(' ', '_')}_report.xlsx",
                 "Excel Files (*.xlsx);;All Files (*.*)"
             )
-            
+
             if not filename:
                 return
-            
+
             # Ensure .xlsx extension
             if not filename.endswith('.xlsx'):
                 filename += '.xlsx'
-            
+
             # Create workbook and worksheet
             wb = Workbook()
             ws = wb.active
             ws.title = report_name[:31]  # Excel sheet name limit
-            
+
             # Define styles
             header_font = Font(name='Calibri', size=12, bold=True, color='FFFFFF')
             header_fill = PatternFill(start_color='000000', end_color='000000', fill_type='solid')
             header_alignment = Alignment(horizontal='left', vertical='center', wrap_text=True)
-            
+
             data_font = Font(name='Calibri', size=11)
             data_alignment = Alignment(horizontal='left', vertical='center', wrap_text=True)
-            
+
             thin_border = Border(
                 left=Side(style='thin', color='CCCCCC'),
                 right=Side(style='thin', color='CCCCCC'),
                 top=Side(style='thin', color='CCCCCC'),
                 bottom=Side(style='thin', color='CCCCCC')
             )
-            
+
             # Write headers
             headers = []
             for col in range(table.columnCount()):
                 header_item = table.horizontalHeaderItem(col)
                 header_text = header_item.text() if header_item else f"Column {col + 1}"
                 headers.append(header_text)
-                
+
                 cell = ws.cell(row=1, column=col + 1, value=header_text)
                 cell.font = header_font
                 cell.fill = header_fill
                 cell.alignment = header_alignment
                 cell.border = thin_border
-            
+
             # Set header row height
             ws.row_dimensions[1].height = 30
-            
+
             # Write data rows
             for row in range(table.rowCount()):
                 for col in range(table.columnCount()):
                     item = table.item(row, col)
                     cell_value = item.text() if item else ''
-                    
+
                     # Try to convert to number for better Excel formatting
                     if cell_value.startswith(f"{get_currency_symbol()}"):
                         # Remove currency symbol and commas for numeric values
@@ -783,25 +923,25 @@ class ReportExporter:
                             cell_value = float(numeric_value)
                         except ValueError:
                             pass  # Keep as string if conversion fails
-                    
+
                     cell = ws.cell(row=row + 2, column=col + 1, value=cell_value)
                     cell.font = data_font
                     cell.alignment = data_alignment
                     cell.border = thin_border
-                    
+
                     # Format currency cells
                     if isinstance(cell_value, (int, float)):
                         cell.number_format = f'"{get_currency_symbol()}"#,##0.00'
-            
+
             # Auto-adjust column widths with improved algorithm
             for col in range(1, table.columnCount() + 1):
                 column_letter = get_column_letter(col)
                 max_length = 0
-                
+
                 # Check header length
                 header_length = len(str(headers[col - 1]))
                 max_length = max(max_length, header_length)
-                
+
                 # Check ALL data rows for accurate sizing (not just sample)
                 for row in range(2, ws.max_row + 1):
                     try:
@@ -811,12 +951,12 @@ class ReportExporter:
                             max_length = max(max_length, cell_length)
                     except:
                         pass
-                
+
                 # Set column width with appropriate limits
                 # Minimum 12 characters, maximum 60 characters
                 adjusted_width = min(max(max_length + 3, 12), 60)
                 ws.column_dimensions[column_letter].width = adjusted_width
-            
+
             # Apply text wrapping to all data cells to prevent overflow
             from openpyxl.styles import Alignment as OpenpyxlAlignment
             for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=1, max_col=ws.max_column):
@@ -827,20 +967,20 @@ class ReportExporter:
                             vertical='center',
                             wrap_text=True
                         )
-            
+
             # Freeze header row
             ws.freeze_panes = 'A2'
-            
+
             # Save workbook
             wb.save(filename)
-            
+
             log_info(f"Report exported to Excel: {filename}", 'billing_app')
             QMessageBox.information(
                 parent_widget,
                 "Success",
                 f"Report exported successfully to Excel!\n\n{filename}"
             )
-        
+
         except ImportError as e:
             log_error(f"openpyxl not installed", exception=e, logger_name='billing_errors')
             QMessageBox.critical(
@@ -855,12 +995,12 @@ class ReportExporter:
                 "Export Error",
                 f"Failed to export report to Excel:\n{str(e)}"
             )
-    
+
     @staticmethod
     def export_to_pdf(table: QTableWidget, report_name: str, parent_widget: QWidget):
         """
         Export table data to PDF file with proper formatting.
-        
+
         Args:
             table: QTableWidget containing report data
             report_name: Name of the report for filename
@@ -1079,48 +1219,28 @@ class SummaryCardManager:
     @staticmethod
     def create_summary_cards(titles: List[str], colors: dict) -> QFrame:
         """
-        Create summary cards with titles. If 6 cards, arranged in 2 rows of 3.
-        
+        Create summary cards with titles. Responsive: 3 per row, wrap as needed.
         Args:
             titles: List of card titles
             colors: Color scheme dictionary
-            
         Returns:
             QFrame containing all summary cards
         """
+        from PyQt6.QtWidgets import QGridLayout
         summary_frame = QFrame()
-        summary_frame.setStyleSheet("""
-            QFrame {
-                background-color: #000000;
-                border-radius: 8px;
-                border: 2px solid #777777;
-                padding: 15px;
-            }
-        """)
-        
-        # Use grid layout if 6 cards, otherwise horizontal layout
-        if len(titles) == 6:
-            from PyQt6.QtWidgets import QGridLayout
-            summary_layout = QGridLayout(summary_frame)
-            summary_layout.setContentsMargins(15, 15, 15, 15)
-            summary_layout.setSpacing(20)
-            
-            # Add cards in 2 rows of 3
-            for i, title in enumerate(titles):
-                card = SummaryCardManager._create_single_card(title, colors)
-                row = i // 3  # 0 for first 3 cards, 1 for next 3
-                col = i % 3   # 0, 1, 2 repeating
-                summary_layout.addWidget(card, row, col)
-        else:
-            # Original horizontal layout for other card counts
-            summary_layout = QHBoxLayout(summary_frame)
-            summary_layout.setContentsMargins(15, 15, 15, 15)
-            summary_layout.setSpacing(20)
-            
-            for title in titles:
-                card = SummaryCardManager._create_single_card(title, colors)
-                summary_layout.addWidget(card)
-        
+        summary_frame.setStyleSheet("""QFrame { background-color: #000000; border-radius: 8px; border: 2px solid #777777; padding: 15px; }""")
+        summary_layout = QGridLayout(summary_frame)
+        summary_layout.setContentsMargins(15, 15, 15, 15)
+        summary_layout.setSpacing(20)
+        cards_per_row = 3
+        for i, title in enumerate(titles):
+            card = SummaryCardManager._create_single_card(title, colors)
+            row = i // cards_per_row
+            col = i % cards_per_row
+            summary_layout.addWidget(card, row, col)
+        # Make columns stretch equally
+        for col in range(cards_per_row):
+            summary_layout.setColumnStretch(col, 1)
         return summary_frame
     
     @staticmethod

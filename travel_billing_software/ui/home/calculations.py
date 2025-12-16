@@ -156,6 +156,7 @@ class CalculationsWidget(QFrame):
         calc_grid.addWidget(paid_lbl, 0, 0)
         
         self.txt_received = QLineEdit()
+        self.txt_received.textChanged.connect(self.calculate_balance)
         self.txt_received.setPlaceholderText("0.00")
         self.txt_received.setStyleSheet(input_style)
         self.txt_received.textChanged.connect(self._on_received_changed)
@@ -309,6 +310,7 @@ class CalculationsWidget(QFrame):
             Dictionary with total, paid, balance, payment_mode
         """
         try:
+            log_info(f"[DEBUG] get_financial_data: paid_amount={self._received}, payment_mode={self.payment_mode.currentText()}", "calculations")
             return {
                 "grand_total": self._total,
                 "paid_amount": self._received,

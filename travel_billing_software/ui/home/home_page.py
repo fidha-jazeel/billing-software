@@ -558,60 +558,56 @@ class HomePage(QWidget):
             )
     
     def print_invoice(self):
-        """Print invoice."""
-        try:
-            invoice_number = self.invoice_form.get_invoice_number()
-            
-            # Check if invoice exists in database
-            invoice_exists = self.db_ops.db.get_invoice(invoice_number) is not None
-            
-            # If invoice doesn't exist, auto-save it first
-            if not invoice_exists:
-                log_info(f"Invoice {invoice_number} not in database, auto-saving before print", "home_page")
-                
-                # Validate invoice has items
-                if self.items_table.get_row_count() == 0:
-                    QMessageBox.warning(
-                        self,
-                        "No Items",
-                        "Please add at least one item to the invoice before printing."
-                    )
-                    return
-                
-                # Collect invoice data
-                invoice_form_data = self.invoice_form.get_invoice_data()
-                financial_data = self.calculations.get_financial_data()
-                items = self.items_table.get_all_items()
-                
-                # Combine all data
-                invoice_data = {
-                    **invoice_form_data,
-                    **financial_data,
-                    "items": items,
-                    "payment_method": "Cash"  # Default
-                }
-                
-                # Save to database silently
-                invoice_id = self.db_ops.save_invoice(invoice_data)
-                
-                if invoice_id > 0:
-                    log_info(f"Invoice auto-saved for printing: {invoice_number}, ID: {invoice_id}", "home_page")
-                    # Update passenger history
-                    self._update_passenger_history(invoice_data)
-                else:
-                    QMessageBox.critical(
-                        self,
-                        "Save Failed",
-                        f"Failed to save invoice {invoice_number} before printing.\n"
-                        "Please check the data and try again."
-                    )
-                    return
-            
-            # Now print the invoice (PDF will be auto-generated if needed)
-            self.pdf_ops.print_invoice(invoice_number, parent_widget=self)
-            
-        except Exception as e:
-            log_error("Error printing invoice", exception=e, logger_name="home_page_errors")
+        """Print invoice with correct paid and balance values (Sale Report logic)."""
+        # try:
+        #     invoice_number = self.invoice_form.get_invoice_number()
+        #     from travel_billing_software.database.db_manager import get_db_instance
+        #     db = get_db_instance()
+        #     invoice = db.get_invoice(invoice_number)
+        #     if not invoice:
+        #         # If invoice doesn't exist, auto-save it first (fallback to old logic)
+        #         log_info(f"Invoice {invoice_number} not in database, auto-saving before print", "home_page")
+        #         if self.items_table.get_row_count() == 0:
+        #             QMessageBox.warning(
+        #                 self,
+        #                 "No Items",
+        #                 "Please add at least one item to the invoice before printing."
+        #             )
+        #             return
+        #         invoice_form_data = self.invoice_form.get_invoice_data()
+        #         financial_data = self.calculations.get_financial_data()
+        #         items = self.items_table.get_all_items()
+        #         invoice_data = {
+        #             **invoice_form_data,
+        #             **financial_data,
+        #             "items": items,
+        #         }
+        #         invoice_id = self.db_ops.save_invoice(invoice_data)
+        #         if invoice_id > 0:
+        #             log_info(f"Invoice auto-saved for printing: {invoice_number}, ID: {invoice_id}", "home_page")
+        #             self._update_passenger_history(invoice_data)
+        #         else:
+        #             QMessageBox.critical(
+        #                 self,
+        #                 "Save Failed",
+        #                 f"Failed to save invoice {invoice_number} before printing.\n"
+        #                 "Please check the data and try again."
+        #             )
+        #             return
+        #         invoice = db.get_invoice(invoice_number)
+        #     # Always fetch the latest paid/balance from ReportsDBOperations (like Sale Report)
+        #     from travel_billing_software.database.db_operations import ReportsDBOperations
+        #     db_ops = ReportsDBOperations()
+        #     all_invoices = db_ops.load_all_invoices()
+        #     for inv in all_invoices:
+        #         if inv.get('invoice_number', '') == invoice_number:
+        #             invoice['paid_amount'] = inv.get('paid_amount', 0)
+        #             invoice['balance'] = inv.get('balance', invoice.get('total_amount', 0) - inv.get('paid_amount', 0))
+        #             break
+        #     from travel_billing_software.ui.reports.utils import ReportExporter
+        #     ReportExporter.print_invoice(invoice, parent=self)
+        # except Exception as e:
+        #     log_error("Error printing invoice", exception=e, logger_name="home_page_errors")
     
     def share_invoice(self):
         """Share invoice via email."""
@@ -675,7 +671,8 @@ class HomePage(QWidget):
             
         except Exception as e:
             log_error("Error sharing invoice", exception=e, logger_name="home_page_errors")
-    
+            invoice_id = self.db_ops.save_invoice(invoice_data)
+
     def reset_invoice(self):
         """Reset all invoice fields."""
         try:

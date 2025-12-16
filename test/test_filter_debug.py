@@ -1,4 +1,4 @@
-from travel_billing_software.ui.reports.db_operations import ReportsDBOperations
+from travel_billing_software.database.db_operations import ReportsDBOperations
 from datetime import datetime, date
 
 # Load data

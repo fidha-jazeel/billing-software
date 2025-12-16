@@ -476,6 +476,104 @@ class ReportsPage(QWidget):
             print(f"Error loading invoices: {e}")
     
     def _create_common_filters(self) -> QFrame:
+                        # Customer Name - Two separate bordered boxes
+                        customer_row = QHBoxLayout()
+                        customer_row.setSpacing(10)
+                        customer_label_box = QFrame()
+                        customer_label_box.setStyleSheet("""
+                            QFrame {
+                                background-color: #121212;
+                                border: 1px solid #777777;
+                                border-radius: 5px;
+                                padding: 6px 10px;
+                            }
+                        """)
+                        customer_label_layout = QHBoxLayout(customer_label_box)
+                        customer_label_layout.setContentsMargins(0, 0, 0, 0)
+                        customer_label = QLabel("Customer Name:")
+                        customer_label.setStyleSheet("color: #FFFFFF; font-weight: bold; background: transparent; border: none;")
+                        customer_label_layout.addWidget(customer_label)
+                        customer_row.addWidget(customer_label_box)
+                        customer_input_box = QFrame()
+                        customer_input_box.setStyleSheet("""
+                            QFrame {
+                                background-color: #000000;
+                                border: 1px solid #777777;
+                                border-radius: 5px;
+                                padding: 6px 10px;
+                            }
+                        """)
+                        customer_input_layout = QHBoxLayout(customer_input_box)
+                        customer_input_layout.setContentsMargins(0, 0, 0, 0)
+                        self.filter_customer = QLineEdit()
+                        self.filter_customer.setPlaceholderText("Search by customer name...")
+                        self.filter_customer.setStyleSheet("""
+                            QLineEdit {
+                                background-color: transparent;
+                                color: #FFFFFF;
+                                border: none;
+                                padding: 2px;
+                            }
+                            QLineEdit::placeholder {
+                                color: #CCCCCC;
+                            }
+                            QLineEdit:focus {
+                                outline: none;
+                                border: none;
+                            }
+                        """)
+                        customer_input_layout.addWidget(self.filter_customer)
+                        customer_row.addWidget(customer_input_box, 1)
+                        filter_layout.addLayout(customer_row)
+                # Customer Name - Two separate bordered boxes
+                customer_row = QHBoxLayout()
+                customer_row.setSpacing(10)
+                customer_label_box = QFrame()
+                customer_label_box.setStyleSheet("""
+                    QFrame {
+                        background-color: #121212;
+                        border: 1px solid #777777;
+                        border-radius: 5px;
+                        padding: 6px 10px;
+                    }
+                """)
+                customer_label_layout = QHBoxLayout(customer_label_box)
+                customer_label_layout.setContentsMargins(0, 0, 0, 0)
+                customer_label = QLabel("Customer Name:")
+                customer_label.setStyleSheet("color: #FFFFFF; font-weight: bold; background: transparent; border: none;")
+                customer_label_layout.addWidget(customer_label)
+                customer_row.addWidget(customer_label_box)
+                customer_input_box = QFrame()
+                customer_input_box.setStyleSheet("""
+                    QFrame {
+                        background-color: #000000;
+                        border: 1px solid #777777;
+                        border-radius: 5px;
+                        padding: 6px 10px;
+                    }
+                """)
+                customer_input_layout = QHBoxLayout(customer_input_box)
+                customer_input_layout.setContentsMargins(0, 0, 0, 0)
+                self.filter_customer = QLineEdit()
+                self.filter_customer.setPlaceholderText("Search by customer name...")
+                self.filter_customer.setStyleSheet("""
+                    QLineEdit {
+                        background-color: transparent;
+                        color: #FFFFFF;
+                        border: none;
+                        padding: 2px;
+                    }
+                    QLineEdit::placeholder {
+                        color: #CCCCCC;
+                    }
+                    QLineEdit:focus {
+                        outline: none;
+                        border: none;
+                    }
+                """)
+                customer_input_layout.addWidget(self.filter_customer)
+                customer_row.addWidget(customer_input_box, 1)
+                filter_layout.addLayout(customer_row)
         """Create common filter section for reports with enhanced styling."""
         filter_frame = QFrame()
         filter_frame.setStyleSheet("""
@@ -897,6 +995,7 @@ class ReportsPage(QWidget):
         from_date = self.filter_from_date.date().toPyDate()
         to_date = self.filter_to_date.date().toPyDate()
         contact = self.filter_contact.text().lower()
+        customer = self.filter_customer.text().lower()
         passenger = self.filter_passenger.text().lower()
         sector = self.filter_sector.text().lower()
         supplier = self.filter_supplier.currentText()
@@ -913,15 +1012,15 @@ class ReportsPage(QWidget):
                         continue
             except:
                 pass
-            
             # Contact filter
             if contact and contact not in invoice.get('contact_number', '').lower():
                 continue
-            
+            # Customer Name filter
+            if customer and customer not in invoice.get('customer_name', '').lower():
+                continue
             # Type filter
             if booking_type != "All" and invoice.get('type', '') != booking_type:
                 continue
-            
             # Passenger, sector, supplier filters (check items)
             if passenger or sector or supplier != "All":
                 match_found = False
@@ -936,9 +1035,7 @@ class ReportsPage(QWidget):
                         break
                 if not match_found and (passenger or sector or supplier != "All"):
                     continue
-            
             filtered.append(invoice)
-        
         return filtered
     
     def _show_no_records_message(self, report_name):
@@ -1043,19 +1140,20 @@ class ReportsPage(QWidget):
         layout.addLayout(export_row)
         
         # Table
-        self.sale_table = QTableWidget(0, 7)
+        self.sale_table = QTableWidget(0, 8)
         self.sale_table.setHorizontalHeaderLabels([
-            "Invoice #", "Date", "Customer", "Contact", "Type", "Total", "Status"
+            "Invoice #", "Date", "Customer", "Customer Name", "Contact", "Type", "Total", "Status"
         ])
         # Configure with optimal column widths
         self._configure_table(self.sale_table, {
             0: 140,  # Invoice #
             1: 100,  # Date
             2: 'stretch',  # Customer
-            3: 120,  # Contact
-            4: 100,  # Type
-            5: 120,  # Total
-            6: 120   # Status
+            3: 160,  # Customer Name
+            4: 120,  # Contact
+            5: 100,  # Type
+            6: 120,  # Total
+            7: 120   # Status
         })
         self.sale_table.setMinimumHeight(500)
         layout.addWidget(self.sale_table)
@@ -1075,40 +1173,42 @@ class ReportsPage(QWidget):
         self.sale_table.setRowCount(0)
         
         # Check if no records found
-        if not filtered_invoices:
-            self._show_no_records_message("Sale Report")
-            # Update summary with zeros
-            self._update_summary_cards(self.sale_summary_frame, [
-                format_currency(0),
-                "0",
-                format_currency(0)
-            ])
-            return
-        
-        total_sales = 0.0
-        
         for invoice in filtered_invoices:
             row = self.sale_table.rowCount()
             self.sale_table.insertRow(row)
-            
             # Invoice Number
             self.sale_table.setItem(row, 0, QTableWidgetItem(invoice.get('invoice_number', '')))
-            
             # Date
             self.sale_table.setItem(row, 1, QTableWidgetItem(invoice.get('invoice_date', '')))
-            
-            # Customer
+            # Customer (existing field)
             self.sale_table.setItem(row, 2, QTableWidgetItem(invoice.get('customer_name', '')))
-            
+            # Customer Name (new field, can be same as customer_name or another field if available)
+            self.sale_table.setItem(row, 3, QTableWidgetItem(invoice.get('customer_name', '')))
             # Contact
-            self.sale_table.setItem(row, 3, QTableWidgetItem(invoice.get('contact_number', '')))
-            
+            self.sale_table.setItem(row, 4, QTableWidgetItem(invoice.get('contact_number', '')))
             # Type
-            self.sale_table.setItem(row, 4, QTableWidgetItem(invoice.get('type', '')))
-            
+            self.sale_table.setItem(row, 5, QTableWidgetItem(invoice.get('type', '')))
             # Total
             total_str = str(invoice.get('total', '₹0.00')).replace('₹', '').replace(',', '').strip()
             try:
+                total = float(total_str)
+                total_sales += total
+            except:
+                total = 0.0
+            total_item = QTableWidgetItem(format_currency(total))
+            total_item.setForeground(QColor(self.colors['accent_gold']))
+            self.sale_table.setItem(row, 6, total_item)
+            # Status
+            balance_str = str(invoice.get('balance', '₹0.00'))
+            if 'Paid' in balance_str or '₹0.00' in balance_str:
+                status = '✅ Paid'
+                color = self.colors['success']
+            else:
+                status = '⏳ Pending'
+                color = self.colors['danger']
+            status_item = QTableWidgetItem(status)
+            status_item.setForeground(QColor(color))
+            self.sale_table.setItem(row, 7, status_item)
                 total = float(total_str)
                 total_sales += total
             except:
